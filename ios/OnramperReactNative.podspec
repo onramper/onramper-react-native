@@ -7,23 +7,20 @@ Pod::Spec.new do |s|
   s.version        = package['version']
   s.summary        = package['description']
   s.description    = package['description']
-  s.license        = package['license']
+  s.license        = { :type => 'UNLICENSED', :file => '../LICENSE' }
   s.author         = package['author']
   s.homepage       = package['homepage']
-  s.platforms      = {
-    :ios => '15.1',
-    :tvos => '15.1'
-  }
+  s.platforms      = { :ios => '16.0' }
   s.swift_version  = '5.9'
-  s.source         = { git: 'https://github.com/onramper/onramper-react-native' }
-  s.static_framework = true
+  s.source         = { :git => "#{package['repository']}.git", :tag => "v#{s.version}" }
 
   s.dependency 'ExpoModulesCore'
 
-  # Swift/Objective-C compatibility
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
   }
 
-  s.source_files = "**/*.{h,m,mm,swift,hpp,cpp}"
+  s.source_files        = '**/*.{h,m,mm,swift,hpp,cpp}'
+  s.exclude_files       = 'Tests/**/*', 'Frameworks/**/*'
+  s.vendored_frameworks = 'Frameworks/OnramperSDK.xcframework'
 end
