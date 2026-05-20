@@ -1,12 +1,16 @@
 import ExpoModulesCore
 import OnramperSDK
 import Combine
+#if canImport(UIKit)
+import SwiftUI
+#endif
 
 public class OnramperReactNativeModule: Module {
     private var client: OnramperClient?
     private var sessionExpiredHandler: JavaScriptFunction<SessionCredentialsDict>?
     private var stateObservation: AnyCancellable?
     private var eventTask: Task<Void, Never>?
+    private let intentRegistry = PreparedIntentRegistry()
 
     public func definition() -> ModuleDefinition {
         Name("OnramperReactNative")
@@ -31,6 +35,19 @@ public class OnramperReactNativeModule: Module {
                 await self.requireClient().reset()
             }
         }
+
+        #if canImport(UIKit)
+        AsyncFunction("getCheckoutRequirements") {
+            (request: CheckoutRequestDict, buttonStyle: CheckoutButtonStyleDict) async throws -> PreparedIntentDict in
+            try await mappingOnramperError {
+                try await self.prepareIntent(request: request, buttonStyle: buttonStyle)
+            }
+        }
+
+        AsyncFunction("cancelPreparedIntent") { (intentHandle: String) async in
+            await self.intentRegistry.drop(intentHandle)
+        }
+        #endif
 
         OnDestroy {
             self.tearDown()
@@ -104,4 +121,31 @@ public class OnramperReactNativeModule: Module {
         }
         return client
     }
+
+    #if canImport(UIKit)
+    @MainActor
+    private func prepareIntent(
+        request: CheckoutRequestDict,
+        buttonStyle: CheckoutButtonStyleDict
+    ) async throws -> PreparedIntentDict {
+        let client = try requireClient()
+        // Invalidate any prior prepared intent — mirrors the SDK's single-flight gate.
+        await intentRegistry.invalidateAll()
+
+        let swiftRequest = request.toSwift()
+        let style = buttonStyle.toSwift()
+        let result = try await client.getCheckoutRequirements(swiftRequest, buttonStyle: style)
+
+        let entry = PreparedIntentRegistry.PreparedIntent(
+            button: AnyView(result.button),
+            createdAt: Date()
+        )
+        let handle = await intentRegistry.store(entry)
+
+        var dict = PreparedIntentDict()
+        dict.intentHandle = handle
+        dict.quote = (codableToJSValue(result.quote) as? [String: Any]) ?? [:]
+        return dict
+    }
+    #endif
 }
