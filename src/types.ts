@@ -20,7 +20,16 @@ export interface OnramperConfiguration {
   environment: OnramperEnvironment;
   theme?: OnramperTheme;
   logLevel?: OnramperLogLevel;
-  onSessionExpired: () => Promise<SessionCredentials>;
+  /**
+   * Called by the SDK when the session token expires and needs to be re-issued.
+   *
+   * v1 limitation: the native bridge currently invokes this callback synchronously
+   * (`expo-modules-core`'s `JavaScriptFunction.call()` is sync-throws). Return a
+   * `SessionCredentials` object directly. Returning a `Promise` will throw
+   * `sessionExpirationHandlerFailed`. To handle async refresh, pre-stage the
+   * credentials and have this callback return the closed-over value.
+   */
+  onSessionExpired: () => SessionCredentials | Promise<SessionCredentials>;
 }
 
 export interface WalletInfo {
