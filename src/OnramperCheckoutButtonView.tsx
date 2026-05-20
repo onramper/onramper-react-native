@@ -1,9 +1,17 @@
-// Stub — replaced by Task 15 with the actual native view binding.
+import { requireNativeViewManager } from 'expo-modules-core';
 import React from 'react';
 import type { ViewProps } from 'react-native';
+import type { OnramperErrorPayload } from './errors';
 
 export interface OnramperCheckoutButtonViewProps extends ViewProps {
   intentHandle: string;
+  onCheckoutCompleted?: (event: { nativeEvent: { checkoutId?: string } }) => void;
+  onCheckoutFailed?: (event: { nativeEvent: OnramperErrorPayload }) => void;
+  onCheckoutCancelled?: (event: { nativeEvent: Record<string, never> }) => void;
 }
 
-export const OnramperCheckoutButtonView: React.FC<OnramperCheckoutButtonViewProps> = () => null;
+const NativeView = requireNativeViewManager<OnramperCheckoutButtonViewProps>('OnramperReactNative');
+
+export const OnramperCheckoutButtonView: React.FC<OnramperCheckoutButtonViewProps> = (props) => {
+  return <NativeView {...props} />;
+};
