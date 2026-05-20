@@ -1,6 +1,6 @@
 {
   "name": "@onramper/react-native",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "description": "React Native wrapper for the Onramper iOS SDK",
   "main": "build/index.js",
   "types": "build/index.d.ts",
@@ -29,13 +29,19 @@
     "verify-version": "node scripts/verify-version.js",
     "fetch-xcframework": "node scripts/fetch-xcframework.js"
   },
-  "keywords": ["react-native", "expo", "onramper", "crypto", "onramp"],
+  "keywords": [
+    "react-native",
+    "expo",
+    "onramper",
+    "crypto",
+    "onramp"
+  ],
   "repository": "https://github.com/onramper/onramper-react-native",
   "author": "Onramper <engineering@onramper.com>",
   "license": "UNLICENSED",
   "homepage": "https://github.com/onramper/onramper-react-native#readme",
   "onramperSDK": {
-    "checksum": "PENDING_FETCH"
+    "checksum": "757972939abd3fbca8befff74741378ad5fe4eece41c128fdcf170d1ecc5d629"
   },
   "peerDependencies": {
     "expo-modules-core": ">=1.12.0",
