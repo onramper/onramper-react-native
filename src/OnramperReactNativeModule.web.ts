@@ -1,4 +1,4 @@
-import { registerWebModule, NativeModule } from 'expo';
+import { createWebModule, NativeModule } from 'expo-modules-core';
 
 import { OnramperReactNativeModuleEvents } from './OnramperReactNative.types';
 
@@ -12,4 +12,4 @@ class OnramperReactNativeModule extends NativeModule<OnramperReactNativeModuleEv
   }
 }
 
-export default registerWebModule(OnramperReactNativeModule, 'OnramperReactNativeModule');
+export default createWebModule(OnramperReactNativeModule);

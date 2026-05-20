@@ -1,4 +1,4 @@
-import { NativeModule, requireNativeModule } from 'expo';
+import { NativeModule, requireNativeModule } from 'expo-modules-core';
 
 import { OnramperReactNativeModuleEvents } from './OnramperReactNative.types';
 
