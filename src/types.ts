@@ -71,15 +71,38 @@ export interface CheckoutButtonStyle {
   borderRadius?: number;
 }
 
-export type RenderType = 'webview' | 'iframe';
-export type CheckoutPaymentType = 'card' | 'applePay' | 'bankTransfer' | 'other';
+// Mirrors Swift `RenderType` raw values from Models/SharedTypes.swift.
+export type RenderType = 'webview' | 'deeplink';
+// Mirrors Swift `CheckoutPaymentType` raw values from Models/SharedTypes.swift.
+export type CheckoutPaymentType = 'applepay' | 'revolutpay';
+
+// Checkout requirements surfaced by the BFF and bridged through JSON.
+// Shape mirrors Sources/OnramperSDK/Models/CheckoutIntentResponse.swift.
+export type CheckoutRequirement =
+  | { type: 'tos'; providerId: string; items: ToSItem[] }
+  | { type: 'amount_limit'; providerId: string; minAmountLimit?: number; maxAmountLimit?: number }
+  | { type: 'user_info'; providerId: string; fields: UserInfoField[] };
+
+export interface ToSItem {
+  type: 'tos' | 'privacy_policy' | 'user_agreement';
+  required: boolean;
+  satisfied: boolean;
+  url?: string;
+  content?: string;
+}
+
+export interface UserInfoField {
+  type: string; // backend can extend; safer to leave open
+  required: boolean;
+  // other fields omitted for v1 — extend later if needed
+}
 
 export type OnramperState =
   | { kind: 'idle' }
   | { kind: 'initializing' }
   | { kind: 'ready' }
   | { kind: 'checkoutPreparing' }
-  | { kind: 'requireLogin' }
+  | { kind: 'requireLogin'; requirements: CheckoutRequirement[] }
   | { kind: 'authenticating' }
   | { kind: 'readyToCheckout' }
   | { kind: 'finalizing' }
