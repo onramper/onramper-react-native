@@ -20,7 +20,6 @@ Pod::Spec.new do |s|
     'DEFINES_MODULE' => 'YES',
   }
 
-  s.source_files        = '**/*.{h,m,mm,swift,hpp,cpp}'
-  s.exclude_files       = 'Tests/**/*', 'Frameworks/**/*'
+  s.source_files        = '*.{h,m,mm,swift,hpp,cpp}', 'Bridging/**/*.{h,m,mm,swift,hpp,cpp}'
   s.vendored_frameworks = 'Frameworks/OnramperSDK.xcframework'
 end

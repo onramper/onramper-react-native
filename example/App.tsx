@@ -1,73 +1,55 @@
-import { useEvent } from 'expo';
-import OnramperReactNative, { OnramperReactNativeView } from 'onramper-react-native';
-import { Button, SafeAreaView, ScrollView, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { SafeAreaView, ScrollView, Text, View, TextInput, Button, StyleSheet } from 'react-native';
+import { OnramperClient } from '@onramper/react-native';
 
 export default function App() {
-  const onChangePayload = useEvent(OnramperReactNative, 'onChange');
+  const [log, setLog] = useState<string[]>([]);
+  const [apiKey, setApiKey] = useState('');
+  const [clientId, setClientId] = useState('');
+  const [sessionId, setSessionId] = useState('');
+  const [sessionToken, setSessionToken] = useState('');
+  const [client, setClient] = useState<OnramperClient | null>(null);
+
+  const append = (line: string) => setLog((l) => [...l, line]);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.container}>
-        <Text style={styles.header}>Module API Example</Text>
-        <Group name="Constants">
-          <Text>{OnramperReactNative.PI}</Text>
-        </Group>
-        <Group name="Functions">
-          <Text>{OnramperReactNative.hello()}</Text>
-        </Group>
-        <Group name="Async functions">
-          <Button
-            title="Set value"
-            onPress={async () => {
-              await OnramperReactNative.setValueAsync('Hello from JS!');
-            }}
-          />
-        </Group>
-        <Group name="Events">
-          <Text>{onChangePayload?.value}</Text>
-        </Group>
-        <Group name="Views">
-          <OnramperReactNativeView
-            url="https://www.example.com"
-            onLoad={({ nativeEvent: { url } }) => console.log(`Loaded: ${url}`)}
-            style={styles.view}
-          />
-        </Group>
+    <SafeAreaView style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.title}>Onramper RN Example</Text>
+        <TextInput placeholder="apiKey" value={apiKey} onChangeText={setApiKey} style={styles.input} />
+        <TextInput placeholder="clientId" value={clientId} onChangeText={setClientId} style={styles.input} />
+        <TextInput placeholder="sessionId" value={sessionId} onChangeText={setSessionId} style={styles.input} />
+        <TextInput placeholder="sessionToken" value={sessionToken} onChangeText={setSessionToken} style={styles.input} />
+        <Button
+          title="Configure + Initialize"
+          onPress={async () => {
+            try {
+              const c = new OnramperClient({
+                apiKey, clientId, environment: 'development',
+                onSessionExpired: async () => ({ sessionId, sessionToken }),
+              });
+              await c.initialize({ sessionId, sessionToken });
+              setClient(c);
+              append('initialized');
+            } catch (e: any) {
+              append(`init error: ${e.code} ${e.message}`);
+            }
+          }}
+        />
+        <View style={{ height: 16 }} />
+        <Text style={styles.subtitle}>Log</Text>
+        {log.map((l, i) => (
+          <Text key={i} style={styles.log}>{l}</Text>
+        ))}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function Group(props: { name: string; children: React.ReactNode }) {
-  return (
-    <View style={styles.group}>
-      <Text style={styles.groupHeader}>{props.name}</Text>
-      {props.children}
-    </View>
-  );
-}
-
-const styles = {
-  header: {
-    fontSize: 30,
-    margin: 20,
-  },
-  groupHeader: {
-    fontSize: 20,
-    marginBottom: 20,
-  },
-  group: {
-    margin: 20,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 20,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#eee',
-  },
-  view: {
-    flex: 1,
-    height: 200,
-  },
-};
+const styles = StyleSheet.create({
+  container: { padding: 16 },
+  title: { fontSize: 22, fontWeight: '600', marginBottom: 12 },
+  subtitle: { fontSize: 16, fontWeight: '500', marginTop: 16 },
+  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 8, marginBottom: 8 },
+  log: { fontFamily: 'Menlo', fontSize: 12, marginVertical: 2 },
+});

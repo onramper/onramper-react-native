@@ -1,10 +1,8 @@
 {
-  "extends": "expo/tsconfig.base",
+  "extends": "@react-native/typescript-config",
   "compilerOptions": {
-    "strict": true,
-    "paths": {
-      "onramper-react-native": ["../src/index"],
-      "onramper-react-native/*": ["../src/*"]
-    }
-  }
+    "types": ["jest"]
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["**/node_modules", "**/Pods"]
 }
