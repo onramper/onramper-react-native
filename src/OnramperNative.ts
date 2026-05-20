@@ -1,4 +1,4 @@
-import { EventEmitter, requireNativeModule, type Subscription } from 'expo-modules-core';
+import { EventEmitter, type Subscription, requireNativeModule } from 'expo-modules-core';
 
 // Mirrors the AsyncFunctions exposed by the native module in
 // `ios/OnramperReactNativeModule.swift`. Records (configure's config + button

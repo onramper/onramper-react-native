@@ -1,4 +1,5 @@
 import { requireNativeViewManager } from 'expo-modules-core';
+// biome-ignore lint/style/useImportType: React must be a value import for the classic JSX runtime
 import React from 'react';
 import type { ViewProps } from 'react-native';
 import type { OnramperErrorPayload } from './errors';

@@ -1,9 +1,9 @@
 import React from 'react';
 
-import { OnramperError } from './errors';
-import type { CheckoutEvent, EventName, EventPayload } from './events';
 import { OnramperCheckoutButtonView } from './OnramperCheckoutButtonView';
 import { OnramperEmitter, OnramperNative } from './OnramperNative';
+import { OnramperError } from './errors';
+import type { CheckoutEvent, EventName, EventPayload } from './events';
 import type {
   CheckoutButtonStyle,
   CheckoutRequest,
