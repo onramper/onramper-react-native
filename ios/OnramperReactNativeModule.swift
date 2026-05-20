@@ -47,6 +47,13 @@ public class OnramperReactNativeModule: Module {
         AsyncFunction("cancelPreparedIntent") { (intentHandle: String) async in
             await self.intentRegistry.drop(intentHandle)
         }
+
+        View(OnramperCheckoutButtonView.self) {
+            Prop("intentHandle") { (view: OnramperCheckoutButtonView, handle: String) in
+                view.bind(handle: handle, registry: self.intentRegistry)
+            }
+            Events("onCheckoutCompleted", "onCheckoutFailed", "onCheckoutCancelled")
+        }
         #endif
 
         OnDestroy {
