@@ -32,7 +32,7 @@ public class OnramperReactNativeModule: Module {
 
         AsyncFunction("reset") { () async throws in
             try await mappingOnramperError {
-                await self.requireClient().reset()
+                try await self.requireClient().reset()
             }
         }
 
@@ -70,6 +70,7 @@ public class OnramperReactNativeModule: Module {
         client = nil
     }
 
+    @MainActor
     private func configure(
         config: OnramperConfigurationDict,
         sessionExpiredJS: JavaScriptFunction<SessionCredentialsDict>
@@ -102,9 +103,9 @@ public class OnramperReactNativeModule: Module {
             }
         }
         let swiftConfig = config.toSwift(sessionExpirationHandler: swiftHandler)
-        let newClient = await MainActor.run { OnramperClient(configuration: swiftConfig) }
+        let newClient = OnramperClient(configuration: swiftConfig)
         self.client = newClient
-        await self.attachObservers(to: newClient)
+        self.attachObservers(to: newClient)
     }
 
     @MainActor
