@@ -3,8 +3,9 @@
 
 import type { OnramperErrorPayload } from './errors';
 
-export type OnramperEnvironment = 'production' | 'staging';
-export type OnramperLogLevel = 'silent' | 'info' | 'debug';
+export type OnramperEnvironment = 'development' | 'production';
+export type OnramperLogLevel = 'off' | 'error' | 'info' | 'debug';
+export type OnramperTheme = 'system' | 'light' | 'dark';
 
 export type TransactionType = 'buy' | 'sell';
 
@@ -17,38 +18,51 @@ export interface OnramperConfiguration {
   apiKey: string;
   clientId: string;
   environment: OnramperEnvironment;
+  theme?: OnramperTheme;
   logLevel?: OnramperLogLevel;
   onSessionExpired: () => Promise<SessionCredentials>;
 }
 
+export interface WalletInfo {
+  network: string;
+  address: string;
+  memo?: string;
+}
+
+// Flattened from the Swift nesting (CheckoutIntentRequest → OnramperTransactionData).
+// The bridge re-nests before handing to the SDK. ISO codes (`source`, `destination`,
+// `country`, `subdivision`) are lowercased by the SDK; pass either case.
 export interface CheckoutRequest {
-  transactionType: TransactionType;
-  sourceCurrency: string;
-  destinationCurrency: string;
+  onramp: string;
+  source: string;
+  destination?: string;
   amount: number;
-  walletAddress: string;
+  type: TransactionType;
   country?: string;
-  paymentMethod?: string;
-  partnerCustomerId?: string;
-  partnerContext?: string;
-}
-
-export interface QuoteResponse {
-  rate: number;
-  fees: { network?: number; partner?: number; total: number };
-  payout: number;
-  expiresAt: string; // ISO 8601
-  recommendations?: Recommendation[];
-}
-
-export interface Recommendation {
+  subdivision?: string;
   paymentMethod: string;
-  reason: string;
+  wallet: WalletInfo;
+  onlyOnramps?: string[];
 }
 
-export interface AmountLimit {
-  min: number;
-  max: number;
+// Mirrors Swift QuoteResponse exactly — all fields optional because the BFF
+// can return a partial quote with `errors` populated when the onramp can't
+// honor the request. Integrators must handle nulls.
+export interface QuoteResponse {
+  quoteId?: string;
+  ramp?: string;
+  rate?: number;
+  networkFee?: number;
+  transactionFee?: number;
+  payout?: number;
+  paymentMethod?: string;
+  recommendations?: string[];
+  errors?: QuoteError[];
+}
+
+export interface QuoteError {
+  type: string;
+  message: string;
 }
 
 export interface CheckoutButtonStyle {
