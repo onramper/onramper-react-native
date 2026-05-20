@@ -1,0 +1,106 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      ios-version:
+        description: 'iOS SDK release tag to bundle (e.g. 1.0.0)'
+        required: true
+      prerelease:
+        description: 'Pre-release suffix for wrapper-only patches (blank for normal release)'
+        required: false
+        default: ''
+
+jobs:
+  release:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Verify iOS release exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IOS_VERSION: ${{ github.event.inputs.ios-version }}
+        run: |
+          set -e
+          curl -fsSL -o /dev/null \
+            -H "Authorization: token $GH_TOKEN" \
+            "https://api.github.com/repos/onramper/onramper-ios/releases/tags/v${IOS_VERSION}" \
+            || { echo "No iOS release for v${IOS_VERSION}"; exit 1; }
+
+      - name: Compute target version
+        id: ver
+        env:
+          BASE: ${{ github.event.inputs.ios-version }}
+          PR: ${{ github.event.inputs.prerelease }}
+        run: |
+          if [ -z "$PR" ]; then
+            echo "version=${BASE}" >> "$GITHUB_OUTPUT"
+            echo "tag=latest" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${BASE}-${PR}" >> "$GITHUB_OUTPUT"
+            echo "tag=next" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Refuse if already published
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          if npm view "@onramper/react-native@${VERSION}" version 2>/dev/null; then
+            echo "Version ${VERSION} already on npm."; exit 1
+          fi
+
+      - name: Bump package.json
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json'));p.version=process.env.VERSION;p.onramperSDK={checksum:'PENDING_FETCH'};fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n');"
+
+      - name: Fetch xcframework + checksum
+        run: npm ci --legacy-peer-deps && npm run fetch-xcframework
+
+      - name: Verify checksum recorded
+        run: npm run verify-version
+
+      - name: Test + build
+        run: |
+          npm run lint
+          npm run typecheck
+          npx jest
+          npm run build
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit + tag
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          git add package.json
+          git commit -m "chore(release): v${VERSION}"
+          git tag "v${VERSION}"
+          git push origin master --tags
+
+      - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TAG: ${{ steps.ver.outputs.tag }}
+        run: npm publish --tag "$NPM_TAG" --access public
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.ver.outputs.version }}
+          IOS_VERSION: ${{ github.event.inputs.ios-version }}
+        run: |
+          gh release create "v${VERSION}" \
+            --title "v${VERSION}" \
+            --notes "Bundles OnramperSDK ${IOS_VERSION}."
