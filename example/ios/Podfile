@@ -47,6 +47,12 @@ target 'OnramperReactNativeExample' do
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
         config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.4'
+        # Xcode 26 defaults user-script sandboxing to YES, which blocks the
+        # RN + Expo pre-build script phases from extracting Debug-iphoneos
+        # intermediates (React-Core-prebuilt, ReactNativeDependencies,
+        # ExpoModulesJSI, etc.). Without it the device build fails with
+        # cascading "no such module 'React'" / "module map not found" errors.
+        config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
       end
 
       # Enable testability on the wrapper pod so `@testable import` works from
@@ -57,5 +63,16 @@ target 'OnramperReactNativeExample' do
         end
       end
     end
+
+    # Same setting on the user project's app + test targets — these aren't
+    # touched by the loop above (they live in the user xcodeproj, not the
+    # Pods xcodeproj).
+    user_project = installer.aggregate_targets.first&.user_project
+    user_project&.targets&.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
+      end
+    end
+    user_project&.save
   end
 end
