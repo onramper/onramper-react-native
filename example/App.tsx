@@ -11,37 +11,30 @@ import {
   View,
 } from 'react-native';
 import { OnramperClient, type OnramperState, type QuoteResponse } from '@onramper/react-native';
+import { ENV } from './env.local';
+import { createDemoSession } from './createDemoSession';
 
 type LogEntry = { level: 'info' | 'event' | 'error'; line: string };
 
-const DEFAULTS = {
-  apiKey: '',
-  clientId: '',
-  sessionId: '',
-  sessionToken: '',
-  // Test transaction defaults — adjust per partner.
+const TX_DEFAULTS = {
   onramp: 'demo',
   source: 'usd',
-  destination: 'eth',
+  destination: 'sol',
   amount: '100',
   paymentMethod: 'creditcard',
-  walletNetwork: 'ethereum',
-  walletAddress: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
+  walletNetwork: 'solana',
+  walletAddress: 'Br2jjHYskB1JJikv3Qw2QcmWVQGfZvkJFng4ZEwiGSjv',
 };
 
 export default function App() {
   const [log, setLog] = useState<LogEntry[]>([]);
-  const [apiKey, setApiKey] = useState(DEFAULTS.apiKey);
-  const [clientId, setClientId] = useState(DEFAULTS.clientId);
-  const [sessionId, setSessionId] = useState(DEFAULTS.sessionId);
-  const [sessionToken, setSessionToken] = useState(DEFAULTS.sessionToken);
-  const [onramp, setOnramp] = useState(DEFAULTS.onramp);
-  const [source, setSource] = useState(DEFAULTS.source);
-  const [destination, setDestination] = useState(DEFAULTS.destination);
-  const [amount, setAmount] = useState(DEFAULTS.amount);
-  const [paymentMethod, setPaymentMethod] = useState(DEFAULTS.paymentMethod);
-  const [walletNetwork, setWalletNetwork] = useState(DEFAULTS.walletNetwork);
-  const [walletAddress, setWalletAddress] = useState(DEFAULTS.walletAddress);
+  const [onramp, setOnramp] = useState(TX_DEFAULTS.onramp);
+  const [source, setSource] = useState(TX_DEFAULTS.source);
+  const [destination, setDestination] = useState(TX_DEFAULTS.destination);
+  const [amount, setAmount] = useState(TX_DEFAULTS.amount);
+  const [paymentMethod, setPaymentMethod] = useState(TX_DEFAULTS.paymentMethod);
+  const [walletNetwork, setWalletNetwork] = useState(TX_DEFAULTS.walletNetwork);
+  const [walletAddress, setWalletAddress] = useState(TX_DEFAULTS.walletAddress);
 
   const [client, setClient] = useState<OnramperClient | null>(null);
   const [state, setState] = useState<OnramperState>({ kind: 'idle' });
@@ -80,18 +73,21 @@ export default function App() {
       setQuote(null);
       setButton(null);
 
+      info('minting demo session…');
+      const session = await createDemoSession(ENV.demoToken);
+      info(`minted session: ${session.sessionId}`);
+
       const c = new OnramperClient({
-        apiKey,
-        clientId,
+        apiKey: ENV.apiKey,
+        clientId: ENV.clientId,
         environment: 'development',
-        // Real async — fetched on demand when the SDK calls it.
         onSessionExpired: async () => {
-          info('onSessionExpired invoked — returning current creds');
-          return { sessionId, sessionToken };
+          info('onSessionExpired invoked — refreshing');
+          return createDemoSession(ENV.demoToken);
         },
       });
       setupClient(c);
-      await c.initialize({ sessionId, sessionToken });
+      await c.initialize({ sessionId: session.sessionId, sessionToken: session.sessionToken });
       setClient(c);
       info('initialized OK');
     } catch (e: unknown) {
@@ -149,20 +145,19 @@ export default function App() {
     }
   };
 
+  const maskedKey = ENV.apiKey ? `${ENV.apiKey.slice(0, 8)}…${ENV.apiKey.slice(-4)}` : '(missing)';
+
   return (
     <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView ref={scrollRef} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
           <Text style={styles.title}>Onramper RN Example</Text>
 
-          <Text style={styles.section}>Credentials (staging)</Text>
-          <Field label="apiKey" value={apiKey} onChangeText={setApiKey} secure />
-          <Field label="clientId" value={clientId} onChangeText={setClientId} />
-          <Field label="sessionId" value={sessionId} onChangeText={setSessionId} />
-          <Field label="sessionToken" value={sessionToken} onChangeText={setSessionToken} secure />
+          <Text style={styles.section}>Credentials (from env.local.ts)</Text>
+          <Text style={styles.kv}>apiKey: {maskedKey}</Text>
+          <Text style={styles.kv}>clientId: {ENV.clientId || '(missing)'}</Text>
+          <Text style={styles.kv}>demoToken: {ENV.demoToken ? '✓ loaded' : '(missing)'}</Text>
+          <View style={{ height: 8 }} />
           <Button title="Configure + Initialize" onPress={onConfigureInitialize} />
 
           <View style={styles.divider} />
@@ -191,9 +186,7 @@ export default function App() {
               <Text style={styles.kv}>networkFee: {quote.networkFee ?? '—'}</Text>
               <Text style={styles.kv}>transactionFee: {quote.transactionFee ?? '—'}</Text>
               <Text style={styles.kv}>payout: {quote.payout ?? '—'}</Text>
-              {quote.errors?.length ? (
-                <Text style={styles.error}>errors: {JSON.stringify(quote.errors)}</Text>
-              ) : null}
+              {quote.errors?.length ? <Text style={styles.error}>errors: {JSON.stringify(quote.errors)}</Text> : null}
             </>
           )}
 
@@ -216,11 +209,7 @@ export default function App() {
             log.map((l, i) => (
               <Text
                 key={`${i}-${l.line}`}
-                style={[
-                  styles.log,
-                  l.level === 'error' && styles.error,
-                  l.level === 'event' && styles.eventLine,
-                ]}
+                style={[styles.log, l.level === 'error' && styles.error, l.level === 'event' && styles.eventLine]}
               >
                 {l.line}
               </Text>
@@ -238,14 +227,12 @@ function Field({
   onChangeText,
   compact = false,
   numeric = false,
-  secure = false,
 }: {
   label: string;
   value: string;
   onChangeText: (v: string) => void;
   compact?: boolean;
   numeric?: boolean;
-  secure?: boolean;
 }) {
   return (
     <View style={[styles.field, compact && { flex: 1 }]}>
@@ -257,7 +244,6 @@ function Field({
         autoCapitalize="none"
         autoCorrect={false}
         keyboardType={numeric ? 'decimal-pad' : 'default'}
-        secureTextEntry={secure}
       />
     </View>
   );

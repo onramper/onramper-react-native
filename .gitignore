@@ -24,6 +24,7 @@ example/android/app/build/
 example/.expo/
 example/.bundle/
 example/vendor/
+example/env.local.ts
 
 # Xcode
 *.pbxuser
