@@ -1,5 +1,5 @@
 import { OnramperClient } from '../src/OnramperClient';
-import { __mockEmitter, __mockNative } from './__mocks__/expo-modules-core';
+import { __mockEmit, __mockNative } from './__mocks__/expo-modules-core';
 
 describe('OnramperClient', () => {
   beforeEach(() => {
@@ -88,7 +88,7 @@ describe('OnramperClient', () => {
       environment: 'development',
       onSessionExpired,
     });
-    __mockEmitter.emit('onSessionExpired', { token: 'session-1' });
+    __mockEmit('onSessionExpired', { token: 'session-1' });
     // Let the async callback chain settle.
     await new Promise<void>((r) => setImmediate(() => r()));
     await new Promise<void>((r) => setImmediate(() => r()));
@@ -107,7 +107,7 @@ describe('OnramperClient', () => {
       environment: 'development',
       onSessionExpired,
     });
-    __mockEmitter.emit('onSessionExpired', { token: 'session-2' });
+    __mockEmit('onSessionExpired', { token: 'session-2' });
     await new Promise<void>((r) => setImmediate(() => r()));
     await new Promise<void>((r) => setImmediate(() => r()));
     expect(__mockNative.failSessionRefresh).toHaveBeenCalledWith('session-2', 'refresh denied');

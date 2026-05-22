@@ -1,4 +1,7 @@
-import { EventEmitter, type Subscription, requireNativeModule } from 'expo-modules-core';
+import { type EventSubscription, requireNativeModule } from 'expo-modules-core';
+
+import type { CheckoutEvent } from './events';
+import type { OnramperState } from './types';
 
 // Mirrors the AsyncFunctions exposed by the native module in
 // `ios/OnramperReactNativeModule.swift`. Records (configure's config + button
@@ -23,8 +26,16 @@ interface OnramperNativeModule {
   // JS responds with one of these two. See OnramperClient for the wiring.
   provideSessionCredentials(token: string, credentials: { sessionId: string; sessionToken: string }): Promise<void>;
   failSessionRefresh(token: string, message: string): Promise<void>;
+  // Event subscriptions are accessed via the inherited EventEmitter API; the
+  // OnramperClient class wraps these with typed listeners.
+  addListener<K extends keyof OnramperEventsMap>(name: K, listener: OnramperEventsMap[K]): EventSubscription;
 }
 
+export type OnramperEventsMap = {
+  onStateChanged: (state: OnramperState) => void;
+  onCheckoutEvent: (event: CheckoutEvent) => void;
+  onSessionExpired: (payload: { token: string }) => void;
+};
+
 export const OnramperNative = requireNativeModule<OnramperNativeModule>('OnramperReactNative');
-export const OnramperEmitter = new EventEmitter(OnramperNative as unknown as object);
-export type { Subscription };
+export type { EventSubscription };

@@ -1,4 +1,21 @@
 {
-  "name": "OnramperReactNativeExample",
-  "displayName": "OnramperReactNativeExample"
+  "expo": {
+    "name": "OnramperReactNativeExample",
+    "slug": "onramper-react-native-example",
+    "version": "1.0.0",
+    "platforms": ["ios"],
+    "ios": {
+      "bundleIdentifier": "com.onramper.demo.react-native",
+      "deploymentTarget": "16.4",
+      "entitlements": {
+        "com.apple.developer.devicecheck.appattest-environment": "development"
+      },
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": false,
+          "NSAllowsLocalNetworking": true
+        }
+      }
+    }
+  }
 }

@@ -1,3 +1,13 @@
+// Simple typed listener registry. In production the native module IS an
+// EventEmitter (Expo SDK 56+); tests substitute this lightweight equivalent.
+const listeners = new Map<string, Set<(payload: unknown) => void>>();
+
+function addListener(name: string, fn: (payload: unknown) => void) {
+  if (!listeners.has(name)) listeners.set(name, new Set());
+  listeners.get(name)?.add(fn);
+  return { remove: () => listeners.get(name)?.delete(fn) };
+}
+
 const nativeModuleSingleton = {
   configure: jest.fn().mockResolvedValue(undefined),
   initialize: jest.fn().mockResolvedValue(undefined),
@@ -6,6 +16,7 @@ const nativeModuleSingleton = {
   reset: jest.fn().mockResolvedValue(undefined),
   provideSessionCredentials: jest.fn().mockResolvedValue(undefined),
   failSessionRefresh: jest.fn().mockResolvedValue(undefined),
+  addListener,
 };
 
 export const requireNativeModule = jest.fn(() => nativeModuleSingleton);
@@ -13,19 +24,7 @@ export const __mockNative = nativeModuleSingleton;
 
 export const requireNativeViewManager = jest.fn(() => () => null);
 
-class TestEventEmitter {
-  private listeners = new Map<string, Set<(e: unknown) => void>>();
-  constructor(_target: unknown) {}
-  addListener(name: string, fn: (e: unknown) => void) {
-    if (!this.listeners.has(name)) this.listeners.set(name, new Set());
-    this.listeners.get(name)?.add(fn);
-    return { remove: () => this.listeners.get(name)?.delete(fn) };
-  }
-  emit(name: string, payload: unknown) {
-    this.listeners.get(name)?.forEach((fn) => fn(payload));
-  }
+// Helper for tests to push synthetic events through the mock listener registry.
+export function __mockEmit(name: string, payload: unknown): void {
+  listeners.get(name)?.forEach((fn) => fn(payload));
 }
-
-// Singleton emitter so tests can grab it via the exported helper.
-export const __mockEmitter = new TestEventEmitter(nativeModuleSingleton);
-export const EventEmitter = jest.fn().mockImplementation(() => __mockEmitter);

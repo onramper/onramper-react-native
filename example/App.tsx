@@ -10,9 +10,16 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import * as Application from 'expo-application';
 import { OnramperClient, type OnramperState, type QuoteResponse } from '@onramper/react-native';
 import { ENV } from './env.local';
 import { createDemoSession } from './createDemoSession';
+
+// Team ID is fixed at signing time and stored in the Xcode project's
+// DEVELOPMENT_TEAM build setting. iOS has no public runtime API to read it,
+// so we display the value configured at build time.
+const SIGNING_TEAM_ID = 'P3JUP9FF82';
+const SIGNING_TEAM_NAME = 'Onramper Technologies B.V.';
 
 type LogEntry = { level: 'info' | 'event' | 'error'; line: string };
 
@@ -21,7 +28,7 @@ const TX_DEFAULTS = {
   source: 'usd',
   destination: 'sol',
   amount: '100',
-  paymentMethod: 'creditcard',
+  paymentMethod: 'applepay',
   walletNetwork: 'solana',
   walletAddress: 'Br2jjHYskB1JJikv3Qw2QcmWVQGfZvkJFng4ZEwiGSjv',
 };
@@ -81,6 +88,7 @@ export default function App() {
         apiKey: ENV.apiKey,
         clientId: ENV.clientId,
         environment: 'development',
+        logLevel: 'debug',
         onSessionExpired: async () => {
           info('onSessionExpired invoked — refreshing');
           return createDemoSession(ENV.demoToken);
@@ -153,6 +161,12 @@ export default function App() {
         <ScrollView ref={scrollRef} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
           <Text style={styles.title}>Onramper RN Example</Text>
 
+          <Text style={styles.section}>Build info</Text>
+          <Text style={styles.kv}>bundleId: {Application.applicationId ?? '(unknown)'}</Text>
+          <Text style={styles.kv}>version: {Application.nativeApplicationVersion ?? '(unknown)'} ({Application.nativeBuildVersion ?? '(unknown)'})</Text>
+          <Text style={styles.kv}>teamId: {SIGNING_TEAM_ID} ({SIGNING_TEAM_NAME})</Text>
+
+          <View style={styles.divider} />
           <Text style={styles.section}>Credentials (from env.local.ts)</Text>
           <Text style={styles.kv}>apiKey: {maskedKey}</Text>
           <Text style={styles.kv}>clientId: {ENV.clientId || '(missing)'}</Text>
