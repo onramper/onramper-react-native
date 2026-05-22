@@ -23,6 +23,7 @@ export class OnramperClient {
   lastError: OnramperError | null = null;
 
   private stateSub: { remove: () => void } | null = null;
+  private sessionExpiredSub: { remove: () => void } | null = null;
 
   constructor(private readonly config: OnramperConfiguration) {
     this.stateSub = OnramperEmitter.addListener('onStateChanged', (s: OnramperState) => {
@@ -30,31 +31,32 @@ export class OnramperClient {
       if (s.kind === 'failed') this.lastError = OnramperError.from(s.error);
     });
 
-    // Native expects a synchronous callback (JavaScriptFunction.call() is sync-throws
-    // in expo-modules-core). We adapt to that contract by requiring
-    // `onSessionExpired` to be sync-resolvable. If the integrator returned a
-    // Promise we throw — they need to pre-stage credentials.
-    void OnramperNative.configure(
-      {
-        apiKey: config.apiKey,
-        clientId: config.clientId,
-        environment: config.environment,
-        theme: config.theme ?? 'system',
-        logLevel: config.logLevel ?? 'off',
-      },
-      (): SessionCredentials => {
-        const result = config.onSessionExpired();
-        if (result && typeof (result as Promise<SessionCredentials>).then === 'function') {
-          throw new OnramperError({
-            code: 'sessionExpirationHandlerFailed',
-            message:
-              'onSessionExpired returned a Promise but the native bridge requires a synchronous result. ' +
-              'Pre-stage credentials and return them synchronously, or implement a separate setSessionCredentials flow.',
-          });
-        }
-        return result as SessionCredentials;
-      },
-    ).catch((e: unknown) => {
+    // Native asks for fresh credentials by emitting `onSessionExpired` with a
+    // token; we resolve it via `provideSessionCredentials` (or reject with
+    // `failSessionRefresh`). This is an event-based round-trip, not a JS
+    // callback — necessary because expo-modules-core ≥ SDK 56's
+    // `JavaScriptFunction` is `~Copyable` and cannot be stored on the native
+    // side. Async callbacks Just Work here.
+    this.sessionExpiredSub = OnramperEmitter.addListener('onSessionExpired', async ({ token }: { token: string }) => {
+      try {
+        const creds = await config.onSessionExpired();
+        await OnramperNative.provideSessionCredentials(token, {
+          sessionId: creds.sessionId,
+          sessionToken: creds.sessionToken,
+        });
+      } catch (e: unknown) {
+        const err = OnramperError.from(e);
+        await OnramperNative.failSessionRefresh(token, err.message).catch(() => undefined);
+      }
+    });
+
+    void OnramperNative.configure({
+      apiKey: config.apiKey,
+      clientId: config.clientId,
+      environment: config.environment,
+      theme: config.theme ?? 'system',
+      logLevel: config.logLevel ?? 'off',
+    }).catch((e: unknown) => {
       this.lastError = OnramperError.from(e);
       // Throwing here would be unhandled; we surface via lastError + state.
     });
@@ -117,5 +119,7 @@ export class OnramperClient {
   destroy(): void {
     this.stateSub?.remove();
     this.stateSub = null;
+    this.sessionExpiredSub?.remove();
+    this.sessionExpiredSub = null;
   }
 }

@@ -7,7 +7,7 @@ require Pod::Executable.execute_command('node', ['-p',
 
 require File.join(File.dirname(`node --print "require.resolve('expo/package.json')"`), "scripts/autolinking")
 
-platform :ios, '16.0'
+platform :ios, '16.4'
 prepare_react_native_project!
 
 linkage = ENV['USE_FRAMEWORKS']
@@ -27,6 +27,13 @@ target 'OnramperReactNativeExample' do
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
+  # Make the OnramperReactNative pod (and its deps) available to the xctest
+  # bundle so `@testable import OnramperReactNative` resolves. The test target
+  # is created in Xcode UI; this inheritance hooks up linking.
+  target 'OnramperReactNativeTests' do
+    inherit! :complete
+  end
+
   post_install do |installer|
     react_native_post_install(
       installer,
@@ -34,5 +41,21 @@ target 'OnramperReactNativeExample' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # Expo SDK 56 requires iOS 16.4. Force every pod target to match so the
+    # umbrella ExpoModulesProvider stops compiling against the stale iOS 15.1.
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.4'
+      end
+
+      # Enable testability on the wrapper pod so `@testable import` works from
+      # OnramperReactNativeTests.
+      if target.name == 'OnramperReactNative'
+        target.build_configurations.each do |config|
+          config.build_settings['ENABLE_TESTABILITY'] = 'YES' if config.name == 'Debug'
+        end
+      end
+    end
   end
 end

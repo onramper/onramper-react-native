@@ -38,6 +38,17 @@
                ReferencedContainer = "container:OnramperReactNativeExample.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "095FC5A72FBF363700A6AAB6"
+               BuildableName = "OnramperReactNativeTests.xctest"
+               BlueprintName = "OnramperReactNativeTests"
+               ReferencedContainer = "container:OnramperReactNativeExample.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

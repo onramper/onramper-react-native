@@ -1,8 +1,9 @@
 PODS:
-  - EXConstants (55.0.16):
+  - EXConstants (56.0.14):
     - ExpoModulesCore
-  - Expo (55.0.25):
+  - Expo (56.0.3):
     - ExpoModulesCore
+    - ExpoModulesJSI
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -26,19 +27,19 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - ExpoAsset (55.0.17):
+  - ExpoAsset (56.0.13):
     - ExpoModulesCore
-  - ExpoDomWebView (55.0.6):
+  - ExpoDomWebView (56.0.5):
     - ExpoModulesCore
-  - ExpoFileSystem (55.0.21):
+  - ExpoFileSystem (56.0.7):
     - ExpoModulesCore
-  - ExpoFont (55.0.8):
+  - ExpoFont (56.0.5):
     - ExpoModulesCore
-  - ExpoKeepAwake (55.0.8):
+  - ExpoKeepAwake (56.0.3):
     - ExpoModulesCore
-  - ExpoLogBox (55.0.12):
+  - ExpoLogBox (56.0.12):
     - React-Core
-  - ExpoModulesCore (55.0.25):
+  - ExpoModulesCore (56.0.12):
     - ExpoModulesJSI
     - hermes-engine
     - RCTRequired
@@ -62,11 +63,12 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - ExpoModulesJSI (55.0.25):
-    - hermes-engine
+  - ExpoModulesJSI (56.0.7):
     - React-Core
-    - React-runtimescheduler
     - ReactCommon
+  - ExpoModulesWorklets (56.0.12):
+    - ExpoModulesCore
+    - ExpoModulesJSI
   - FBLazyVector (0.85.3)
   - hermes-engine (250829098.0.10):
     - hermes-engine/Pre-built (= 250829098.0.10)
@@ -1938,7 +1940,8 @@ DEPENDENCIES:
   - ExpoKeepAwake (from `../node_modules/expo-keep-awake/ios`)
   - "ExpoLogBox (from `../node_modules/@expo/log-box`)"
   - ExpoModulesCore (from `../node_modules/expo-modules-core`)
-  - ExpoModulesJSI (from `../node_modules/expo-modules-core`)
+  - ExpoModulesJSI (from `../node_modules/expo-modules-jsi/apple`)
+  - ExpoModulesWorklets (from `../node_modules/expo-modules-core`)
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - OnramperReactNative (from `../../ios`)
@@ -2037,6 +2040,8 @@ EXTERNAL SOURCES:
   ExpoModulesCore:
     :path: "../node_modules/expo-modules-core"
   ExpoModulesJSI:
+    :path: "../node_modules/expo-modules-jsi/apple"
+  ExpoModulesWorklets:
     :path: "../node_modules/expo-modules-core"
   FBLazyVector:
     :path: "../node_modules/react-native/Libraries/FBLazyVector"
@@ -2193,19 +2198,20 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
-  EXConstants: dadbeba983acc30f855a919658a2b34fbd86615d
-  Expo: 1b12e77ebf106baa8f6517c008b1809a03c3db75
-  ExpoAsset: 7721c5c4ae2a7c3c8147a046727ac6c020b05648
-  ExpoDomWebView: b2e9d601f9cb77d3c97da73234e175b64be91928
-  ExpoFileSystem: 60d1020c4533ca9d8e9ca6b98d4e719c3e8185b2
-  ExpoFont: a7e34a75bdfb703fa07a0e87807f836236608c76
-  ExpoKeepAwake: d0eb7a0719500d2a43fbf29b6f79e84d70c75ebf
-  ExpoLogBox: a678d36477ab9544fe63e0b5328a0716539b6774
-  ExpoModulesCore: ec6a3ca1f51f23b81a7e7ff6891cdd820f11b27b
-  ExpoModulesJSI: 964334271fc77832736f66ee1785761cdc778dbe
+  EXConstants: 798681483da4a577de0151dbbb94ce39a824b26e
+  Expo: 657e9438b56d04cc89ba2c882703817acd6d4e6e
+  ExpoAsset: 873ff4f99d9855e222b832c8acedb6b16e83cb2c
+  ExpoDomWebView: 27205be8754f9992913b8a9a08e65019f2207075
+  ExpoFileSystem: d730a1cb33f2c91dec01561f0d710054fda32ae9
+  ExpoFont: 6fe496f2be617ed4367f159f215dcc4ba27d37d6
+  ExpoKeepAwake: 359c47a1d9ccc3a3c519bca6e39562cce230c5bb
+  ExpoLogBox: 7aa03244fe5eeced5129e4ec7ad5bd9a3994378e
+  ExpoModulesCore: c2f4acdfd58824e00b175b7d610b492ac2c40f97
+  ExpoModulesJSI: f25a013ea9a79904bdd535e4bea0872e155cde09
+  ExpoModulesWorklets: 5349d7281651a11e0a5d14f32db8bb47e32c2ff4
   FBLazyVector: 24e62c765683b8d89006a88a2c8f5cf019f0074d
   hermes-engine: 8fc490c7fad76475c7610cd63c9a55316b6dca16
-  OnramperReactNative: 4b5046e6f2bef548da5e0719f33404bb0dc94125
+  OnramperReactNative: d6bdddd8540432d61ef485056f122c013a32d478
   RCTDeprecation: a4c521821fab57cbb125b36effe84d897d0dfa12
   RCTRequired: 9f3a7e5645d4bc3f551593de7550bb66ab6e42bc
   RCTSwiftUI: 239ed2eb9e73de5a6f518810630f0c95e01c8702
@@ -2280,6 +2286,6 @@ SPEC CHECKSUMS:
   ReactNativeDependencies: 1c3dac8b50ae7a2565ebabf8e156d8306b3dc7e8
   Yoga: 77dfa8673de2874e1855002ae59c68b8be9b007b
 
-PODFILE CHECKSUM: 36ef5d0e3466d7d20db19eb815e2e6f943d78f0e
+PODFILE CHECKSUM: 1aaa76f5ad2724a58a7241d70e9085b933844daa
 
 COCOAPODS: 1.16.2

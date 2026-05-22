@@ -1,6 +1,6 @@
 import XCTest
 import SwiftUI
-@testable import OnramperReactNative
+@testable internal import OnramperReactNative
 
 final class PreparedIntentRegistryTests: XCTestCase {
     func test_storeReturnsHandle_consumeReturnsEntry() async {

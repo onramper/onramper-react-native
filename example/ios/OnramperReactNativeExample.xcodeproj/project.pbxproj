@@ -3,33 +3,80 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 54;
+	objectVersion = 60;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		05394BD002B4D806A6119DD0 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70DBD82BCE78958F2FA506F7 /* ExpoModulesProvider.swift */; };
+		095FC5B52FBF38D900A6AAB6 /* OnramperErrorMappingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 095FC5B32FBF38D900A6AAB6 /* OnramperErrorMappingTests.swift */; };
+		095FC5B62FBF38D900A6AAB6 /* PreparedIntentRegistryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 095FC5B42FBF38D900A6AAB6 /* PreparedIntentRegistryTests.swift */; };
+		095FC5B72FC073E200A6AAB6 /* Pods-OnramperReactNativeExample.debug.xcconfig in Frameworks */ = {isa = PBXBuildFile; fileRef = 3B4392A12AC88292D35C810B /* Pods-OnramperReactNativeExample.debug.xcconfig */; };
 		0C80B921A6F3F58F76C31292 /* libPods-OnramperReactNativeExample.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DCACB8F33CDC322A6C60F78 /* libPods-OnramperReactNativeExample.a */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		1E496ADE717449494455A6D6 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88F8065E07C0969FBD92407F /* ExpoModulesProvider.swift */; };
+		4E7C8F08951E96DA5ED1BA94 /* libPods-OnramperReactNativeExample-OnramperReactNativeTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A8C89A8DF7093D36FCEF3349 /* libPods-OnramperReactNativeExample-OnramperReactNativeTests.a */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		8D0E332C73A80C0511F90F1A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		095FC5AC2FBF363700A6AAB6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 13B07F861A680F5B00A75B9A;
+			remoteInfo = OnramperReactNativeExample;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		095FC5A82FBF363700A6AAB6 /* OnramperReactNativeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OnramperReactNativeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		095FC5B12FBF36FA00A6AAB6 /* PreparedIntentRegistryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PreparedIntentRegistryTests.swift; path = ../../ios/Tests/PreparedIntentRegistryTests.swift; sourceTree = "<group>"; };
+		095FC5B22FBF36FA00A6AAB6 /* OnramperErrorMappingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OnramperErrorMappingTests.swift; path = ../../ios/Tests/OnramperErrorMappingTests.swift; sourceTree = "<group>"; };
+		095FC5B32FBF38D900A6AAB6 /* OnramperErrorMappingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OnramperErrorMappingTests.swift; path = ../../ios/Tests/OnramperErrorMappingTests.swift; sourceTree = "<group>"; };
+		095FC5B42FBF38D900A6AAB6 /* PreparedIntentRegistryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PreparedIntentRegistryTests.swift; path = ../../ios/Tests/PreparedIntentRegistryTests.swift; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* OnramperReactNativeExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OnramperReactNativeExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = OnramperReactNativeExample/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = OnramperReactNativeExample/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = OnramperReactNativeExample/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		33AAE224CF1FA84502A6772E /* Pods-OnramperReactNativeExample-OnramperReactNativeTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-OnramperReactNativeExample-OnramperReactNativeTests.release.xcconfig"; path = "Target Support Files/Pods-OnramperReactNativeExample-OnramperReactNativeTests/Pods-OnramperReactNativeExample-OnramperReactNativeTests.release.xcconfig"; sourceTree = "<group>"; };
 		3B4392A12AC88292D35C810B /* Pods-OnramperReactNativeExample.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-OnramperReactNativeExample.debug.xcconfig"; path = "Target Support Files/Pods-OnramperReactNativeExample/Pods-OnramperReactNativeExample.debug.xcconfig"; sourceTree = "<group>"; };
 		5709B34CF0A7D63546082F79 /* Pods-OnramperReactNativeExample.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-OnramperReactNativeExample.release.xcconfig"; path = "Target Support Files/Pods-OnramperReactNativeExample/Pods-OnramperReactNativeExample.release.xcconfig"; sourceTree = "<group>"; };
 		5DCACB8F33CDC322A6C60F78 /* libPods-OnramperReactNativeExample.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-OnramperReactNativeExample.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		70DBD82BCE78958F2FA506F7 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-OnramperReactNativeExample/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = OnramperReactNativeExample/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = OnramperReactNativeExample/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		88F8065E07C0969FBD92407F /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-OnramperReactNativeExample-OnramperReactNativeTests/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		A8C89A8DF7093D36FCEF3349 /* libPods-OnramperReactNativeExample-OnramperReactNativeTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-OnramperReactNativeExample-OnramperReactNativeTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		CBAB08895A7CC9B21E0AF5CA /* Pods-OnramperReactNativeExample-OnramperReactNativeTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-OnramperReactNativeExample-OnramperReactNativeTests.debug.xcconfig"; path = "Target Support Files/Pods-OnramperReactNativeExample-OnramperReactNativeTests/Pods-OnramperReactNativeExample-OnramperReactNativeTests.debug.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		095FC5A92FBF363700A6AAB6 /* OnramperReactNativeTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = OnramperReactNativeTests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
 /* Begin PBXFrameworksBuildPhase section */
+		095FC5A52FBF363700A6AAB6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				095FC5B72FC073E200A6AAB6 /* Pods-OnramperReactNativeExample.debug.xcconfig in Frameworks */,
+				4E7C8F08951E96DA5ED1BA94 /* libPods-OnramperReactNativeExample-OnramperReactNativeTests.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		13B07F8C1A680F5B00A75B9A /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -64,16 +111,28 @@
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				095FC5B22FBF36FA00A6AAB6 /* OnramperErrorMappingTests.swift */,
+				095FC5B12FBF36FA00A6AAB6 /* PreparedIntentRegistryTests.swift */,
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
 				5DCACB8F33CDC322A6C60F78 /* libPods-OnramperReactNativeExample.a */,
+				A8C89A8DF7093D36FCEF3349 /* libPods-OnramperReactNativeExample-OnramperReactNativeTests.a */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		4DE720E858254C12F21F7489 /* OnramperReactNativeTests */ = {
+			isa = PBXGroup;
+			children = (
+				88F8065E07C0969FBD92407F /* ExpoModulesProvider.swift */,
+			);
+			name = OnramperReactNativeTests;
 			sourceTree = "<group>";
 		};
 		736D79F5B243CE4308FDB4DC /* ExpoModulesProviders */ = {
 			isa = PBXGroup;
 			children = (
 				204E108A2B17F0FE20681F5C /* OnramperReactNativeExample */,
+				4DE720E858254C12F21F7489 /* OnramperReactNativeTests */,
 			);
 			name = ExpoModulesProviders;
 			sourceTree = "<group>";
@@ -88,8 +147,11 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
+				095FC5B32FBF38D900A6AAB6 /* OnramperErrorMappingTests.swift */,
+				095FC5B42FBF38D900A6AAB6 /* PreparedIntentRegistryTests.swift */,
 				13B07FAE1A68108700A75B9A /* OnramperReactNativeExample */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
+				095FC5A92FBF363700A6AAB6 /* OnramperReactNativeTests */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
@@ -104,6 +166,7 @@
 			isa = PBXGroup;
 			children = (
 				13B07F961A680F5B00A75B9A /* OnramperReactNativeExample.app */,
+				095FC5A82FBF363700A6AAB6 /* OnramperReactNativeTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -113,6 +176,8 @@
 			children = (
 				3B4392A12AC88292D35C810B /* Pods-OnramperReactNativeExample.debug.xcconfig */,
 				5709B34CF0A7D63546082F79 /* Pods-OnramperReactNativeExample.release.xcconfig */,
+				CBAB08895A7CC9B21E0AF5CA /* Pods-OnramperReactNativeExample-OnramperReactNativeTests.debug.xcconfig */,
+				33AAE224CF1FA84502A6772E /* Pods-OnramperReactNativeExample-OnramperReactNativeTests.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -120,6 +185,31 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		095FC5A72FBF363700A6AAB6 /* OnramperReactNativeTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 095FC5B02FBF363700A6AAB6 /* Build configuration list for PBXNativeTarget "OnramperReactNativeTests" */;
+			buildPhases = (
+				6143ADA17D47E005B85D5DD2 /* [CP] Check Pods Manifest.lock */,
+				2285E6D7C909B994AC50E6AC /* [Expo] Configure project */,
+				095FC5A42FBF363700A6AAB6 /* Sources */,
+				095FC5A52FBF363700A6AAB6 /* Frameworks */,
+				095FC5A62FBF363700A6AAB6 /* Resources */,
+				BE586703D3DA9D94F2FB918E /* [CP] Embed Pods Frameworks */,
+				1C8C60863985D1D11252219E /* [CP] Copy Pods Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				095FC5AD2FBF363700A6AAB6 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				095FC5A92FBF363700A6AAB6 /* OnramperReactNativeTests */,
+			);
+			name = OnramperReactNativeTests;
+			productName = OnramperReactNativeTests;
+			productReference = 095FC5A82FBF363700A6AAB6 /* OnramperReactNativeTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		13B07F861A680F5B00A75B9A /* OnramperReactNativeExample */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "OnramperReactNativeExample" */;
@@ -148,8 +238,13 @@
 		83CBB9F71A601CBA00E9B192 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				LastSwiftUpdateCheck = 2640;
 				LastUpgradeCheck = 1210;
 				TargetAttributes = {
+					095FC5A72FBF363700A6AAB6 = {
+						CreatedOnToolsVersion = 26.4;
+						TestTargetID = 13B07F861A680F5B00A75B9A;
+					};
 					13B07F861A680F5B00A75B9A = {
 						LastSwiftMigration = 1120;
 					};
@@ -169,11 +264,19 @@
 			projectRoot = "";
 			targets = (
 				13B07F861A680F5B00A75B9A /* OnramperReactNativeExample */,
+				095FC5A72FBF363700A6AAB6 /* OnramperReactNativeTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		095FC5A62FBF363700A6AAB6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		13B07F8E1A680F5B00A75B9A /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -220,6 +323,46 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-OnramperReactNativeExample/Pods-OnramperReactNativeExample-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
+		1C8C60863985D1D11252219E /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-OnramperReactNativeExample-OnramperReactNativeTests/Pods-OnramperReactNativeExample-OnramperReactNativeTests-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-OnramperReactNativeExample-OnramperReactNativeTests/Pods-OnramperReactNativeExample-OnramperReactNativeTests-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-OnramperReactNativeExample-OnramperReactNativeTests/Pods-OnramperReactNativeExample-OnramperReactNativeTests-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		2285E6D7C909B994AC50E6AC /* [Expo] Configure project */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/.xcode.env",
+				"$(SRCROOT)/.xcode.env.local",
+				"$(SRCROOT)/Pods/Target Support Files/Pods-OnramperReactNativeExample-OnramperReactNativeTests/expo-configure-project.sh",
+			);
+			name = "[Expo] Configure project";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/Pods/Target Support Files/Pods-OnramperReactNativeExample-OnramperReactNativeTests/ExpoModulesProvider.swift",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-OnramperReactNativeExample-OnramperReactNativeTests/expo-configure-project.sh\"\n";
+		};
 		38BD61A5B1A791E6055BF584 /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
@@ -242,6 +385,45 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-OnramperReactNativeExample/expo-configure-project.sh\"\n";
+		};
+		6143ADA17D47E005B85D5DD2 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-OnramperReactNativeExample-OnramperReactNativeTests-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		BE586703D3DA9D94F2FB918E /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-OnramperReactNativeExample-OnramperReactNativeTests/Pods-OnramperReactNativeExample-OnramperReactNativeTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-OnramperReactNativeExample-OnramperReactNativeTests/Pods-OnramperReactNativeExample-OnramperReactNativeTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-OnramperReactNativeExample-OnramperReactNativeTests/Pods-OnramperReactNativeExample-OnramperReactNativeTests-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
 		};
 		C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -285,6 +467,16 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		095FC5A42FBF363700A6AAB6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				095FC5B52FBF38D900A6AAB6 /* OnramperErrorMappingTests.swift in Sources */,
+				095FC5B62FBF38D900A6AAB6 /* PreparedIntentRegistryTests.swift in Sources */,
+				1E496ADE717449494455A6D6 /* ExpoModulesProvider.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		13B07F871A680F5B00A75B9A /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -296,7 +488,92 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		095FC5AD2FBF363700A6AAB6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 13B07F861A680F5B00A75B9A /* OnramperReactNativeExample */;
+			targetProxy = 095FC5AC2FBF363700A6AAB6 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		095FC5AE2FBF363700A6AAB6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = CBAB08895A7CC9B21E0AF5CA /* Pods-OnramperReactNativeExample-OnramperReactNativeTests.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = P3JUP9FF82;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.onramper.OnramperReactNativeTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/OnramperReactNativeExample.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/OnramperReactNativeExample";
+			};
+			name = Debug;
+		};
+		095FC5AF2FBF363700A6AAB6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 33AAE224CF1FA84502A6772E /* Pods-OnramperReactNativeExample-OnramperReactNativeTests.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = P3JUP9FF82;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.onramper.OnramperReactNativeTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/OnramperReactNativeExample.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/OnramperReactNativeExample";
+			};
+			name = Release;
+		};
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 3B4392A12AC88292D35C810B /* Pods-OnramperReactNativeExample.debug.xcconfig */;
@@ -306,7 +583,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = OnramperReactNativeExample/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -336,7 +613,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = OnramperReactNativeExample/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -406,7 +683,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					/usr/lib/swift,
 					"$(inherited)",
@@ -481,7 +758,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					/usr/lib/swift,
 					"$(inherited)",
@@ -516,6 +793,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		095FC5B02FBF363700A6AAB6 /* Build configuration list for PBXNativeTarget "OnramperReactNativeTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				095FC5AE2FBF363700A6AAB6 /* Debug */,
+				095FC5AF2FBF363700A6AAB6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "OnramperReactNativeExample" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

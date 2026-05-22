@@ -1,5 +1,5 @@
 import XCTest
-@testable import OnramperReactNative
+@testable internal import OnramperReactNative
 import OnramperSDK
 
 final class OnramperErrorMappingTests: XCTestCase {

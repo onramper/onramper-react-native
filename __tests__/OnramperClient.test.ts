@@ -1,30 +1,42 @@
 import { OnramperClient } from '../src/OnramperClient';
-import { __mockNative } from './__mocks__/expo-modules-core';
+import { __mockEmitter, __mockNative } from './__mocks__/expo-modules-core';
 
 describe('OnramperClient', () => {
   beforeEach(() => {
-    Object.values(__mockNative).forEach((fn: any) => fn.mockClear?.());
+    Object.values(__mockNative).forEach((fn) => {
+      if (typeof (fn as jest.Mock).mockClear === 'function') (fn as jest.Mock).mockClear();
+    });
     __mockNative.configure.mockResolvedValue(undefined);
     __mockNative.initialize.mockResolvedValue(undefined);
+    __mockNative.provideSessionCredentials.mockResolvedValue(undefined);
+    __mockNative.failSessionRefresh.mockResolvedValue(undefined);
   });
 
   it('calls configure on construction', async () => {
     const onSessionExpired = jest.fn().mockReturnValue({ sessionId: 's', sessionToken: 't' });
     new OnramperClient({
-      apiKey: 'k', clientId: 'c', environment: 'development', onSessionExpired,
+      apiKey: 'k',
+      clientId: 'c',
+      environment: 'development',
+      onSessionExpired,
     });
     await new Promise<void>((r) => setImmediate(() => r()));
     expect(__mockNative.configure).toHaveBeenCalledWith(
       expect.objectContaining({
-        apiKey: 'k', clientId: 'c', environment: 'development', theme: 'system', logLevel: 'off',
+        apiKey: 'k',
+        clientId: 'c',
+        environment: 'development',
+        theme: 'system',
+        logLevel: 'off',
       }),
-      expect.any(Function),
     );
   });
 
   it('forwards initialize to native', async () => {
     const client = new OnramperClient({
-      apiKey: 'k', clientId: 'c', environment: 'development',
+      apiKey: 'k',
+      clientId: 'c',
+      environment: 'development',
       onSessionExpired: jest.fn().mockReturnValue({ sessionId: 's', sessionToken: 't' }),
     });
     await client.initialize({ sessionId: 's', sessionToken: 't' });
@@ -37,7 +49,9 @@ describe('OnramperClient', () => {
       quote: { rate: 1, payout: 0, ramp: 'demo' },
     });
     const client = new OnramperClient({
-      apiKey: 'k', clientId: 'c', environment: 'development',
+      apiKey: 'k',
+      clientId: 'c',
+      environment: 'development',
       onSessionExpired: jest.fn().mockReturnValue({ sessionId: 's', sessionToken: 't' }),
     });
     const result = await client.getCheckoutRequirements({
@@ -56,11 +70,46 @@ describe('OnramperClient', () => {
   it('wraps native errors as OnramperError', async () => {
     __mockNative.initialize.mockRejectedValueOnce({ code: 'deviceBlocked', message: 'no' });
     const client = new OnramperClient({
-      apiKey: 'k', clientId: 'c', environment: 'development',
+      apiKey: 'k',
+      clientId: 'c',
+      environment: 'development',
       onSessionExpired: jest.fn().mockReturnValue({ sessionId: 's', sessionToken: 't' }),
     });
     await expect(client.initialize({ sessionId: 's', sessionToken: 't' })).rejects.toMatchObject({
       code: 'deviceBlocked',
     });
+  });
+
+  it('handles onSessionExpired event via async round-trip', async () => {
+    const onSessionExpired = jest.fn().mockResolvedValue({ sessionId: 'fresh-id', sessionToken: 'fresh-tok' });
+    new OnramperClient({
+      apiKey: 'k',
+      clientId: 'c',
+      environment: 'development',
+      onSessionExpired,
+    });
+    __mockEmitter.emit('onSessionExpired', { token: 'session-1' });
+    // Let the async callback chain settle.
+    await new Promise<void>((r) => setImmediate(() => r()));
+    await new Promise<void>((r) => setImmediate(() => r()));
+    expect(onSessionExpired).toHaveBeenCalled();
+    expect(__mockNative.provideSessionCredentials).toHaveBeenCalledWith('session-1', {
+      sessionId: 'fresh-id',
+      sessionToken: 'fresh-tok',
+    });
+  });
+
+  it('reports failed onSessionExpired via failSessionRefresh', async () => {
+    const onSessionExpired = jest.fn().mockRejectedValue(new Error('refresh denied'));
+    new OnramperClient({
+      apiKey: 'k',
+      clientId: 'c',
+      environment: 'development',
+      onSessionExpired,
+    });
+    __mockEmitter.emit('onSessionExpired', { token: 'session-2' });
+    await new Promise<void>((r) => setImmediate(() => r()));
+    await new Promise<void>((r) => setImmediate(() => r()));
+    expect(__mockNative.failSessionRefresh).toHaveBeenCalledWith('session-2', 'refresh denied');
   });
 });
