@@ -13,7 +13,9 @@ All notable changes to this project are documented in this file.
 - Android stub that throws `platformUnsupported`.
 
 ### Known limitations
-- `onSessionExpired` callback is invoked synchronously by the native bridge (`expo-modules-core`'s `JavaScriptFunction.call()` is sync-throws). Returning a `Promise` throws `sessionExpirationHandlerFailed`.
 - `CheckoutEvent.checkoutCancelled` case is omitted from the JS event mapping because the bundled `OnramperSDK@1.0.0` xcframework does not include it.
 - Per-view event handlers on `OnramperCheckoutButtonView` are declared but not fired by the SDK button; consumers should subscribe via `client.addEventListener(...)` instead.
-- Swift unit tests in `ios/Tests/` are not executed by CI yet — the Xcode test scheme requires a one-time manual setup in `example/ios/OnramperReactNativeExample.xcworkspace`.
+- Requires `expo-modules-core` ≥ 56 (Expo SDK 56) and iOS deployment target 16.4. Older Expo / iOS targets won't link.
+
+### Implementation notes
+- Session refresh uses an event + AsyncFunction round-trip (`onSessionExpired` → `provideSessionCredentials`) so `onSessionExpired` can be fully async. Required because expo-modules-core's `JavaScriptFunction` became `~Copyable` in SDK 56 and can't be stored as a property on the native side.

@@ -11,7 +11,7 @@ npm install @onramper/react-native expo-modules-core
 cd ios && pod install
 ```
 
-Requires React Native 0.74+ and `expo-modules-core` 1.12+. Works in bare RN and Expo dev clients (not Expo Go — the package vendors a native binary).
+Requires React Native 0.81+, `expo-modules-core` 56+, and iOS deployment target 16.4. Works in bare RN and Expo dev clients (not Expo Go — the package vendors a native binary).
 
 If your app doesn't yet use Expo Modules:
 
@@ -28,8 +28,11 @@ const client = new OnramperClient({
   apiKey: 'pk_live_...',
   clientId: '01K...',
   environment: 'production',
-  // v1: must return synchronously. Pre-stage credentials before the SDK calls this.
-  onSessionExpired: () => stagedCredentials,
+  // Fully async — fetch fresh credentials when the SDK asks.
+  onSessionExpired: async () => {
+    const r = await fetch('/api/onramper-session', { method: 'POST' });
+    return r.json();
+  },
 });
 
 await client.initialize({ sessionId, sessionToken });
@@ -100,7 +103,6 @@ The vendored `OnramperSDK.xcframework` already ships its own `PrivacyInfo.xcpriv
 
 ## Known limitations (v1)
 
-- `onSessionExpired` must return credentials **synchronously**. Returning a `Promise` throws `sessionExpirationHandlerFailed`. Pre-stage credentials before the SDK invokes the handler. (Tracking ticket: TODO add issue link after first commit.)
 - `CheckoutEvent.checkoutCancelled` is not surfaced in this release — the bundled `OnramperSDK@1.0.0` xcframework doesn't include the case. It will be available when the SDK is rebuilt with the case.
 - Native checkout outcomes flow via the module-level event stream (`client.addEventListener(...)`), not per-view event handlers. The view's `onCheckoutCompleted`/`onCheckoutFailed`/`onCheckoutCancelled` props are declared for forward-compat but only `onCheckoutFailed` fires today (for handle-binding errors).
 
