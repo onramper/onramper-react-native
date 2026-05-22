@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 60;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -36,6 +36,7 @@
 		095FC5B22FBF36FA00A6AAB6 /* OnramperErrorMappingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OnramperErrorMappingTests.swift; path = ../../ios/Tests/OnramperErrorMappingTests.swift; sourceTree = "<group>"; };
 		095FC5B32FBF38D900A6AAB6 /* OnramperErrorMappingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OnramperErrorMappingTests.swift; path = ../../ios/Tests/OnramperErrorMappingTests.swift; sourceTree = "<group>"; };
 		095FC5B42FBF38D900A6AAB6 /* PreparedIntentRegistryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PreparedIntentRegistryTests.swift; path = ../../ios/Tests/PreparedIntentRegistryTests.swift; sourceTree = "<group>"; };
+		095FC5CE2FC07EE200A6AAB6 /* OnramperReactNativeExample.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = OnramperReactNativeExample.entitlements; path = OnramperReactNativeExample/OnramperReactNativeExample.entitlements; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* OnramperReactNativeExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OnramperReactNativeExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = OnramperReactNativeExample/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = OnramperReactNativeExample/Info.plist; sourceTree = "<group>"; };
@@ -54,17 +55,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		095FC5A92FBF363700A6AAB6 /* OnramperReactNativeTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = OnramperReactNativeTests;
-			sourceTree = "<group>";
-		};
+		095FC5A92FBF363700A6AAB6 /* OnramperReactNativeTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = OnramperReactNativeTests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -91,6 +82,7 @@
 		13B07FAE1A68108700A75B9A /* OnramperReactNativeExample */ = {
 			isa = PBXGroup;
 			children = (
+				095FC5CE2FC07EE200A6AAB6 /* OnramperReactNativeExample.entitlements */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
@@ -314,9 +306,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-OnramperReactNativeExample/Pods-OnramperReactNativeExample-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-OnramperReactNativeExample/Pods-OnramperReactNativeExample-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -331,9 +327,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-OnramperReactNativeExample-OnramperReactNativeTests/Pods-OnramperReactNativeExample-OnramperReactNativeTests-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-OnramperReactNativeExample-OnramperReactNativeTests/Pods-OnramperReactNativeExample-OnramperReactNativeTests-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -416,9 +416,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-OnramperReactNativeExample-OnramperReactNativeTests/Pods-OnramperReactNativeExample-OnramperReactNativeTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-OnramperReactNativeExample-OnramperReactNativeTests/Pods-OnramperReactNativeExample-OnramperReactNativeTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -455,9 +459,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-OnramperReactNativeExample/Pods-OnramperReactNativeExample-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-OnramperReactNativeExample/Pods-OnramperReactNativeExample-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -580,7 +588,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = OnramperReactNativeExample/OnramperReactNativeExample.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = P3JUP9FF82;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = OnramperReactNativeExample/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
@@ -595,7 +605,7 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
-				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.onramper.demo.react-native";
 				PRODUCT_NAME = OnramperReactNativeExample;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -611,7 +621,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = OnramperReactNativeExample/OnramperReactNativeExample.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = P3JUP9FF82;
 				INFOPLIST_FILE = OnramperReactNativeExample/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -625,7 +637,7 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
-				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.onramper.demo.react-native";
 				PRODUCT_NAME = OnramperReactNativeExample;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_VERSION = 5.0;
