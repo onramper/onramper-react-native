@@ -53,28 +53,16 @@ Run `npx expo-doctor` and resolve any version mismatches it flags.
 
 ## 2. iOS configuration
 
-### 2.1 Podfile properties (CRITICAL)
-
-The wrapper bundles `OnramperSDK.xcframework` and depends on React's
-TurboModule registry being properly initialized under Bridgeless mode. The
-prebuilt `React.xcframework` Expo ships by default has a bug that leaves the
-TurboModule registry empty on first launch. Override it:
+### 2.1 Podfile properties
 
 `ios/Podfile.properties.json`:
 
 ```json
 {
   "expo.jsEngine": "hermes",
-  "ios.deploymentTarget": "16.4",
-  "ios.buildReactNativeFromSource": "true"
+  "ios.deploymentTarget": "16.4"
 }
 ```
-
-The `buildReactNativeFromSource: "true"` is **required**. First build will be
-slower (~5 min) because React Native compiles from source, but subsequent
-builds are cached. Without this, the app crashes at startup with
-`Invariant Violation: TurboModuleRegistry.getEnforcing('PlatformConstants')
-could not be found`.
 
 ### 2.2 Podfile post-install
 
@@ -349,14 +337,6 @@ A sample dev-only client-side session mint is in `example/createDemoSession.ts`
 
 ## 6. Known limitations & gotchas
 
-### `ios.buildReactNativeFromSource = "true"` is mandatory
-Without it, the app crashes immediately with a missing `PlatformConstants`
-TurboModule error. The prebuilt `React.xcframework` shipped by Expo SDK 56
-has incomplete C++-side module registration under Bridgeless mode. Building
-React Native from source produces a working binary. Tracked as a known issue
-in the React Native GitHub repo (see [RN #47352](https://github.com/facebook/react-native/issues/47352)
-and related).
-
 ### `CheckoutEvent.checkoutCancelled` is not surfaced
 The bundled `OnramperSDK@1.0.0` xcframework doesn't include the
 `checkoutCancelled` case. It will be re-added when the SDK is rebuilt with
@@ -416,7 +396,7 @@ After installation, you should be able to:
 npx tsc --noEmit                # types resolve
 npx expo-doctor                 # config validation
 
-# iOS build (will take ~5 min the first time due to source-built React)
+# iOS build
 cd ios && pod install
 cd .. && npx expo run:ios --device "Your iPhone"
 ```
