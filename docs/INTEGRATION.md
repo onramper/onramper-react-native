@@ -1,8 +1,28 @@
 # Integrating `@onramper/react-native`
 
 A consumer-facing guide to embedding the Onramper iOS SDK in a React Native
-app via this wrapper. Assumes you already have a React Native (or Expo) app
-and want to add Onramper crypto onramping.
+app via this wrapper.
+
+---
+
+## What kind of app can use this?
+
+The wrapper is an **Expo Module**. It needs the Expo Modules layer
+(`expo-modules-core` + the `ExpoReactNativeFactory` AppDelegate setup) to
+boot. It does **not** require Expo CLI, Expo Go, EAS, or any cloud services
+— just the native runtime layer.
+
+Three consumer scenarios, in order of effort:
+
+| You have… | What you need to do |
+|---|---|
+| **An Expo SDK 56+ app** (managed or with prebuild) | Just `npm install @onramper/react-native` + `pod install`. Skip to §3. |
+| **A bare RN app that already uses Expo Modules** (e.g. you previously ran `npx install-expo-modules`) | Same as above — skip to §3. |
+| **A pure bare RN app, no Expo Modules at all** | Add the Expo Modules layer first (§2), then install the wrapper (§3). |
+
+If you're unsure: check your `package.json`. If you see `"expo"` or
+`"expo-modules-core"` in dependencies, you're in one of the first two
+scenarios.
 
 ---
 
@@ -12,28 +32,44 @@ and want to add Onramper crypto onramping.
 |---|---|---|
 | iOS | 16.4+ | Deployment target |
 | React Native | 0.85.3 | Exact pin matching Expo SDK 56's RN |
-| Expo SDK | 56.0.3+ | Required — the wrapper is an Expo Module |
 | `expo-modules-core` | 56.0.12+ | Autolinked via the `expo` package |
 | Node | 22.11.0+ | Per Expo's engines field |
 | Xcode | 16+ (Xcode 26 tested) | New Architecture / Bridgeless mandatory in SDK 56+ |
 | Real iOS device | Required for App Attest | Simulator can launch but attestation will return `attestationFailed` |
 | Apple Developer account | Required for signing | Free or paid; need App Attest capability under your team |
 
-> **Bare React Native is not supported.** The wrapper exposes an Expo Module
-> (`OnramperReactNativeModule`). You must use the Expo toolchain (`expo start`,
-> `expo prebuild`, `babel-preset-expo`). If your project doesn't currently use
-> Expo, the easiest path is to run `npx install-expo-modules@latest` to add
-> the Expo Modules layer without committing to the full Expo workflow.
+---
+
+## 1. Install the wrapper
+
+```bash
+npm install @onramper/react-native
+cd ios && pod install
+```
+
+That's it for the wrapper itself. The native binary
+(`OnramperSDK.xcframework`) and the Expo Module autolink in. If you're in
+the **first scenario above** (already on Expo SDK 56+), you can skip to §3.
 
 ---
 
-## 1. Install
+## 2. Adding the Expo Modules layer to a bare RN app (only if needed)
+
+If your `package.json` doesn't yet have `expo-modules-core`, run:
 
 ```bash
-npm install @onramper/react-native expo expo-modules-core
+npx install-expo-modules@latest
 ```
 
-Make sure these versions are present in your `package.json`:
+This patches your `AppDelegate.swift`, `Podfile`, and `Info.plist` to enable
+Expo Modules autolinking. After it completes, re-run `npm install` +
+`pod install`.
+
+If `install-expo-modules` doesn't work for you (some setups can't auto-detect
+SDK version), hand-apply the changes documented in §3 below: the AppDelegate
+template, Podfile snippets, and babel/Metro config.
+
+Your `package.json` should end up with at least:
 
 ```json
 {
@@ -51,7 +87,11 @@ Run `npx expo-doctor` and resolve any version mismatches it flags.
 
 ---
 
-## 2. iOS configuration
+## 3. iOS configuration
+
+The rest of this section applies to **all** consumers. Already-Expo apps
+will likely have most of this in place; bare-RN-with-fresh-Expo-Modules
+consumers may need to apply some of it manually.
 
 ### 2.1 Podfile properties
 
@@ -179,7 +219,7 @@ re-run the `sed` before each `pod install`.
 
 ---
 
-## 3. Metro configuration
+## 4. Metro configuration
 
 Use Expo's Metro config (not bare RN's):
 
@@ -209,7 +249,7 @@ entry or the polyfills required for TurboModule init.)
 
 ---
 
-## 4. JavaScript usage
+## 5. JavaScript usage
 
 ```ts
 import { OnramperClient } from '@onramper/react-native';
@@ -314,7 +354,7 @@ try {
 
 ---
 
-## 5. Backend requirements
+## 6. Backend requirements
 
 The SDK calls Onramper's BFF directly. Your **backend** is responsible for:
 
@@ -335,7 +375,7 @@ A sample dev-only client-side session mint is in `example/createDemoSession.ts`
 
 ---
 
-## 6. Known limitations & gotchas
+## 7. Known limitations & gotchas
 
 ### `CheckoutEvent.checkoutCancelled` is not surfaced
 The bundled `OnramperSDK@1.0.0` xcframework doesn't include the
@@ -387,7 +427,7 @@ symlink, so only one copy resolves.
 
 ---
 
-## 7. Verifying your setup
+## 8. Verifying your setup
 
 After installation, you should be able to:
 
@@ -414,7 +454,7 @@ can't reach the BFF.
 
 ---
 
-## 8. Getting help
+## 9. Getting help
 
 - Wrapper bug? File an issue at
   [github.com/onramper/onramper-react-native](https://github.com/onramper/onramper-react-native/issues)
