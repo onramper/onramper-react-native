@@ -113,6 +113,18 @@ describe('OnramperClient', () => {
     expect(__mockNative.failSessionRefresh).toHaveBeenCalledWith('session-2', 'refresh denied');
   });
 
+  it('signOut() awaits configure then forwards to native', async () => {
+    const client = new OnramperClient({
+      apiKey: 'k',
+      clientId: 'c',
+      environment: 'development',
+      onSessionExpired: jest.fn().mockReturnValue({ sessionId: 's', sessionToken: 't' }),
+    });
+    await client.signOut();
+    expect(__mockNative.configure).toHaveBeenCalled();
+    expect(__mockNative.signOut).toHaveBeenCalledTimes(1);
+  });
+
   it('destroy() removes every listener added via addStateListener / addEventListener', () => {
     const client = new OnramperClient({
       apiKey: 'k',

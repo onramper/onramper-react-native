@@ -71,6 +71,12 @@ public class OnramperReactNativeModule: Module {
             }
         }
 
+        AsyncFunction("signOut") { () async throws in
+            try await mappingOnramperError {
+                try await self.requireClient().signOut()
+            }
+        }
+
         AsyncFunction("provideSessionCredentials") { (token: String, credentials: SessionCredentialsDict) async in
             _ = await self.sessionRequests.resolve(token: token, credentials: credentials.toSwift())
         }

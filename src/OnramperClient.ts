@@ -125,6 +125,23 @@ export class OnramperClient {
     }
   }
 
+  /**
+   * Signs the OnramperID user out by clearing stored OIDC tokens. The next
+   * checkout that requires user_info will trigger the OnramperID login sheet
+   * again. Also resets any in-flight checkout state.
+   *
+   * Does NOT clear the partner-scoped SDK session — re-calling `initialize`
+   * is only required if that session itself has expired.
+   */
+  async signOut(): Promise<void> {
+    try {
+      await this.configured;
+      await OnramperNative.signOut();
+    } catch (e: unknown) {
+      throw OnramperError.from(e);
+    }
+  }
+
   addStateListener(fn: (state: OnramperState) => void): () => void {
     return this.track(OnramperNative.addListener('onStateChanged', fn));
   }

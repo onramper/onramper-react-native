@@ -22,6 +22,7 @@ interface OnramperNativeModule {
   ): Promise<{ intentHandle: string; quote: Record<string, unknown> }>;
   cancelPreparedIntent(intentHandle: string): Promise<void>;
   reset(): Promise<void>;
+  signOut(): Promise<void>;
   // Session refresh round-trip. Native emits `onSessionExpired` with a token;
   // JS responds with one of these two. See OnramperClient for the wiring.
   provideSessionCredentials(token: string, credentials: { sessionId: string; sessionToken: string }): Promise<void>;

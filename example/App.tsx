@@ -160,6 +160,19 @@ export default function App() {
     }
   };
 
+  const onSignOut = async () => {
+    if (!client) return;
+    try {
+      await client.signOut();
+      setQuote(null);
+      setButton(null);
+      info('signed out — OIDC tokens cleared, next checkout will re-present login');
+    } catch (e: unknown) {
+      const err = e as { code?: string; message?: string };
+      fail(`signOut error: ${err.code ?? 'unknown'} — ${err.message ?? String(e)}`);
+    }
+  };
+
   const maskedKey = ENV.apiKey ? `${ENV.apiKey.slice(0, 8)}…${ENV.apiKey.slice(-4)}` : '(missing)';
 
   return (
@@ -197,6 +210,8 @@ export default function App() {
           <Button title="Get checkout requirements" onPress={onGetRequirements} disabled={!client} />
           <View style={{ height: 8 }} />
           <Button title="Reset SDK" onPress={onReset} disabled={!client} color="#888" />
+          <View style={{ height: 8 }} />
+          <Button title="Sign out (clear OIDC)" onPress={onSignOut} disabled={!client} color="#CC0000" />
 
           {quote && (
             <>

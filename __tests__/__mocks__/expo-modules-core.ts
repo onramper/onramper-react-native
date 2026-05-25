@@ -14,6 +14,7 @@ const nativeModuleSingleton = {
   getCheckoutRequirements: jest.fn(),
   cancelPreparedIntent: jest.fn().mockResolvedValue(undefined),
   reset: jest.fn().mockResolvedValue(undefined),
+  signOut: jest.fn().mockResolvedValue(undefined),
   provideSessionCredentials: jest.fn().mockResolvedValue(undefined),
   failSessionRefresh: jest.fn().mockResolvedValue(undefined),
   addListener,
