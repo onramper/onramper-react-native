@@ -24,6 +24,8 @@ extension CheckoutEvent {
             var info: [String: Any] = ["code": err.jsCode, "message": err.errorDescription ?? ""]
             if let extra = err.jsInfo { info["info"] = extra }
             return ["type": "failed", "error": info]
+        case .checkoutCancelled:
+            return ["type": "cancelled"]
         }
     }
 }

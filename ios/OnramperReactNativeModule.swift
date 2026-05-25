@@ -121,10 +121,11 @@ public class OnramperReactNativeModule: Module {
                 && existing.configuration.clientId == config.clientId {
                 return
             }
-            throw NSError(domain: "OnramperReactNative", code: 0, userInfo: [
-                "code": "clientAlreadyConfigured",
-                "message": "OnramperClient already configured with different apiKey/clientId",
-            ])
+            throw Exception(
+                name: "OnramperError",
+                description: "OnramperClient already configured with different apiKey/clientId",
+                code: "clientAlreadyConfigured"
+            )
         }
 
         let swiftHandler: @Sendable () async throws -> SessionCredentials = { [weak self] in
@@ -167,10 +168,11 @@ public class OnramperReactNativeModule: Module {
 
     private func requireClient() throws -> OnramperClient {
         guard let client = self.client else {
-            throw NSError(domain: "OnramperReactNative", code: 0, userInfo: [
-                "code": "notInitialized",
-                "message": "configure() must be called before this method",
-            ])
+            throw Exception(
+                name: "OnramperError",
+                description: "configure() must be called before this method",
+                code: "notInitialized"
+            )
         }
         return client
     }

@@ -59,8 +59,24 @@ export class OnramperError extends Error implements OnramperErrorPayload {
         info?: Record<string, unknown>;
       };
       const code = (v.code ?? 'unrecoverable') as OnramperErrorCode;
-      const message = v.message ?? 'Unknown error';
-      const info = v.info ?? v.userInfo;
+      const rawMessage = v.message ?? 'Unknown error';
+
+      // The native bridge folds structured detail into the message as
+      // `... [info: {<json>}]` (Expo SDK 56 JavaScriptThrowable only bridges
+      // `message` + `code`, not NSError.userInfo). Recover it here so
+      // consumers can read `err.info.debugInfo` etc. without parsing.
+      let info = v.info ?? v.userInfo;
+      let message = rawMessage;
+      const infoMatch = rawMessage.match(/^(.*) \[info: (\{.*\})\]$/s);
+      if (infoMatch) {
+        message = infoMatch[1] ?? rawMessage;
+        try {
+          info = JSON.parse(infoMatch[2] ?? '{}');
+        } catch {
+          // Fall through with the original message if the suffix isn't valid JSON.
+        }
+      }
+
       return new OnramperError({ code, message, info });
     }
     return new OnramperError({ code: 'unrecoverable', message: String(value) });

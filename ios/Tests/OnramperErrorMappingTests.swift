@@ -33,22 +33,19 @@ final class OnramperErrorMappingTests: XCTestCase {
         ]
 
         for (error, expectedCode) in cases {
-            let nsError = error.toNSError()
-            XCTAssertEqual(nsError.userInfo["code"] as? String, expectedCode, "case: \(error)")
-            XCTAssertNotNil(nsError.userInfo["message"], "case: \(error)")
+            XCTAssertEqual(error.jsCode, expectedCode, "case: \(error)")
+            XCTAssertFalse(error.toJSMessage().isEmpty, "case: \(error)")
         }
     }
 
-    func test_amountOutOfRange_carriesMinMaxInInfo() {
-        let nsError = OnramperError.amountOutOfRange(min: 5, max: 50).toNSError()
-        let info = nsError.userInfo["info"] as? [String: Double]
-        XCTAssertEqual(info?["min"], 5)
-        XCTAssertEqual(info?["max"], 50)
+    func test_amountOutOfRange_carriesMinMaxInMessage() {
+        let msg = OnramperError.amountOutOfRange(min: 5, max: 50).toJSMessage()
+        XCTAssertTrue(msg.contains("\"min\":5"), "got: \(msg)")
+        XCTAssertTrue(msg.contains("\"max\":50"), "got: \(msg)")
     }
 
-    func test_networkError_carriesStatusInInfo() {
-        let nsError = OnramperError.networkError(code: 503, message: "x").toNSError()
-        let info = nsError.userInfo["info"] as? [String: Any]
-        XCTAssertEqual(info?["status"] as? Int, 503)
+    func test_networkError_carriesStatusInMessage() {
+        let msg = OnramperError.networkError(code: 503, message: "x").toJSMessage()
+        XCTAssertTrue(msg.contains("\"status\":503"), "got: \(msg)")
     }
 }

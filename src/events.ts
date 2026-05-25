@@ -12,7 +12,8 @@ export type CheckoutEvent =
   | { type: 'checkoutFinalized'; response: unknown }
   | { type: 'renderingStarted'; url: string; renderType: RenderType }
   | { type: 'completed'; checkoutId: string }
-  | { type: 'failed'; error: OnramperErrorPayload };
+  | { type: 'failed'; error: OnramperErrorPayload }
+  | { type: 'cancelled' };
 
 export type EventName = CheckoutEvent['type'];
 export type EventPayload<K extends EventName> = Extract<CheckoutEvent, { type: K }>;

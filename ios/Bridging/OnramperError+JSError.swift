@@ -1,3 +1,4 @@
+import ExpoModulesCore
 import Foundation
 import OnramperSDK
 
@@ -63,14 +64,22 @@ extension OnramperError {
         }
     }
 
-    func toNSError() -> NSError {
-        var userInfo: [String: Any] = [
-            "code": jsCode,
-            "message": self.errorDescription ?? "Unknown error",
-            NSLocalizedDescriptionKey: self.errorDescription ?? "Unknown error",
-        ]
-        if let info = jsInfo { userInfo["info"] = info }
-        return NSError(domain: "OnramperReactNative", code: 0, userInfo: userInfo)
+    /// Build the JS-facing message: the SDK's human-readable
+    /// `errorDescription` plus a `[info: <json>]` suffix when there's
+    /// structured detail (debugInfo, status code, min/max, etc.).
+    ///
+    /// Expo Modules SDK 56's `JavaScriptThrowable` only bridges `message` and
+    /// `code` to JS — raw `NSError.userInfo` entries are dropped. Folding
+    /// the detail into the message text is the supported way to carry it
+    /// across without losing it.
+    func toJSMessage() -> String {
+        let base = self.errorDescription ?? "Unknown error"
+        guard let info = jsInfo, !info.isEmpty,
+              let data = try? JSONSerialization.data(withJSONObject: info),
+              let json = String(data: data, encoding: .utf8) else {
+            return base
+        }
+        return "\(base) [info: \(json)]"
     }
 }
 
@@ -78,6 +87,10 @@ func mappingOnramperError<T>(_ block: () async throws -> T) async throws -> T {
     do {
         return try await block()
     } catch let e as OnramperError {
-        throw e.toNSError()
+        // Expo's bridge preserves Exception.code as JS `err.code` and
+        // Exception.description as JS `err.message`. NSError userInfo is
+        // dropped, so we fold any structured info into the message text via
+        // toJSMessage() and recover it on the JS side.
+        throw Exception(name: "OnramperError", description: e.toJSMessage(), code: e.jsCode)
     }
 }

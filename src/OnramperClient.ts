@@ -22,14 +22,26 @@ export class OnramperClient {
   state: OnramperState = { kind: 'idle' };
   lastError: OnramperError | null = null;
 
-  private stateSub: EventSubscription | null = null;
-  private sessionExpiredSub: EventSubscription | null = null;
+  // Every listener attached to the global OnramperNative emitter — both the
+  // two internal ones (state mirror + session refresh) and any added by the
+  // host app via addStateListener / addEventListener. destroy() removes them
+  // all so re-constructing the client doesn't leave stale handlers firing.
+  private subs: EventSubscription[] = [];
+
+  // Resolved when the constructor-issued configure() round-trip completes.
+  // All public methods that need the native client (initialize / reset /
+  // getCheckoutRequirements) must await this first — otherwise the native
+  // side throws `notInitialized` because configure() hasn't yet set the
+  // client field.
+  private readonly configured: Promise<void>;
 
   constructor(private readonly config: OnramperConfiguration) {
-    this.stateSub = OnramperNative.addListener('onStateChanged', (s: OnramperState) => {
-      this.state = s;
-      if (s.kind === 'failed') this.lastError = OnramperError.from(s.error);
-    });
+    this.subs.push(
+      OnramperNative.addListener('onStateChanged', (s: OnramperState) => {
+        this.state = s;
+        if (s.kind === 'failed') this.lastError = OnramperError.from(s.error);
+      }),
+    );
 
     // Native asks for fresh credentials by emitting `onSessionExpired` with a
     // token; we resolve it via `provideSessionCredentials` (or reject with
@@ -37,33 +49,40 @@ export class OnramperClient {
     // callback — necessary because expo-modules-core ≥ SDK 56's
     // `JavaScriptFunction` is `~Copyable` and cannot be stored on the native
     // side. Async callbacks Just Work here.
-    this.sessionExpiredSub = OnramperNative.addListener('onSessionExpired', async ({ token }) => {
-      try {
-        const creds = await config.onSessionExpired();
-        await OnramperNative.provideSessionCredentials(token, {
-          sessionId: creds.sessionId,
-          sessionToken: creds.sessionToken,
-        });
-      } catch (e: unknown) {
-        const err = OnramperError.from(e);
-        await OnramperNative.failSessionRefresh(token, err.message).catch(() => undefined);
-      }
-    });
+    this.subs.push(
+      OnramperNative.addListener('onSessionExpired', async ({ token }) => {
+        try {
+          const creds = await config.onSessionExpired();
+          await OnramperNative.provideSessionCredentials(token, {
+            sessionId: creds.sessionId,
+            sessionToken: creds.sessionToken,
+          });
+        } catch (e: unknown) {
+          const err = OnramperError.from(e);
+          await OnramperNative.failSessionRefresh(token, err.message).catch(() => undefined);
+        }
+      }),
+    );
 
-    void OnramperNative.configure({
+    this.configured = OnramperNative.configure({
       apiKey: config.apiKey,
       clientId: config.clientId,
       environment: config.environment,
       theme: config.theme ?? 'system',
       logLevel: config.logLevel ?? 'off',
     }).catch((e: unknown) => {
-      this.lastError = OnramperError.from(e);
-      // Throwing here would be unhandled; we surface via lastError + state.
+      const err = OnramperError.from(e);
+      this.lastError = err;
+      throw err;
     });
+    // Swallow the unhandled-rejection warning when no one awaits .configured
+    // before calling initialize(). The error still surfaces via initialize().
+    this.configured.catch(() => undefined);
   }
 
   async initialize(creds: SessionCredentials): Promise<void> {
     try {
+      await this.configured;
       await OnramperNative.initialize(creds.sessionId, creds.sessionToken);
     } catch (e: unknown) {
       throw OnramperError.from(e);
@@ -75,6 +94,7 @@ export class OnramperClient {
     buttonStyle: CheckoutButtonStyle = {},
   ): Promise<GetCheckoutRequirementsResult> {
     try {
+      await this.configured;
       const result = await OnramperNative.getCheckoutRequirements(
         request as unknown as Record<string, unknown>,
         buttonStyle as unknown as Record<string, unknown>,
@@ -98,6 +118,7 @@ export class OnramperClient {
 
   async reset(): Promise<void> {
     try {
+      await this.configured;
       await OnramperNative.reset();
     } catch (e: unknown) {
       throw OnramperError.from(e);
@@ -105,21 +126,30 @@ export class OnramperClient {
   }
 
   addStateListener(fn: (state: OnramperState) => void): () => void {
-    const sub = OnramperNative.addListener('onStateChanged', fn);
-    return () => sub.remove();
+    return this.track(OnramperNative.addListener('onStateChanged', fn));
   }
 
   addEventListener<K extends EventName>(name: K, fn: (e: EventPayload<K>) => void): () => void {
-    const sub = OnramperNative.addListener('onCheckoutEvent', (e: CheckoutEvent) => {
-      if (e.type === name) fn(e as EventPayload<K>);
-    });
-    return () => sub.remove();
+    return this.track(
+      OnramperNative.addListener('onCheckoutEvent', (e: CheckoutEvent) => {
+        if (e.type === name) fn(e as EventPayload<K>);
+      }),
+    );
   }
 
   destroy(): void {
-    this.stateSub?.remove();
-    this.stateSub = null;
-    this.sessionExpiredSub?.remove();
-    this.sessionExpiredSub = null;
+    for (const sub of this.subs) sub.remove();
+    this.subs = [];
+  }
+
+  /** Add `sub` to the per-client registry and return an unsubscribe that
+   *  also removes it from the registry — so caller-side cleanup and
+   *  destroy()-driven cleanup don't double-fire. */
+  private track(sub: EventSubscription): () => void {
+    this.subs.push(sub);
+    return () => {
+      sub.remove();
+      this.subs = this.subs.filter((s) => s !== sub);
+    };
   }
 }

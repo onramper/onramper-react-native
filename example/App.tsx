@@ -74,17 +74,19 @@ export default function App() {
   };
 
   const onConfigureInitialize = async () => {
-    try {
-      // Destroy any prior client so the bridge state is clean for re-runs.
-      client?.destroy();
-      setQuote(null);
-      setButton(null);
+    // Destroy any prior client so its listeners come off the native emitter
+    // before we create a new one. Otherwise every retry doubles the handlers.
+    client?.destroy();
+    setQuote(null);
+    setButton(null);
 
+    let inflight: OnramperClient | null = null;
+    try {
       info('minting demo session…');
       const session = await createDemoSession(ENV.demoToken);
       info(`minted session: ${session.sessionId}`);
 
-      const c = new OnramperClient({
+      inflight = new OnramperClient({
         apiKey: ENV.apiKey,
         clientId: ENV.clientId,
         environment: 'development',
@@ -94,13 +96,18 @@ export default function App() {
           return createDemoSession(ENV.demoToken);
         },
       });
-      setupClient(c);
-      await c.initialize({ sessionId: session.sessionId, sessionToken: session.sessionToken });
-      setClient(c);
+      setupClient(inflight);
+      await inflight.initialize({ sessionId: session.sessionId, sessionToken: session.sessionToken });
+      setClient(inflight);
       info('initialized OK');
     } catch (e: unknown) {
-      const err = e as { code?: string; message?: string };
+      // Tear down the half-initialized client so its listeners don't leak.
+      inflight?.destroy();
+      const err = e as { code?: string; message?: string; info?: Record<string, unknown> };
       fail(`init error: ${err.code ?? 'unknown'} — ${err.message ?? String(e)}`);
+      if (err.info && Object.keys(err.info).length > 0) {
+        fail(`  info: ${JSON.stringify(err.info)}`);
+      }
     }
   };
 
