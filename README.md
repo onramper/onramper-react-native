@@ -38,7 +38,6 @@ const client = new OnramperClient({
 await client.initialize({ sessionId, sessionToken });
 
 const { button, quote } = await client.getCheckoutRequirements({
-  onramp: 'moonpay',
   source: 'usd',
   destination: 'eth',
   amount: 100,

@@ -41,7 +41,6 @@ export interface WalletInfo {
 // The bridge re-nests before handing to the SDK. ISO codes (`source`, `destination`,
 // `country`, `subdivision`) are lowercased by the SDK; pass either case.
 export interface CheckoutRequest {
-  onramp: string;
   source: string;
   destination?: string;
   amount: number;

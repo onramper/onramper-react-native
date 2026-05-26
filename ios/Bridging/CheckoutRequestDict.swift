@@ -12,7 +12,6 @@ struct WalletInfoDict: Record {
 }
 
 struct CheckoutRequestDict: Record {
-    @Field var onramp: String = ""
     @Field var source: String = ""
     @Field var destination: String? = nil
     @Field var amount: Double = 0
@@ -25,7 +24,6 @@ struct CheckoutRequestDict: Record {
 
     func toSwift() -> CheckoutIntentRequest {
         let txData = OnramperTransactionData(
-            onramp: onramp,
             source: source,
             destination: destination,
             amount: amount,

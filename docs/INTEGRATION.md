@@ -314,7 +314,6 @@ If your backend is unreachable when the SDK calls `onSessionExpired`, throw or r
 ```ts
 const { button, quote } = await client.getCheckoutRequirements(
   {
-    onramp: 'moonpay',
     source: 'usd',
     destination: 'sol',
     amount: 100,

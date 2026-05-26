@@ -55,7 +55,6 @@ describe('OnramperClient', () => {
       onSessionExpired: jest.fn().mockReturnValue({ sessionId: 's', sessionToken: 't' }),
     });
     const result = await client.getCheckoutRequirements({
-      onramp: 'demo',
       source: 'usd',
       destination: 'eth',
       amount: 100,

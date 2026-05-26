@@ -40,7 +40,7 @@
   "license": "UNLICENSED",
   "homepage": "https://github.com/onramper/onramper-react-native#readme",
   "onramperSDK": {
-    "checksum": "757972939abd3fbca8befff74741378ad5fe4eece41c128fdcf170d1ecc5d629"
+    "checksum": "4ea47e79e0b678d334c4b443947deb92693d165e9d67c42a09430f22a0902369"
   },
   "peerDependencies": {
     "expo-modules-core": ">=56.0.0",

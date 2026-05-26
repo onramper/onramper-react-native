@@ -18,7 +18,6 @@ import { createDemoSession } from './createDemoSession';
 type LogEntry = { level: 'info' | 'event' | 'error'; line: string };
 
 const TX_DEFAULTS = {
-  onramp: 'demo',
   source: 'usd',
   destination: 'sol',
   amount: '100',
@@ -29,7 +28,6 @@ const TX_DEFAULTS = {
 
 export default function App() {
   const [log, setLog] = useState<LogEntry[]>([]);
-  const [onramp, setOnramp] = useState(TX_DEFAULTS.onramp);
   const [source, setSource] = useState(TX_DEFAULTS.source);
   const [destination, setDestination] = useState(TX_DEFAULTS.destination);
   const [amount, setAmount] = useState(TX_DEFAULTS.amount);
@@ -118,7 +116,6 @@ export default function App() {
       }
       const result = await client.getCheckoutRequirements(
         {
-          onramp,
           source,
           destination,
           amount: parsed,
@@ -190,8 +187,7 @@ export default function App() {
           <View style={styles.divider} />
           <Text style={styles.section}>Transaction</Text>
           <Row>
-            <Field label="onramp" value={onramp} onChangeText={setOnramp} compact />
-            <Field label="payment" value={paymentMethod} onChangeText={setPaymentMethod} compact />
+            <Field label="payment" value={paymentMethod} onChangeText={setPaymentMethod} />
           </Row>
           <Row>
             <Field label="source" value={source} onChangeText={setSource} compact />
