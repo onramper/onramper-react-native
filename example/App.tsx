@@ -15,12 +15,6 @@ import { OnramperClient, type OnramperState, type QuoteResponse } from '@onrampe
 import { ENV } from './env.local';
 import { createDemoSession } from './createDemoSession';
 
-// Team ID is fixed at signing time and stored in the Xcode project's
-// DEVELOPMENT_TEAM build setting. iOS has no public runtime API to read it,
-// so we display the value configured at build time.
-const SIGNING_TEAM_ID = 'P3JUP9FF82';
-const SIGNING_TEAM_NAME = 'Onramper Technologies B.V.';
-
 type LogEntry = { level: 'info' | 'event' | 'error'; line: string };
 
 const TX_DEFAULTS = {
@@ -184,7 +178,6 @@ export default function App() {
           <Text style={styles.section}>Build info</Text>
           <Text style={styles.kv}>bundleId: {Application.applicationId ?? '(unknown)'}</Text>
           <Text style={styles.kv}>version: {Application.nativeApplicationVersion ?? '(unknown)'} ({Application.nativeBuildVersion ?? '(unknown)'})</Text>
-          <Text style={styles.kv}>teamId: {SIGNING_TEAM_ID} ({SIGNING_TEAM_NAME})</Text>
 
           <View style={styles.divider} />
           <Text style={styles.section}>Credentials (from env.local.ts)</Text>
