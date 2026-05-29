@@ -6,6 +6,15 @@ require Pod::Executable.execute_command('node', ['-p',
   )', __dir__]).strip
 
 platform :ios, '16.4'
+
+# RN 0.81+ ships a precompiled React Native Core (React-Core-prebuilt) by
+# default. Its distribution does not expose module maps for Swift the way a
+# source build does, so Swift code that imports React — the stock
+# AppDelegate.swift AND our Nitro pod's generated specs — fails with
+# "No such module 'React'" / missing module map. Building RN core from source
+# fixes it. (Slower build, but reliable for this spike/example app.)
+ENV['RCT_USE_PREBUILT_RNCORE'] = '0'
+
 prepare_react_native_project!
 
 linkage = ENV['USE_FRAMEWORKS']
