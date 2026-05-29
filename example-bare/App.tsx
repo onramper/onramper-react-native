@@ -34,6 +34,11 @@ function App() {
 
 function AppContent() {
   const insets = useSafeAreaInsets();
+  const isDark = useColorScheme() === 'dark';
+  const fg = isDark ? '#FFFFFF' : '#111111';
+  const muted = isDark ? '#9A9A9A' : '#777777';
+  const bg = isDark ? '#000000' : '#FFFFFF';
+
   const [log, setLog] = useState<string[]>([]);
   const append = (line: string) => setLog((l) => [...l, line]);
 
@@ -74,8 +79,8 @@ function AppContent() {
   };
 
   return (
-    <ScrollView contentContainerStyle={[styles.container, { paddingTop: insets.top }]}>
-      <Text style={styles.title}>Nitro spike</Text>
+    <ScrollView style={{ backgroundColor: bg }} contentContainerStyle={[styles.container, { paddingTop: insets.top }]}>
+      <Text style={[styles.title, { color: fg }]}>Nitro spike</Text>
 
       <Button title="#1 Nitro ping" onPress={onPing} />
       <View style={styles.gap} />
@@ -85,15 +90,15 @@ function AppContent() {
       <View style={styles.gap} />
       <Button title="#4 Stop ticker" onPress={onStopTicker} color="#888" />
 
-      <Text style={styles.section}>#3 SwiftUI Nitro View:</Text>
+      <Text style={[styles.section, { color: fg }]}>#3 SwiftUI Nitro View:</Text>
       <SpikeView label="hello from SwiftUI" style={styles.spikeView} />
 
-      <Text style={styles.section}>Log:</Text>
+      <Text style={[styles.section, { color: fg }]}>Log:</Text>
       {log.length === 0 ? (
-        <Text style={styles.muted}>(empty)</Text>
+        <Text style={[styles.muted, { color: muted }]}>(empty — tap the buttons)</Text>
       ) : (
         log.map((l, i) => (
-          <Text key={`${i}-${l}`} style={styles.log}>
+          <Text key={`${i}-${l}`} style={[styles.logLine, { color: fg }]}>
             {l}
           </Text>
         ))
@@ -103,13 +108,13 @@ function AppContent() {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, paddingBottom: 48 },
+  container: { padding: 16, paddingBottom: 48, flexGrow: 1 },
   title: { fontSize: 22, fontWeight: '700', marginBottom: 16 },
   gap: { height: 8 },
   section: { fontSize: 14, fontWeight: '600', marginTop: 20, marginBottom: 8 },
   spikeView: { height: 60, width: '100%', borderWidth: 1, borderColor: '#CCC', borderRadius: 8 },
-  log: { fontFamily: 'Menlo', fontSize: 12, marginVertical: 1 },
-  muted: { color: '#999', fontStyle: 'italic' },
+  logLine: { fontFamily: 'Menlo', fontSize: 12, marginVertical: 1 },
+  muted: { fontStyle: 'italic' },
 });
 
 export default App;
