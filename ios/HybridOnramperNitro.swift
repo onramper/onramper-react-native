@@ -2,6 +2,7 @@ import Combine
 import Foundation
 import NitroModules
 import OnramperSDK
+import SwiftUI
 
 /// Nitro bridge to OnramperSDK's `OnramperClient`. Wraps the @MainActor SDK
 /// client, mirrors its `@Published state` and `events` stream to stored JS
@@ -129,6 +130,37 @@ final class HybridOnramperNitro: HybridOnramperNitroSpec {
       guard let self else { return }
       let client = try await self.requireClient()
       await client.signOut()
+    }
+  }
+
+  // MARK: - Checkout
+
+  func getCheckoutRequirements(requestJson: String, styleJson: String) throws -> Promise<PreparedIntentResult> {
+    return Promise.async { [weak self] in
+      guard let self else { throw OnramperError.notInitialized }
+      return try await self.performGetCheckoutRequirements(requestJson: requestJson, styleJson: styleJson)
+    }
+  }
+
+  @MainActor
+  private func performGetCheckoutRequirements(requestJson: String, styleJson: String) async throws -> PreparedIntentResult {
+    let client = try requireClient()
+    let request = try decodeCheckoutRequest(requestJson)
+    let style = decodeCheckoutButtonStyle(styleJson)
+
+    // Single-flight: a new prepared intent supersedes any prior unconsumed one.
+    await PreparedIntentRegistry.shared.invalidateAll()
+
+    let result = try await client.getCheckoutRequirements(request, buttonStyle: style)
+    let entry = PreparedIntentRegistry.PreparedIntent(button: AnyView(result.button), createdAt: Date())
+    let handle = await PreparedIntentRegistry.shared.store(entry)
+    let quoteDict = (codableToJSValue(result.quote) as? [String: Any]) ?? [:]
+    return PreparedIntentResult(intentHandle: handle, quoteJson: jsonString(quoteDict))
+  }
+
+  func cancelPreparedIntent(intentHandle: String) throws -> Promise<Void> {
+    return Promise.async {
+      await PreparedIntentRegistry.shared.drop(intentHandle)
     }
   }
 

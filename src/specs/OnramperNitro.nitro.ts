@@ -17,6 +17,13 @@ export interface NitroSessionCredentials {
   sessionToken: string;
 }
 
+// Result of getCheckoutRequirements: a handle the OnramperCheckoutButton view
+// renders by, plus the quote (JSON-encoded QuoteResponse, parsed in JS).
+export interface PreparedIntentResult {
+  intentHandle: string;
+  quoteJson: string;
+}
+
 /**
  * Native bridge to OnramperSDK's `OnramperClient`. The public, typed JS API
  * (`OnramperClient`) wraps this.
@@ -31,6 +38,13 @@ export interface OnramperNitro extends HybridObject<{ ios: 'swift' }> {
   initialize(sessionId: string, sessionToken: string): Promise<void>;
   reset(): Promise<void>;
   signOut(): Promise<void>;
+
+  // Fetches checkout requirements + quote, stores the SDK's SwiftUI checkout
+  // button under a handle, and returns the handle + JSON-encoded quote. The
+  // OnramperCheckoutButton Nitro view renders the stored button by handle.
+  // `requestJson` is a JSON CheckoutRequest; `styleJson` a JSON CheckoutButtonStyle.
+  getCheckoutRequirements(requestJson: string, styleJson: string): Promise<PreparedIntentResult>;
+  cancelPreparedIntent(intentHandle: string): Promise<void>;
 
   // Single native callback per stream; the JS wrapper fans out to multiple listeners.
   setStateListener(onState: (stateJson: string) => void): void;

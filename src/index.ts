@@ -1,8 +1,9 @@
 // Public API re-exports.
 
 export { OnramperClient } from './OnramperClient';
-// NOTE: getCheckoutRequirements() and the native checkout button view return in
-// Phase 2 (as a Nitro view). Their exports are intentionally omitted for now.
+export type { GetCheckoutRequirementsResult } from './OnramperClient';
+export { OnramperCheckoutButtonView } from './OnramperCheckoutButtonView';
+export type { OnramperCheckoutButtonViewProps } from './OnramperCheckoutButtonView';
 export { OnramperError } from './errors';
 export type { OnramperErrorCode, OnramperErrorPayload } from './errors';
 export type {

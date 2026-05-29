@@ -1,16 +1,26 @@
 /**
- * Onramper RN (Nitro) example — Phase 1 core module.
- * Exercises configure → initialize → state/event streams → reset / signOut.
+ * Onramper RN (Nitro) example.
+ * Exercises configure → initialize → state/event streams, getCheckoutRequirements
+ * (renders the native checkout button + quote), reset / signOut.
  *
  * @format
  */
 
+import type { ReactElement } from 'react';
 import { useRef, useState } from 'react';
 import { Button, ScrollView, StatusBar, StyleSheet, Text, useColorScheme, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { OnramperClient, type OnramperState } from '@onramper/react-native';
+import { OnramperClient, type OnramperState, type QuoteResponse } from '@onramper/react-native';
 import { ENV } from './env.local';
 import { createDemoSession } from './createDemoSession';
+
+const TX = {
+  source: 'usd',
+  destination: 'sol',
+  amount: 100,
+  paymentMethod: 'applepay',
+  wallet: { network: 'solana', address: 'Br2jjHYskB1JJikv3Qw2QcmWVQGfZvkJFng4ZEwiGSjv' },
+};
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -32,6 +42,8 @@ function AppContent() {
   const [log, setLog] = useState<{ level: 'info' | 'event' | 'error'; line: string }[]>([]);
   const [client, setClient] = useState<OnramperClient | null>(null);
   const [stateKind, setStateKind] = useState<OnramperState['kind']>('idle');
+  const [quote, setQuote] = useState<QuoteResponse | null>(null);
+  const [button, setButton] = useState<ReactElement | null>(null);
   const scrollRef = useRef<ScrollView>(null);
 
   const append = (level: 'info' | 'event' | 'error', line: string) => {
@@ -44,6 +56,8 @@ function AppContent() {
 
   const onConfigureInitialize = async () => {
     client?.destroy();
+    setQuote(null);
+    setButton(null);
     let inflight: OnramperClient | null = null;
     try {
       info('minting demo session…');
@@ -77,10 +91,31 @@ function AppContent() {
     }
   };
 
+  const onGetRequirements = async () => {
+    if (!client) {
+      fail('configure + initialize first');
+      return;
+    }
+    try {
+      const result = await client.getCheckoutRequirements(
+        { source: TX.source, destination: TX.destination, amount: TX.amount, type: 'buy', paymentMethod: TX.paymentMethod, wallet: TX.wallet },
+        { backgroundColor: '#0A84FF', foregroundColor: '#FFFFFF', borderRadius: 12 },
+      );
+      setQuote(result.quote);
+      setButton(result.button);
+      info(`got intent: rate=${result.quote.rate ?? 'n/a'} payout=${result.quote.payout ?? 'n/a'}`);
+    } catch (e: unknown) {
+      const err = e as { code?: string; message?: string };
+      fail(`getCheckoutRequirements error: ${err.code ?? 'unknown'} — ${err.message ?? String(e)}`);
+    }
+  };
+
   const onReset = async () => {
     if (!client) return;
     try {
       await client.reset();
+      setQuote(null);
+      setButton(null);
       info('reset OK');
     } catch (e: unknown) {
       const err = e as { code?: string; message?: string };
@@ -92,6 +127,8 @@ function AppContent() {
     if (!client) return;
     try {
       await client.signOut();
+      setQuote(null);
+      setButton(null);
       info('signed out — OIDC tokens cleared');
     } catch (e: unknown) {
       const err = e as { code?: string; message?: string };
@@ -116,9 +153,27 @@ function AppContent() {
       <View style={styles.gap} />
       <Button title="Configure + Initialize" onPress={onConfigureInitialize} />
       <View style={styles.gap} />
+      <Button title="Get checkout requirements" onPress={onGetRequirements} disabled={!client} />
+      <View style={styles.gap} />
       <Button title="Reset" onPress={onReset} color="#888" />
       <View style={styles.gap} />
       <Button title="Sign out" onPress={onSignOut} color="#CC0000" />
+
+      {quote && (
+        <>
+          <Text style={[styles.section, { color: fg }]}>Quote</Text>
+          <Text style={[styles.kv, { color: muted }]}>ramp: {quote.ramp ?? '—'}</Text>
+          <Text style={[styles.kv, { color: muted }]}>rate: {quote.rate ?? '—'}</Text>
+          <Text style={[styles.kv, { color: muted }]}>payout: {quote.payout ?? '—'}</Text>
+        </>
+      )}
+
+      {button && (
+        <>
+          <Text style={[styles.section, { color: fg }]}>Checkout button (native):</Text>
+          <View style={styles.buttonHost}>{button}</View>
+        </>
+      )}
 
       <Text style={[styles.section, { color: fg }]}>State: {stateKind}</Text>
 
@@ -145,6 +200,7 @@ const styles = StyleSheet.create({
   gap: { height: 8 },
   kv: { fontFamily: 'Menlo', fontSize: 12, marginVertical: 1 },
   section: { fontSize: 14, fontWeight: '600', marginTop: 20, marginBottom: 8 },
+  buttonHost: { minHeight: 56, marginBottom: 8 },
   logLine: { fontFamily: 'Menlo', fontSize: 12, marginVertical: 1 },
   italic: { fontStyle: 'italic' },
 });

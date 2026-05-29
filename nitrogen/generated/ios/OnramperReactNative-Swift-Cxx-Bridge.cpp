@@ -8,12 +8,29 @@
 #include "OnramperReactNative-Swift-Cxx-Bridge.hpp"
 
 // Include C++ implementation defined types
+#include "HybridOnramperCheckoutButtonSpecSwift.hpp"
 #include "HybridOnramperNitroSpecSwift.hpp"
 #include "OnramperReactNative-Swift-Cxx-Umbrella.hpp"
 #include <NitroModules/NitroDefines.hpp>
 
 namespace margelo::nitro::onramper::bridge::swift {
 
+  // pragma MARK: std::shared_ptr<HybridOnramperCheckoutButtonSpec>
+  std::shared_ptr<HybridOnramperCheckoutButtonSpec> create_std__shared_ptr_HybridOnramperCheckoutButtonSpec_(void* NON_NULL swiftUnsafePointer) noexcept {
+    OnramperReactNative::HybridOnramperCheckoutButtonSpec_cxx swiftPart = OnramperReactNative::HybridOnramperCheckoutButtonSpec_cxx::fromUnsafe(swiftUnsafePointer);
+    return std::make_shared<margelo::nitro::onramper::HybridOnramperCheckoutButtonSpecSwift>(swiftPart);
+  }
+  void* NON_NULL get_std__shared_ptr_HybridOnramperCheckoutButtonSpec_(std__shared_ptr_HybridOnramperCheckoutButtonSpec_ cppType) {
+    std::shared_ptr<margelo::nitro::onramper::HybridOnramperCheckoutButtonSpecSwift> swiftWrapper = std::dynamic_pointer_cast<margelo::nitro::onramper::HybridOnramperCheckoutButtonSpecSwift>(cppType);
+    #ifdef NITRO_DEBUG
+    if (swiftWrapper == nullptr) [[unlikely]] {
+      throw std::runtime_error("Class \"HybridOnramperCheckoutButtonSpec\" is not implemented in Swift!");
+    }
+    #endif
+    OnramperReactNative::HybridOnramperCheckoutButtonSpec_cxx& swiftPart = swiftWrapper->getSwiftPart();
+    return swiftPart.toUnsafe();
+  }
+  
   // pragma MARK: std::function<void()>
   Func_void create_Func_void(void* NON_NULL swiftClosureWrapper) noexcept {
     auto swiftClosure = OnramperReactNative::Func_void::fromUnsafe(swiftClosureWrapper);
@@ -27,6 +44,14 @@ namespace margelo::nitro::onramper::bridge::swift {
     auto swiftClosure = OnramperReactNative::Func_void_std__exception_ptr::fromUnsafe(swiftClosureWrapper);
     return [swiftClosure = std::move(swiftClosure)](const std::exception_ptr& error) mutable -> void {
       swiftClosure.call(error);
+    };
+  }
+  
+  // pragma MARK: std::function<void(const PreparedIntentResult& /* result */)>
+  Func_void_PreparedIntentResult create_Func_void_PreparedIntentResult(void* NON_NULL swiftClosureWrapper) noexcept {
+    auto swiftClosure = OnramperReactNative::Func_void_PreparedIntentResult::fromUnsafe(swiftClosureWrapper);
+    return [swiftClosure = std::move(swiftClosure)](const PreparedIntentResult& result) mutable -> void {
+      swiftClosure.call(result);
     };
   }
   

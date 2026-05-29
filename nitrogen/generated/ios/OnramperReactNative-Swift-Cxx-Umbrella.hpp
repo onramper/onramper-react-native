@@ -8,17 +8,23 @@
 #pragma once
 
 // Forward declarations of C++ defined types
+// Forward declaration of `HybridOnramperCheckoutButtonSpec` to properly resolve imports.
+namespace margelo::nitro::onramper { class HybridOnramperCheckoutButtonSpec; }
 // Forward declaration of `HybridOnramperNitroSpec` to properly resolve imports.
 namespace margelo::nitro::onramper { class HybridOnramperNitroSpec; }
 // Forward declaration of `NitroSessionCredentials` to properly resolve imports.
 namespace margelo::nitro::onramper { struct NitroSessionCredentials; }
 // Forward declaration of `OnramperNitroConfig` to properly resolve imports.
 namespace margelo::nitro::onramper { struct OnramperNitroConfig; }
+// Forward declaration of `PreparedIntentResult` to properly resolve imports.
+namespace margelo::nitro::onramper { struct PreparedIntentResult; }
 
 // Include C++ defined types
+#include "HybridOnramperCheckoutButtonSpec.hpp"
 #include "HybridOnramperNitroSpec.hpp"
 #include "NitroSessionCredentials.hpp"
 #include "OnramperNitroConfig.hpp"
+#include "PreparedIntentResult.hpp"
 #include <NitroModules/Promise.hpp>
 #include <NitroModules/Result.hpp>
 #include <exception>
@@ -36,6 +42,8 @@ namespace margelo::nitro::onramper { struct OnramperNitroConfig; }
 #include <NitroModules/DateToChronoDate.hpp>
 
 // Forward declarations of Swift defined types
+// Forward declaration of `HybridOnramperCheckoutButtonSpec_cxx` to properly resolve imports.
+namespace OnramperReactNative { class HybridOnramperCheckoutButtonSpec_cxx; }
 // Forward declaration of `HybridOnramperNitroSpec_cxx` to properly resolve imports.
 namespace OnramperReactNative { class HybridOnramperNitroSpec_cxx; }
 

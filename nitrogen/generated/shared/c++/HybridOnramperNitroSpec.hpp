@@ -15,12 +15,15 @@
 
 // Forward declaration of `OnramperNitroConfig` to properly resolve imports.
 namespace margelo::nitro::onramper { struct OnramperNitroConfig; }
+// Forward declaration of `PreparedIntentResult` to properly resolve imports.
+namespace margelo::nitro::onramper { struct PreparedIntentResult; }
 // Forward declaration of `NitroSessionCredentials` to properly resolve imports.
 namespace margelo::nitro::onramper { struct NitroSessionCredentials; }
 
 #include <NitroModules/Promise.hpp>
 #include "OnramperNitroConfig.hpp"
 #include <string>
+#include "PreparedIntentResult.hpp"
 #include <functional>
 #include "NitroSessionCredentials.hpp"
 
@@ -59,6 +62,8 @@ namespace margelo::nitro::onramper {
       virtual std::shared_ptr<Promise<void>> initialize(const std::string& sessionId, const std::string& sessionToken) = 0;
       virtual std::shared_ptr<Promise<void>> reset() = 0;
       virtual std::shared_ptr<Promise<void>> signOut() = 0;
+      virtual std::shared_ptr<Promise<PreparedIntentResult>> getCheckoutRequirements(const std::string& requestJson, const std::string& styleJson) = 0;
+      virtual std::shared_ptr<Promise<void>> cancelPreparedIntent(const std::string& intentHandle) = 0;
       virtual void setStateListener(const std::function<void(const std::string& /* stateJson */)>& onState) = 0;
       virtual void setEventListener(const std::function<void(const std::string& /* eventJson */)>& onEvent) = 0;
       virtual void setSessionExpirationHandler(const std::function<std::shared_ptr<Promise<std::shared_ptr<Promise<NitroSessionCredentials>>>>()>& handler) = 0;

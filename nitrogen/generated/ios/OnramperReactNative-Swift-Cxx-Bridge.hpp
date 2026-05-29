@@ -8,18 +8,26 @@
 #pragma once
 
 // Forward declarations of C++ defined types
+// Forward declaration of `HybridOnramperCheckoutButtonSpec` to properly resolve imports.
+namespace margelo::nitro::onramper { class HybridOnramperCheckoutButtonSpec; }
 // Forward declaration of `HybridOnramperNitroSpec` to properly resolve imports.
 namespace margelo::nitro::onramper { class HybridOnramperNitroSpec; }
 // Forward declaration of `NitroSessionCredentials` to properly resolve imports.
 namespace margelo::nitro::onramper { struct NitroSessionCredentials; }
+// Forward declaration of `PreparedIntentResult` to properly resolve imports.
+namespace margelo::nitro::onramper { struct PreparedIntentResult; }
 
 // Forward declarations of Swift defined types
+// Forward declaration of `HybridOnramperCheckoutButtonSpec_cxx` to properly resolve imports.
+namespace OnramperReactNative { class HybridOnramperCheckoutButtonSpec_cxx; }
 // Forward declaration of `HybridOnramperNitroSpec_cxx` to properly resolve imports.
 namespace OnramperReactNative { class HybridOnramperNitroSpec_cxx; }
 
 // Include C++ defined types
+#include "HybridOnramperCheckoutButtonSpec.hpp"
 #include "HybridOnramperNitroSpec.hpp"
 #include "NitroSessionCredentials.hpp"
+#include "PreparedIntentResult.hpp"
 #include <NitroModules/Promise.hpp>
 #include <NitroModules/PromiseHolder.hpp>
 #include <NitroModules/Result.hpp>
@@ -34,6 +42,18 @@ namespace OnramperReactNative { class HybridOnramperNitroSpec_cxx; }
  */
 namespace margelo::nitro::onramper::bridge::swift {
 
+  // pragma MARK: std::shared_ptr<HybridOnramperCheckoutButtonSpec>
+  /**
+   * Specialized version of `std::shared_ptr<HybridOnramperCheckoutButtonSpec>`.
+   */
+  using std__shared_ptr_HybridOnramperCheckoutButtonSpec_ = std::shared_ptr<HybridOnramperCheckoutButtonSpec>;
+  std::shared_ptr<HybridOnramperCheckoutButtonSpec> create_std__shared_ptr_HybridOnramperCheckoutButtonSpec_(void* NON_NULL swiftUnsafePointer) noexcept;
+  void* NON_NULL get_std__shared_ptr_HybridOnramperCheckoutButtonSpec_(std__shared_ptr_HybridOnramperCheckoutButtonSpec_ cppType);
+  
+  // pragma MARK: std::weak_ptr<HybridOnramperCheckoutButtonSpec>
+  using std__weak_ptr_HybridOnramperCheckoutButtonSpec_ = std::weak_ptr<HybridOnramperCheckoutButtonSpec>;
+  inline std__weak_ptr_HybridOnramperCheckoutButtonSpec_ weakify_std__shared_ptr_HybridOnramperCheckoutButtonSpec_(const std::shared_ptr<HybridOnramperCheckoutButtonSpec>& strong) noexcept { return strong; }
+  
   // pragma MARK: std::shared_ptr<Promise<void>>
   /**
    * Specialized version of `std::shared_ptr<Promise<void>>`.
@@ -88,6 +108,40 @@ namespace margelo::nitro::onramper::bridge::swift {
   Func_void_std__exception_ptr create_Func_void_std__exception_ptr(void* NON_NULL swiftClosureWrapper) noexcept;
   inline Func_void_std__exception_ptr_Wrapper wrap_Func_void_std__exception_ptr(Func_void_std__exception_ptr value) noexcept {
     return Func_void_std__exception_ptr_Wrapper(std::move(value));
+  }
+  
+  // pragma MARK: std::shared_ptr<Promise<PreparedIntentResult>>
+  /**
+   * Specialized version of `std::shared_ptr<Promise<PreparedIntentResult>>`.
+   */
+  using std__shared_ptr_Promise_PreparedIntentResult__ = std::shared_ptr<Promise<PreparedIntentResult>>;
+  inline std::shared_ptr<Promise<PreparedIntentResult>> create_std__shared_ptr_Promise_PreparedIntentResult__() noexcept {
+    return Promise<PreparedIntentResult>::create();
+  }
+  inline PromiseHolder<PreparedIntentResult> wrap_std__shared_ptr_Promise_PreparedIntentResult__(std::shared_ptr<Promise<PreparedIntentResult>> promise) noexcept {
+    return PromiseHolder<PreparedIntentResult>(std::move(promise));
+  }
+  
+  // pragma MARK: std::function<void(const PreparedIntentResult& /* result */)>
+  /**
+   * Specialized version of `std::function<void(const PreparedIntentResult&)>`.
+   */
+  using Func_void_PreparedIntentResult = std::function<void(const PreparedIntentResult& /* result */)>;
+  /**
+   * Wrapper class for a `std::function<void(const PreparedIntentResult& / * result * /)>`, this can be used from Swift.
+   */
+  class Func_void_PreparedIntentResult_Wrapper final {
+  public:
+    explicit Func_void_PreparedIntentResult_Wrapper(std::function<void(const PreparedIntentResult& /* result */)>&& func): _function(std::make_unique<std::function<void(const PreparedIntentResult& /* result */)>>(std::move(func))) {}
+    inline void call(PreparedIntentResult result) const noexcept {
+      _function->operator()(result);
+    }
+  private:
+    std::unique_ptr<std::function<void(const PreparedIntentResult& /* result */)>> _function;
+  } SWIFT_NONCOPYABLE;
+  Func_void_PreparedIntentResult create_Func_void_PreparedIntentResult(void* NON_NULL swiftClosureWrapper) noexcept;
+  inline Func_void_PreparedIntentResult_Wrapper wrap_Func_void_PreparedIntentResult(Func_void_PreparedIntentResult value) noexcept {
+    return Func_void_PreparedIntentResult_Wrapper(std::move(value));
   }
   
   // pragma MARK: std::function<void(const std::string& /* stateJson */)>
@@ -222,6 +276,15 @@ namespace margelo::nitro::onramper::bridge::swift {
   }
   inline Result_std__shared_ptr_Promise_void___ create_Result_std__shared_ptr_Promise_void___(const std::exception_ptr& error) noexcept {
     return Result<std::shared_ptr<Promise<void>>>::withError(error);
+  }
+  
+  // pragma MARK: Result<std::shared_ptr<Promise<PreparedIntentResult>>>
+  using Result_std__shared_ptr_Promise_PreparedIntentResult___ = Result<std::shared_ptr<Promise<PreparedIntentResult>>>;
+  inline Result_std__shared_ptr_Promise_PreparedIntentResult___ create_Result_std__shared_ptr_Promise_PreparedIntentResult___(const std::shared_ptr<Promise<PreparedIntentResult>>& value) noexcept {
+    return Result<std::shared_ptr<Promise<PreparedIntentResult>>>::withValue(value);
+  }
+  inline Result_std__shared_ptr_Promise_PreparedIntentResult___ create_Result_std__shared_ptr_Promise_PreparedIntentResult___(const std::exception_ptr& error) noexcept {
+    return Result<std::shared_ptr<Promise<PreparedIntentResult>>>::withError(error);
   }
   
   // pragma MARK: Result<void>

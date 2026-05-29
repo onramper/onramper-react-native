@@ -52,3 +52,7 @@ export function __lastNative(): MockNative {
   if (!last) throw new Error('no hybrid object created yet');
   return last;
 }
+
+// View host factory. Tests don't render the native button, so a dummy component
+// that ignores its props is sufficient.
+export const getHostComponent = jest.fn(() => () => null);

@@ -11,6 +11,9 @@
   "autolinking": {
     "OnramperNitro": {
       "ios": { "language": "swift", "implementationClassName": "HybridOnramperNitro" }
+    },
+    "OnramperCheckoutButton": {
+      "ios": { "language": "swift", "implementationClassName": "HybridOnramperCheckoutButton" }
     }
   }
 }

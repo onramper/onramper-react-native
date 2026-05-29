@@ -20,15 +20,8 @@ Pod::Spec.new do |s|
 
   # This podspec lives at the package root (not ios/) because nitrogen emits its
   # generated source globs (nitrogen/generated/**) relative to the podspec's
-  # directory via add_nitrogen_files below. Paths to our own sources are therefore
-  # ios/-prefixed.
-  #
-  # Legacy Expo-dependent Swift files (ios/OnramperReactNativeModule.swift,
-  # ios/OnramperCheckoutButtonView.swift, ios/Bridging/*.swift,
-  # ios/PreparedIntentRegistry.swift) are intentionally excluded during the Nitro
-  # migration. They remain in the repo for reference; new Nitro implementation
-  # files (ios/Hybrid*.swift, ios/Nitro*.swift) are compiled.
-  s.source_files        = 'ios/Hybrid*.swift', 'ios/OnramperSDKBridge.swift'
+  # directory via add_nitrogen_files below. Our own sources are ios/-prefixed.
+  s.source_files        = 'ios/*.swift'
   s.vendored_frameworks = 'ios/Frameworks/OnramperSDK.xcframework'
 
   load File.join(__dir__, 'nitrogen', 'generated', 'ios', 'OnramperReactNative+autolinking.rb')

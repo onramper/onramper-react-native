@@ -23,4 +23,16 @@ public final class OnramperReactNativeAutolinking {
   public static func isOnramperNitroRecyclable() -> Bool {
     return HybridOnramperNitro.self is any RecyclableView.Type
   }
+  
+  public static func createOnramperCheckoutButton() -> bridge.std__shared_ptr_HybridOnramperCheckoutButtonSpec_ {
+    let hybridObject = HybridOnramperCheckoutButton()
+    return { () -> bridge.std__shared_ptr_HybridOnramperCheckoutButtonSpec_ in
+      let __cxxWrapped = hybridObject.getCxxWrapper()
+      return __cxxWrapped.getCxxPart()
+    }()
+  }
+  
+  public static func isOnramperCheckoutButtonRecyclable() -> Bool {
+    return HybridOnramperCheckoutButton.self is any RecyclableView.Type
+  }
 }

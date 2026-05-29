@@ -17,6 +17,8 @@ public protocol HybridOnramperNitroSpec_protocol: HybridObject {
   func initialize(sessionId: String, sessionToken: String) throws -> Promise<Void>
   func reset() throws -> Promise<Void>
   func signOut() throws -> Promise<Void>
+  func getCheckoutRequirements(requestJson: String, styleJson: String) throws -> Promise<PreparedIntentResult>
+  func cancelPreparedIntent(intentHandle: String) throws -> Promise<Void>
   func setStateListener(onState: @escaping (_ stateJson: String) -> Void) throws -> Void
   func setEventListener(onEvent: @escaping (_ eventJson: String) -> Void) throws -> Void
   func setSessionExpirationHandler(handler: @escaping () -> Promise<Promise<NitroSessionCredentials>>) throws -> Void

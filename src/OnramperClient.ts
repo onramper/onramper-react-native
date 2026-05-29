@@ -1,15 +1,30 @@
+import { type ReactElement, createElement } from 'react';
+
+import { OnramperCheckoutButtonView } from './OnramperCheckoutButtonView';
 import { createOnramperNative } from './OnramperNative';
 import { OnramperError } from './errors';
 import type { CheckoutEvent, EventName, EventPayload } from './events';
-import type { OnramperConfiguration, OnramperState, SessionCredentials } from './types';
+import type {
+  CheckoutButtonStyle,
+  CheckoutRequest,
+  OnramperConfiguration,
+  OnramperState,
+  QuoteResponse,
+  SessionCredentials,
+} from './types';
+
+export interface GetCheckoutRequirementsResult {
+  /** A native checkout button element to render. Tapping it drives login, finalize, and the payment webview internally. */
+  button: ReactElement;
+  /** The quote (rate, fees, payout) returned with the checkout intent. */
+  quote: QuoteResponse;
+}
 
 /**
  * Typed, public entry point to the Onramper SDK. Wraps the native Nitro hybrid
  * object: state and checkout events arrive as JSON strings over single native
  * callbacks and are parsed here into the typed `OnramperState` / `CheckoutEvent`
  * unions, then fanned out to any number of listeners.
- *
- * Checkout (`getCheckoutRequirements` + the native button view) lands in Phase 2.
  */
 export class OnramperClient {
   state: OnramperState = { kind: 'idle' };
@@ -97,6 +112,34 @@ export class OnramperClient {
     } catch (e: unknown) {
       throw OnramperError.from(e);
     }
+  }
+
+  /**
+   * Fetches checkout requirements + quote and returns a native checkout button
+   * to render plus the quote. The button handles login / finalize / webview
+   * internally; outcomes surface via the event stream (`addEventListener`).
+   */
+  async getCheckoutRequirements(
+    request: CheckoutRequest,
+    buttonStyle: CheckoutButtonStyle = {},
+  ): Promise<GetCheckoutRequirementsResult> {
+    try {
+      await this.configured;
+      const result = await this.native.getCheckoutRequirements(JSON.stringify(request), JSON.stringify(buttonStyle));
+      const quote = JSON.parse(result.quoteJson) as QuoteResponse;
+      const button = createElement(OnramperCheckoutButtonView, {
+        intentHandle: result.intentHandle,
+        style: { width: '100%', minHeight: 56 },
+      });
+      return { button, quote };
+    } catch (e: unknown) {
+      throw OnramperError.from(e);
+    }
+  }
+
+  /** Discards a prepared intent (e.g. if the user navigates away before checkout). */
+  cancelPreparedIntent(intentHandle: string): Promise<void> {
+    return this.native.cancelPreparedIntent(intentHandle);
   }
 
   /** Subscribe to state changes. Returns an unsubscribe function. */

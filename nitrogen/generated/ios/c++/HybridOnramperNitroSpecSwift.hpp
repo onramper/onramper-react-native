@@ -14,12 +14,15 @@ namespace OnramperReactNative { class HybridOnramperNitroSpec_cxx; }
 
 // Forward declaration of `OnramperNitroConfig` to properly resolve imports.
 namespace margelo::nitro::onramper { struct OnramperNitroConfig; }
+// Forward declaration of `PreparedIntentResult` to properly resolve imports.
+namespace margelo::nitro::onramper { struct PreparedIntentResult; }
 // Forward declaration of `NitroSessionCredentials` to properly resolve imports.
 namespace margelo::nitro::onramper { struct NitroSessionCredentials; }
 
 #include <NitroModules/Promise.hpp>
 #include "OnramperNitroConfig.hpp"
 #include <string>
+#include "PreparedIntentResult.hpp"
 #include <functional>
 #include "NitroSessionCredentials.hpp"
 
@@ -99,6 +102,22 @@ namespace margelo::nitro::onramper {
     }
     inline std::shared_ptr<Promise<void>> signOut() override {
       auto __result = _swiftPart.signOut();
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
+    inline std::shared_ptr<Promise<PreparedIntentResult>> getCheckoutRequirements(const std::string& requestJson, const std::string& styleJson) override {
+      auto __result = _swiftPart.getCheckoutRequirements(requestJson, styleJson);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
+    inline std::shared_ptr<Promise<void>> cancelPreparedIntent(const std::string& intentHandle) override {
+      auto __result = _swiftPart.cancelPreparedIntent(intentHandle);
       if (__result.hasError()) [[unlikely]] {
         std::rethrow_exception(__result.error());
       }

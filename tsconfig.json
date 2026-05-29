@@ -2,8 +2,9 @@
 {
   "extends": "expo-module-scripts/tsconfig.base",
   "compilerOptions": {
-    "outDir": "./build"
+    "outDir": "./build",
+    "resolveJsonModule": true
   },
-  "include": ["./src"],
+  "include": ["./src", "./nitrogen/generated/shared/json"],
   "exclude": ["**/__mocks__/*", "**/__tests__/*"]
 }
