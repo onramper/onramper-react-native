@@ -25,4 +25,7 @@ Pod::Spec.new do |s|
   # are added in subsequent tasks.
   s.source_files        = 'Hybrid*.swift', 'Nitro*.swift'
   s.vendored_frameworks = 'Frameworks/OnramperSDK.xcframework'
+
+  load File.join(__dir__, '..', 'nitrogen', 'generated', 'ios', 'OnramperReactNative+autolinking.rb')
+  add_nitrogen_files(s)
 end

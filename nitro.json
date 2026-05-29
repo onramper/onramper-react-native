@@ -8,5 +8,9 @@
     "androidNamespace": ["onramper"],
     "androidCxxLibName": "OnramperReactNative"
   },
-  "autolinking": {}
+  "autolinking": {
+    "OnramperNitro": {
+      "ios": { "language": "swift", "implementationClassName": "HybridOnramperNitro" }
+    }
+  }
 }
