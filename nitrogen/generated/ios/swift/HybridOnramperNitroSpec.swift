@@ -13,10 +13,13 @@ public protocol HybridOnramperNitroSpec_protocol: HybridObject {
   
 
   // Methods
-  func ping(message: String) throws -> Promise<String>
-  func sdkProbe() throws -> Promise<String>
-  func startTicker(onTick: @escaping (_ count: Double) -> Void) throws -> Promise<Void>
-  func stopTicker() throws -> Promise<Void>
+  func configure(config: OnramperNitroConfig) throws -> Promise<Void>
+  func initialize(sessionId: String, sessionToken: String) throws -> Promise<Void>
+  func reset() throws -> Promise<Void>
+  func signOut() throws -> Promise<Void>
+  func setStateListener(onState: @escaping (_ stateJson: String) -> Void) throws -> Void
+  func setEventListener(onEvent: @escaping (_ eventJson: String) -> Void) throws -> Void
+  func setSessionExpirationHandler(handler: @escaping () -> Promise<Promise<NitroSessionCredentials>>) throws -> Void
 }
 
 public extension HybridOnramperNitroSpec_protocol {

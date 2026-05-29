@@ -14,10 +14,13 @@ namespace margelo::nitro::onramper {
     HybridObject::loadHybridMethods();
     // load custom methods/properties
     registerHybrids(this, [](Prototype& prototype) {
-      prototype.registerHybridMethod("ping", &HybridOnramperNitroSpec::ping);
-      prototype.registerHybridMethod("sdkProbe", &HybridOnramperNitroSpec::sdkProbe);
-      prototype.registerHybridMethod("startTicker", &HybridOnramperNitroSpec::startTicker);
-      prototype.registerHybridMethod("stopTicker", &HybridOnramperNitroSpec::stopTicker);
+      prototype.registerHybridMethod("configure", &HybridOnramperNitroSpec::configure);
+      prototype.registerHybridMethod("initialize", &HybridOnramperNitroSpec::initialize);
+      prototype.registerHybridMethod("reset", &HybridOnramperNitroSpec::reset);
+      prototype.registerHybridMethod("signOut", &HybridOnramperNitroSpec::signOut);
+      prototype.registerHybridMethod("setStateListener", &HybridOnramperNitroSpec::setStateListener);
+      prototype.registerHybridMethod("setEventListener", &HybridOnramperNitroSpec::setEventListener);
+      prototype.registerHybridMethod("setSessionExpirationHandler", &HybridOnramperNitroSpec::setSessionExpirationHandler);
     });
   }
 

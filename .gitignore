@@ -69,3 +69,4 @@ jsconfig.json
 .env.local
 example/.env
 example/.env.local
+example-bare/env.local.ts

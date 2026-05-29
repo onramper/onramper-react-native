@@ -1,26 +1,16 @@
 /**
- * Sample React Native App — Nitro spike
- * Exercises spike proofs #1 ping, #2 SDK interop, #3 SwiftUI Nitro View, #4 event callback.
+ * Onramper RN (Nitro) example — Phase 1 core module.
+ * Exercises configure → initialize → state/event streams → reset / signOut.
  *
  * @format
  */
 
-import { useMemo, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Button, ScrollView, StatusBar, StyleSheet, Text, useColorScheme, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { NitroModules, getHostComponent } from 'react-native-nitro-modules';
-import type { OnramperNitro } from '@onramper/react-native/src/specs/OnramperNitro.nitro';
-import type {
-  NitroSpikeViewMethods,
-  NitroSpikeViewProps,
-} from '@onramper/react-native/src/specs/NitroSpikeView.nitro';
-import NitroSpikeViewConfig from '@onramper/react-native/nitrogen/generated/shared/json/NitroSpikeViewConfig.json';
-
-// Spike #3: the SwiftUI-backed Nitro view.
-const SpikeView = getHostComponent<NitroSpikeViewProps, NitroSpikeViewMethods>(
-  'NitroSpikeView',
-  () => NitroSpikeViewConfig,
-);
+import { OnramperClient, type OnramperState } from '@onramper/react-native';
+import { ENV } from './env.local';
+import { createDemoSession } from './createDemoSession';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -39,67 +29,109 @@ function AppContent() {
   const muted = isDark ? '#9A9A9A' : '#777777';
   const bg = isDark ? '#000000' : '#FFFFFF';
 
-  const [log, setLog] = useState<string[]>([]);
-  const append = (line: string) => setLog((l) => [...l, line]);
+  const [log, setLog] = useState<{ level: 'info' | 'event' | 'error'; line: string }[]>([]);
+  const [client, setClient] = useState<OnramperClient | null>(null);
+  const [stateKind, setStateKind] = useState<OnramperState['kind']>('idle');
+  const scrollRef = useRef<ScrollView>(null);
 
-  const obj = useMemo(() => NitroModules.createHybridObject<OnramperNitro>('OnramperNitro'), []);
+  const append = (level: 'info' | 'event' | 'error', line: string) => {
+    setLog((l) => [...l, { level, line }]);
+    requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
+  };
+  const info = (l: string) => append('info', l);
+  const event = (l: string) => append('event', l);
+  const fail = (l: string) => append('error', l);
 
-  const onPing = async () => {
+  const onConfigureInitialize = async () => {
+    client?.destroy();
+    let inflight: OnramperClient | null = null;
     try {
-      append(`ping → ${await obj.ping('hello')}`);
-    } catch (e) {
-      append(`ping ERROR: ${e}`);
+      info('minting demo session…');
+      const session = await createDemoSession(ENV.demoToken);
+      info(`minted session: ${session.sessionId}`);
+
+      inflight = new OnramperClient({
+        apiKey: ENV.apiKey,
+        clientId: ENV.clientId,
+        environment: 'development',
+        logLevel: 'debug',
+        onSessionExpired: async () => {
+          info('onSessionExpired — refreshing');
+          return createDemoSession(ENV.demoToken);
+        },
+      });
+      inflight.addStateListener((s) => {
+        setStateKind(s.kind);
+        event(`state → ${s.kind}${s.kind === 'failed' ? `: ${s.error.code}` : ''}`);
+      });
+      inflight.addEventListener('completed', (e) => event(`COMPLETED ${e.checkoutId}`));
+      inflight.addEventListener('failed', (e) => event(`FAILED ${e.error.code} — ${e.error.message}`));
+
+      await inflight.initialize({ sessionId: session.sessionId, sessionToken: session.sessionToken });
+      setClient(inflight);
+      info('initialized OK');
+    } catch (e: unknown) {
+      inflight?.destroy();
+      const err = e as { code?: string; message?: string };
+      fail(`init error: ${err.code ?? 'unknown'} — ${err.message ?? String(e)}`);
     }
   };
 
-  const onSdkProbe = async () => {
+  const onReset = async () => {
+    if (!client) return;
     try {
-      append(`sdkProbe → ${await obj.sdkProbe()}`);
-    } catch (e) {
-      append(`sdkProbe ERROR: ${e}`);
+      await client.reset();
+      info('reset OK');
+    } catch (e: unknown) {
+      const err = e as { code?: string; message?: string };
+      fail(`reset error: ${err.code ?? 'unknown'} — ${err.message ?? String(e)}`);
     }
   };
 
-  const onStartTicker = async () => {
+  const onSignOut = async () => {
+    if (!client) return;
     try {
-      await obj.startTicker((count) => append(`TICK ${count}`));
-      append('ticker started');
-    } catch (e) {
-      append(`startTicker ERROR: ${e}`);
+      await client.signOut();
+      info('signed out — OIDC tokens cleared');
+    } catch (e: unknown) {
+      const err = e as { code?: string; message?: string };
+      fail(`signOut error: ${err.code ?? 'unknown'} — ${err.message ?? String(e)}`);
     }
   };
 
-  const onStopTicker = async () => {
-    try {
-      await obj.stopTicker();
-      append('ticker stopped');
-    } catch (e) {
-      append(`stopTicker ERROR: ${e}`);
-    }
-  };
+  const maskedKey = ENV.apiKey ? `${ENV.apiKey.slice(0, 8)}…${ENV.apiKey.slice(-4)}` : '(missing)';
 
   return (
-    <ScrollView style={{ backgroundColor: bg }} contentContainerStyle={[styles.container, { paddingTop: insets.top }]}>
-      <Text style={[styles.title, { color: fg }]}>Nitro spike</Text>
+    <ScrollView
+      ref={scrollRef}
+      style={{ backgroundColor: bg }}
+      contentContainerStyle={[styles.container, { paddingTop: insets.top }]}
+    >
+      <Text style={[styles.title, { color: fg }]}>Onramper RN (Nitro)</Text>
 
-      <Button title="#1 Nitro ping" onPress={onPing} />
-      <View style={styles.gap} />
-      <Button title="#2 SDK probe" onPress={onSdkProbe} />
-      <View style={styles.gap} />
-      <Button title="#4 Start ticker" onPress={onStartTicker} />
-      <View style={styles.gap} />
-      <Button title="#4 Stop ticker" onPress={onStopTicker} color="#888" />
+      <Text style={[styles.kv, { color: muted }]}>apiKey: {maskedKey}</Text>
+      <Text style={[styles.kv, { color: muted }]}>clientId: {ENV.clientId || '(missing)'}</Text>
+      <Text style={[styles.kv, { color: muted }]}>demoToken: {ENV.demoToken ? '✓ loaded' : '(missing)'}</Text>
 
-      <Text style={[styles.section, { color: fg }]}>#3 SwiftUI Nitro View:</Text>
-      <SpikeView label="hello from SwiftUI" style={styles.spikeView} />
+      <View style={styles.gap} />
+      <Button title="Configure + Initialize" onPress={onConfigureInitialize} />
+      <View style={styles.gap} />
+      <Button title="Reset" onPress={onReset} color="#888" />
+      <View style={styles.gap} />
+      <Button title="Sign out" onPress={onSignOut} color="#CC0000" />
+
+      <Text style={[styles.section, { color: fg }]}>State: {stateKind}</Text>
 
       <Text style={[styles.section, { color: fg }]}>Log:</Text>
       {log.length === 0 ? (
-        <Text style={[styles.muted, { color: muted }]}>(empty — tap the buttons)</Text>
+        <Text style={[styles.italic, { color: muted }]}>(empty — tap Configure + Initialize)</Text>
       ) : (
         log.map((l, i) => (
-          <Text key={`${i}-${l}`} style={[styles.logLine, { color: fg }]}>
-            {l}
+          <Text
+            key={`${i}-${l.line}`}
+            style={[styles.logLine, { color: l.level === 'error' ? '#FF6B6B' : l.level === 'event' ? '#4DA3FF' : fg }]}
+          >
+            {l.line}
           </Text>
         ))
       )}
@@ -109,12 +141,12 @@ function AppContent() {
 
 const styles = StyleSheet.create({
   container: { padding: 16, paddingBottom: 48, flexGrow: 1 },
-  title: { fontSize: 22, fontWeight: '700', marginBottom: 16 },
+  title: { fontSize: 22, fontWeight: '700', marginBottom: 12 },
   gap: { height: 8 },
+  kv: { fontFamily: 'Menlo', fontSize: 12, marginVertical: 1 },
   section: { fontSize: 14, fontWeight: '600', marginTop: 20, marginBottom: 8 },
-  spikeView: { height: 60, width: '100%', borderWidth: 1, borderColor: '#CCC', borderRadius: 8 },
   logLine: { fontFamily: 'Menlo', fontSize: 12, marginVertical: 1 },
-  muted: { fontStyle: 'italic' },
+  italic: { fontStyle: 'italic' },
 });
 
 export default App;

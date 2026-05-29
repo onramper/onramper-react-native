@@ -13,11 +13,16 @@
 #error NitroModules cannot be found! Are you sure you installed NitroModules properly?
 #endif
 
+// Forward declaration of `OnramperNitroConfig` to properly resolve imports.
+namespace margelo::nitro::onramper { struct OnramperNitroConfig; }
+// Forward declaration of `NitroSessionCredentials` to properly resolve imports.
+namespace margelo::nitro::onramper { struct NitroSessionCredentials; }
 
-
-#include <string>
 #include <NitroModules/Promise.hpp>
+#include "OnramperNitroConfig.hpp"
+#include <string>
 #include <functional>
+#include "NitroSessionCredentials.hpp"
 
 namespace margelo::nitro::onramper {
 
@@ -50,10 +55,13 @@ namespace margelo::nitro::onramper {
 
     public:
       // Methods
-      virtual std::shared_ptr<Promise<std::string>> ping(const std::string& message) = 0;
-      virtual std::shared_ptr<Promise<std::string>> sdkProbe() = 0;
-      virtual std::shared_ptr<Promise<void>> startTicker(const std::function<void(double /* count */)>& onTick) = 0;
-      virtual std::shared_ptr<Promise<void>> stopTicker() = 0;
+      virtual std::shared_ptr<Promise<void>> configure(const OnramperNitroConfig& config) = 0;
+      virtual std::shared_ptr<Promise<void>> initialize(const std::string& sessionId, const std::string& sessionToken) = 0;
+      virtual std::shared_ptr<Promise<void>> reset() = 0;
+      virtual std::shared_ptr<Promise<void>> signOut() = 0;
+      virtual void setStateListener(const std::function<void(const std::string& /* stateJson */)>& onState) = 0;
+      virtual void setEventListener(const std::function<void(const std::string& /* eventJson */)>& onEvent) = 0;
+      virtual void setSessionExpirationHandler(const std::function<std::shared_ptr<Promise<std::shared_ptr<Promise<NitroSessionCredentials>>>>()>& handler) = 0;
 
     protected:
       // Hybrid Setup

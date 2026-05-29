@@ -12,11 +12,16 @@
 // Forward declaration of `HybridOnramperNitroSpec_cxx` to properly resolve imports.
 namespace OnramperReactNative { class HybridOnramperNitroSpec_cxx; }
 
+// Forward declaration of `OnramperNitroConfig` to properly resolve imports.
+namespace margelo::nitro::onramper { struct OnramperNitroConfig; }
+// Forward declaration of `NitroSessionCredentials` to properly resolve imports.
+namespace margelo::nitro::onramper { struct NitroSessionCredentials; }
 
-
-#include <string>
 #include <NitroModules/Promise.hpp>
+#include "OnramperNitroConfig.hpp"
+#include <string>
 #include <functional>
+#include "NitroSessionCredentials.hpp"
 
 #include "OnramperReactNative-Swift-Cxx-Umbrella.hpp"
 
@@ -68,37 +73,55 @@ namespace margelo::nitro::onramper {
 
   public:
     // Methods
-    inline std::shared_ptr<Promise<std::string>> ping(const std::string& message) override {
-      auto __result = _swiftPart.ping(message);
+    inline std::shared_ptr<Promise<void>> configure(const OnramperNitroConfig& config) override {
+      auto __result = _swiftPart.configure(std::forward<decltype(config)>(config));
       if (__result.hasError()) [[unlikely]] {
         std::rethrow_exception(__result.error());
       }
       auto __value = std::move(__result.value());
       return __value;
     }
-    inline std::shared_ptr<Promise<std::string>> sdkProbe() override {
-      auto __result = _swiftPart.sdkProbe();
+    inline std::shared_ptr<Promise<void>> initialize(const std::string& sessionId, const std::string& sessionToken) override {
+      auto __result = _swiftPart.initialize(sessionId, sessionToken);
       if (__result.hasError()) [[unlikely]] {
         std::rethrow_exception(__result.error());
       }
       auto __value = std::move(__result.value());
       return __value;
     }
-    inline std::shared_ptr<Promise<void>> startTicker(const std::function<void(double /* count */)>& onTick) override {
-      auto __result = _swiftPart.startTicker(onTick);
+    inline std::shared_ptr<Promise<void>> reset() override {
+      auto __result = _swiftPart.reset();
       if (__result.hasError()) [[unlikely]] {
         std::rethrow_exception(__result.error());
       }
       auto __value = std::move(__result.value());
       return __value;
     }
-    inline std::shared_ptr<Promise<void>> stopTicker() override {
-      auto __result = _swiftPart.stopTicker();
+    inline std::shared_ptr<Promise<void>> signOut() override {
+      auto __result = _swiftPart.signOut();
       if (__result.hasError()) [[unlikely]] {
         std::rethrow_exception(__result.error());
       }
       auto __value = std::move(__result.value());
       return __value;
+    }
+    inline void setStateListener(const std::function<void(const std::string& /* stateJson */)>& onState) override {
+      auto __result = _swiftPart.setStateListener(onState);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline void setEventListener(const std::function<void(const std::string& /* eventJson */)>& onEvent) override {
+      auto __result = _swiftPart.setEventListener(onEvent);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline void setSessionExpirationHandler(const std::function<std::shared_ptr<Promise<std::shared_ptr<Promise<NitroSessionCredentials>>>>()>& handler) override {
+      auto __result = _swiftPart.setSessionExpirationHandler(handler);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
     }
 
   private:

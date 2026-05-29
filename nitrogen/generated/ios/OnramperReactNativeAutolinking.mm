@@ -11,7 +11,6 @@
 #import <type_traits>
 
 #include "HybridOnramperNitroSpecSwift.hpp"
-#include "HybridNitroSpikeViewSpecSwift.hpp"
 
 @interface OnramperReactNativeAutolinking : NSObject
 @end
@@ -26,13 +25,6 @@
     "OnramperNitro",
     []() -> std::shared_ptr<HybridObject> {
       std::shared_ptr<HybridOnramperNitroSpec> hybridObject = OnramperReactNative::OnramperReactNativeAutolinking::createOnramperNitro();
-      return hybridObject;
-    }
-  );
-  HybridObjectRegistry::registerHybridObjectConstructor(
-    "NitroSpikeView",
-    []() -> std::shared_ptr<HybridObject> {
-      std::shared_ptr<HybridNitroSpikeViewSpec> hybridObject = OnramperReactNative::OnramperReactNativeAutolinking::createNitroSpikeView();
       return hybridObject;
     }
   );

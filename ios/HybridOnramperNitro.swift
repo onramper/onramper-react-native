@@ -1,47 +1,149 @@
+import Combine
 import Foundation
 import NitroModules
 import OnramperSDK
 
+/// Nitro bridge to OnramperSDK's `OnramperClient`. Wraps the @MainActor SDK
+/// client, mirrors its `@Published state` and `events` stream to stored JS
+/// callbacks, and feeds the SDK's `sessionExpirationHandler` from a stored
+/// async JS callback. The public typed JS API lives in `OnramperClient.ts`.
 final class HybridOnramperNitro: HybridOnramperNitroSpec {
-  private var ticker: Timer?
-  private var tickCount: Double = 0
+  private var client: OnramperClient?
+  private var stateObservation: AnyCancellable?
+  private var eventTask: Task<Void, Never>?
 
-  // Spike #1: JS<->Swift round-trip.
-  func ping(message: String) throws -> Promise<String> {
-    return Promise.async { "pong: \(message)" }
+  private var onState: ((String) -> Void)?
+  private var onEvent: ((String) -> Void)?
+  // Nitro wraps a callback's return value in a Promise; our callback already
+  // returns Promise<NitroSessionCredentials>, hence the doubly-nested Promise.
+  private var sessionHandler: (() -> Promise<Promise<NitroSessionCredentials>>)?
+
+  // MARK: - Listener registration (synchronous)
+
+  func setStateListener(onState: @escaping (String) -> Void) {
+    self.onState = onState
   }
 
-  // Spike #2: touch a real OnramperSDK symbol to prove the vendored
-  // xcframework links and is callable from a Nitro Swift target.
-  func sdkProbe() throws -> Promise<String> {
-    return Promise.async {
-      let env = OnramperConfiguration.Environment.production
-      return "OnramperSDK linked: \(env)"
+  func setEventListener(onEvent: @escaping (String) -> Void) {
+    self.onEvent = onEvent
+  }
+
+  func setSessionExpirationHandler(handler: @escaping () -> Promise<Promise<NitroSessionCredentials>>) {
+    self.sessionHandler = handler
+  }
+
+  // MARK: - Lifecycle
+
+  func configure(config: OnramperNitroConfig) throws -> Promise<Void> {
+    return Promise.async { [weak self] in
+      guard let self else { return }
+      try await self.performConfigure(config)
     }
   }
 
-  // Spike #4: store the JS callback natively and fire it repeatedly — the
-  // event-stream mechanism the real onStateChanged/onCheckoutEvent will use.
-  func startTicker(onTick: @escaping (Double) -> Void) throws -> Promise<Void> {
-    return Promise.async {
-      DispatchQueue.main.async {
-        self.ticker?.invalidate()
-        self.tickCount = 0
-        self.ticker = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-          guard let self else { return }
-          self.tickCount += 1
-          onTick(self.tickCount)
+  @MainActor
+  private func performConfigure(_ config: OnramperNitroConfig) async throws {
+    // Idempotent: a second configure() with the SDK already built is a no-op.
+    if client != nil { return }
+
+    let environment: OnramperConfiguration.Environment =
+      config.environment == "development" ? .development : .production
+    let theme: OnramperConfiguration.Theme = {
+      switch config.theme {
+      case "light": return .light
+      case "dark": return .dark
+      default: return .system
+      }
+    }()
+    let logLevel: LogLevel = {
+      switch config.logLevel {
+      case "error": return .error
+      case "info": return .info
+      case "debug": return .debug
+      default: return .off
+      }
+    }()
+
+    let swiftConfig = OnramperConfiguration(
+      apiKey: config.apiKey,
+      clientId: config.clientId,
+      environment: environment,
+      theme: theme,
+      logLevel: logLevel,
+      sessionExpirationHandler: { [weak self] in
+        guard let self, let handler = self.sessionHandler else {
+          throw OnramperError.userTokenRefreshFailed("no session expiration handler registered")
         }
+        // Await twice: outer Promise = the callback invocation, inner Promise =
+        // the JS async function's own returned Promise. Then map to the SDK type.
+        let creds = try await handler().await().await()
+        return SessionCredentials(sessionId: creds.sessionId, sessionToken: creds.sessionToken)
+      }
+    )
+
+    let newClient = OnramperClient(configuration: swiftConfig)
+    client = newClient
+    attachObservers(to: newClient)
+  }
+
+  @MainActor
+  private func attachObservers(to client: OnramperClient) {
+    stateObservation = client.$state.sink { [weak self] state in
+      self?.onState?(jsonString(state.toJSDict()))
+    }
+    // `events` is a computed AsyncStream that captures a single continuation, so
+    // access it exactly once here. CheckoutEvent is Sendable → safe to iterate
+    // off the main actor.
+    let stream = client.events
+    eventTask = Task { [weak self] in
+      for await event in stream {
+        self?.onEvent?(jsonString(event.toJSDict()))
       }
     }
   }
 
-  func stopTicker() throws -> Promise<Void> {
-    return Promise.async {
-      DispatchQueue.main.async {
-        self.ticker?.invalidate()
-        self.ticker = nil
-      }
+  @MainActor
+  private func requireClient() throws -> OnramperClient {
+    guard let client else { throw OnramperError.notInitialized }
+    return client
+  }
+
+  func initialize(sessionId: String, sessionToken: String) throws -> Promise<Void> {
+    return Promise.async { [weak self] in
+      guard let self else { return }
+      let client = try await self.requireClient()
+      try await client.initialize(sessionId: sessionId, sessionToken: sessionToken)
     }
+  }
+
+  func reset() throws -> Promise<Void> {
+    return Promise.async { [weak self] in
+      guard let self else { return }
+      let client = try await self.requireClient()
+      await client.reset()
+    }
+  }
+
+  func signOut() throws -> Promise<Void> {
+    return Promise.async { [weak self] in
+      guard let self else { return }
+      let client = try await self.requireClient()
+      await client.signOut()
+    }
+  }
+
+  // MARK: - Teardown
+
+  /// Releases the stored JS callbacks (Nitro holds strong refs to them) and the
+  /// SDK client. Called from `OnramperClient.destroy()` in JS.
+  func dispose() {
+    stateObservation?.cancel()
+    stateObservation = nil
+    eventTask?.cancel()
+    eventTask = nil
+    onState = nil
+    onEvent = nil
+    sessionHandler = nil
+    client = nil
   }
 }

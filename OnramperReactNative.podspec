@@ -28,7 +28,7 @@ Pod::Spec.new do |s|
   # ios/PreparedIntentRegistry.swift) are intentionally excluded during the Nitro
   # migration. They remain in the repo for reference; new Nitro implementation
   # files (ios/Hybrid*.swift, ios/Nitro*.swift) are compiled.
-  s.source_files        = 'ios/Hybrid*.swift', 'ios/Nitro*.swift'
+  s.source_files        = 'ios/Hybrid*.swift', 'ios/OnramperSDKBridge.swift'
   s.vendored_frameworks = 'ios/Frameworks/OnramperSDK.xcframework'
 
   load File.join(__dir__, 'nitrogen', 'generated', 'ios', 'OnramperReactNative+autolinking.rb')

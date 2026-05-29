@@ -4,6 +4,8 @@
   "description": "React Native wrapper for the Onramper iOS SDK",
   "main": "build/index.js",
   "types": "build/index.d.ts",
+  "react-native": "src/index.ts",
+  "source": "src/index.ts",
   "files": [
     "build",
     "src",

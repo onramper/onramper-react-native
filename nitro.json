@@ -11,9 +11,6 @@
   "autolinking": {
     "OnramperNitro": {
       "ios": { "language": "swift", "implementationClassName": "HybridOnramperNitro" }
-    },
-    "NitroSpikeView": {
-      "ios": { "language": "swift", "implementationClassName": "HybridNitroSpikeView" }
     }
   }
 }

@@ -1,80 +1,66 @@
-import React from 'react';
-
-import { OnramperCheckoutButtonView } from './OnramperCheckoutButtonView';
-import { type EventSubscription, OnramperNative } from './OnramperNative';
+import { createOnramperNative } from './OnramperNative';
 import { OnramperError } from './errors';
 import type { CheckoutEvent, EventName, EventPayload } from './events';
-import type {
-  CheckoutButtonStyle,
-  CheckoutRequest,
-  OnramperConfiguration,
-  OnramperState,
-  QuoteResponse,
-  SessionCredentials,
-} from './types';
+import type { OnramperConfiguration, OnramperState, SessionCredentials } from './types';
 
-export interface GetCheckoutRequirementsResult {
-  button: React.ReactElement;
-  quote: QuoteResponse;
-}
-
+/**
+ * Typed, public entry point to the Onramper SDK. Wraps the native Nitro hybrid
+ * object: state and checkout events arrive as JSON strings over single native
+ * callbacks and are parsed here into the typed `OnramperState` / `CheckoutEvent`
+ * unions, then fanned out to any number of listeners.
+ *
+ * Checkout (`getCheckoutRequirements` + the native button view) lands in Phase 2.
+ */
 export class OnramperClient {
   state: OnramperState = { kind: 'idle' };
   lastError: OnramperError | null = null;
 
-  // Every listener attached to the global OnramperNative emitter — both the
-  // two internal ones (state mirror + session refresh) and any added by the
-  // host app via addStateListener / addEventListener. destroy() removes them
-  // all so re-constructing the client doesn't leave stale handlers firing.
-  private subs: EventSubscription[] = [];
+  // Each client owns its own native instance (and thus its own SDK client).
+  private readonly native = createOnramperNative();
 
-  // Resolved when the constructor-issued configure() round-trip completes.
-  // All public methods that need the native client (initialize / reset /
-  // getCheckoutRequirements) must await this first — otherwise the native
-  // side throws `notInitialized` because configure() hasn't yet set the
-  // client field.
+  private readonly stateListeners = new Set<(state: OnramperState) => void>();
+  private readonly eventListeners = new Set<(event: CheckoutEvent) => void>();
+
+  // Resolved when the constructor-issued configure() completes. Public methods
+  // that need the native client await this first.
   private readonly configured: Promise<void>;
 
-  constructor(private readonly config: OnramperConfiguration) {
-    this.subs.push(
-      OnramperNative.addListener('onStateChanged', (s: OnramperState) => {
-        this.state = s;
-        if (s.kind === 'failed') this.lastError = OnramperError.from(s.error);
-      }),
-    );
-
-    // Native asks for fresh credentials by emitting `onSessionExpired` with a
-    // token; we resolve it via `provideSessionCredentials` (or reject with
-    // `failSessionRefresh`). This is an event-based round-trip, not a JS
-    // callback — necessary because expo-modules-core ≥ SDK 56's
-    // `JavaScriptFunction` is `~Copyable` and cannot be stored on the native
-    // side. Async callbacks Just Work here.
-    this.subs.push(
-      OnramperNative.addListener('onSessionExpired', async ({ token }) => {
-        try {
-          const creds = await config.onSessionExpired();
-          await OnramperNative.provideSessionCredentials(token, {
-            sessionId: creds.sessionId,
-            sessionToken: creds.sessionToken,
-          });
-        } catch (e: unknown) {
-          const err = OnramperError.from(e);
-          await OnramperNative.failSessionRefresh(token, err.message).catch(() => undefined);
-        }
-      }),
-    );
-
-    this.configured = OnramperNative.configure({
-      apiKey: config.apiKey,
-      clientId: config.clientId,
-      environment: config.environment,
-      theme: config.theme ?? 'system',
-      logLevel: config.logLevel ?? 'off',
-    }).catch((e: unknown) => {
-      const err = OnramperError.from(e);
-      this.lastError = err;
-      throw err;
+  constructor(config: OnramperConfiguration) {
+    // Single native state callback → update the mirror + fan out to listeners.
+    this.native.setStateListener((json) => {
+      const s = JSON.parse(json) as OnramperState;
+      this.state = s;
+      if (s.kind === 'failed') this.lastError = OnramperError.from(s.error);
+      for (const fn of this.stateListeners) fn(s);
     });
+
+    // Single native checkout-event callback → fan out to listeners.
+    this.native.setEventListener((json) => {
+      const e = JSON.parse(json) as CheckoutEvent;
+      for (const fn of this.eventListeners) fn(e);
+    });
+
+    // The SDK calls this when its session expires; return fresh credentials.
+    // Nitro stores the async callback natively and awaits it directly — no
+    // event round-trip needed.
+    this.native.setSessionExpirationHandler(async () => {
+      const creds = await config.onSessionExpired();
+      return { sessionId: creds.sessionId, sessionToken: creds.sessionToken };
+    });
+
+    this.configured = this.native
+      .configure({
+        apiKey: config.apiKey,
+        clientId: config.clientId,
+        environment: config.environment,
+        theme: config.theme ?? 'system',
+        logLevel: config.logLevel ?? 'off',
+      })
+      .catch((e: unknown) => {
+        const err = OnramperError.from(e);
+        this.lastError = err;
+        throw err;
+      });
     // Swallow the unhandled-rejection warning when no one awaits .configured
     // before calling initialize(). The error still surfaces via initialize().
     this.configured.catch(() => undefined);
@@ -83,43 +69,16 @@ export class OnramperClient {
   async initialize(creds: SessionCredentials): Promise<void> {
     try {
       await this.configured;
-      await OnramperNative.initialize(creds.sessionId, creds.sessionToken);
+      await this.native.initialize(creds.sessionId, creds.sessionToken);
     } catch (e: unknown) {
       throw OnramperError.from(e);
     }
-  }
-
-  async getCheckoutRequirements(
-    request: CheckoutRequest,
-    buttonStyle: CheckoutButtonStyle = {},
-  ): Promise<GetCheckoutRequirementsResult> {
-    try {
-      await this.configured;
-      const result = await OnramperNative.getCheckoutRequirements(
-        request as unknown as Record<string, unknown>,
-        buttonStyle as unknown as Record<string, unknown>,
-      );
-      const button = React.createElement(OnramperCheckoutButtonView, {
-        intentHandle: result.intentHandle,
-        style: { width: '100%', minHeight: 56 },
-      });
-      return {
-        button,
-        quote: result.quote as unknown as QuoteResponse,
-      };
-    } catch (e: unknown) {
-      throw OnramperError.from(e);
-    }
-  }
-
-  cancelPreparedIntent(intentHandle: string): Promise<void> {
-    return OnramperNative.cancelPreparedIntent(intentHandle);
   }
 
   async reset(): Promise<void> {
     try {
       await this.configured;
-      await OnramperNative.reset();
+      await this.native.reset();
     } catch (e: unknown) {
       throw OnramperError.from(e);
     }
@@ -127,46 +86,42 @@ export class OnramperClient {
 
   /**
    * Signs the OnramperID user out by clearing stored OIDC tokens. The next
-   * checkout that requires user_info will trigger the OnramperID login sheet
-   * again. Also resets any in-flight checkout state.
-   *
-   * Does NOT clear the partner-scoped SDK session — re-calling `initialize`
-   * is only required if that session itself has expired.
+   * checkout that requires user_info will re-trigger the login flow. Also
+   * resets in-flight checkout state. Does NOT clear the partner-scoped SDK
+   * session — re-calling `initialize` is only needed if that session expired.
    */
   async signOut(): Promise<void> {
     try {
       await this.configured;
-      await OnramperNative.signOut();
+      await this.native.signOut();
     } catch (e: unknown) {
       throw OnramperError.from(e);
     }
   }
 
+  /** Subscribe to state changes. Returns an unsubscribe function. */
   addStateListener(fn: (state: OnramperState) => void): () => void {
-    return this.track(OnramperNative.addListener('onStateChanged', fn));
-  }
-
-  addEventListener<K extends EventName>(name: K, fn: (e: EventPayload<K>) => void): () => void {
-    return this.track(
-      OnramperNative.addListener('onCheckoutEvent', (e: CheckoutEvent) => {
-        if (e.type === name) fn(e as EventPayload<K>);
-      }),
-    );
-  }
-
-  destroy(): void {
-    for (const sub of this.subs) sub.remove();
-    this.subs = [];
-  }
-
-  /** Add `sub` to the per-client registry and return an unsubscribe that
-   *  also removes it from the registry — so caller-side cleanup and
-   *  destroy()-driven cleanup don't double-fire. */
-  private track(sub: EventSubscription): () => void {
-    this.subs.push(sub);
+    this.stateListeners.add(fn);
     return () => {
-      sub.remove();
-      this.subs = this.subs.filter((s) => s !== sub);
+      this.stateListeners.delete(fn);
     };
+  }
+
+  /** Subscribe to a specific checkout event. Returns an unsubscribe function. */
+  addEventListener<K extends EventName>(name: K, fn: (e: EventPayload<K>) => void): () => void {
+    const wrapper = (e: CheckoutEvent) => {
+      if (e.type === name) fn(e as EventPayload<K>);
+    };
+    this.eventListeners.add(wrapper);
+    return () => {
+      this.eventListeners.delete(wrapper);
+    };
+  }
+
+  /** Tear down: clears JS listeners and releases the native callbacks + SDK client. */
+  destroy(): void {
+    this.stateListeners.clear();
+    this.eventListeners.clear();
+    this.native.dispose();
   }
 }

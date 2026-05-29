@@ -125,83 +125,147 @@ open class HybridOnramperNitroSpec_cxx {
 
   // Methods
   @inline(__always)
-  public final func ping(message: std.string) -> bridge.Result_std__shared_ptr_Promise_std__string___ {
+  public final func configure(config: OnramperNitroConfig) -> bridge.Result_std__shared_ptr_Promise_void___ {
     do {
-      let __result = try self.__implementation.ping(message: String(message))
-      let __resultCpp = { () -> bridge.std__shared_ptr_Promise_std__string__ in
-        let __promise = bridge.create_std__shared_ptr_Promise_std__string__()
-        let __promiseHolder = bridge.wrap_std__shared_ptr_Promise_std__string__(__promise)
+      let __result = try self.__implementation.configure(config: config)
+      let __resultCpp = { () -> bridge.std__shared_ptr_Promise_void__ in
+        let __promise = bridge.create_std__shared_ptr_Promise_void__()
+        let __promiseHolder = bridge.wrap_std__shared_ptr_Promise_void__(__promise)
         __result
-          .then({ __result in __promiseHolder.resolve(std.string(__result)) })
+          .then({ __result in __promiseHolder.resolve() })
           .catch({ __error in __promiseHolder.reject(__error.toCpp()) })
         return __promise
       }()
-      return bridge.create_Result_std__shared_ptr_Promise_std__string___(__resultCpp)
+      return bridge.create_Result_std__shared_ptr_Promise_void___(__resultCpp)
     } catch (let __error) {
       let __exceptionPtr = __error.toCpp()
-      return bridge.create_Result_std__shared_ptr_Promise_std__string___(__exceptionPtr)
+      return bridge.create_Result_std__shared_ptr_Promise_void___(__exceptionPtr)
     }
   }
   
   @inline(__always)
-  public final func sdkProbe() -> bridge.Result_std__shared_ptr_Promise_std__string___ {
+  public final func initialize(sessionId: std.string, sessionToken: std.string) -> bridge.Result_std__shared_ptr_Promise_void___ {
     do {
-      let __result = try self.__implementation.sdkProbe()
-      let __resultCpp = { () -> bridge.std__shared_ptr_Promise_std__string__ in
-        let __promise = bridge.create_std__shared_ptr_Promise_std__string__()
-        let __promiseHolder = bridge.wrap_std__shared_ptr_Promise_std__string__(__promise)
+      let __result = try self.__implementation.initialize(sessionId: String(sessionId), sessionToken: String(sessionToken))
+      let __resultCpp = { () -> bridge.std__shared_ptr_Promise_void__ in
+        let __promise = bridge.create_std__shared_ptr_Promise_void__()
+        let __promiseHolder = bridge.wrap_std__shared_ptr_Promise_void__(__promise)
         __result
-          .then({ __result in __promiseHolder.resolve(std.string(__result)) })
+          .then({ __result in __promiseHolder.resolve() })
           .catch({ __error in __promiseHolder.reject(__error.toCpp()) })
         return __promise
       }()
-      return bridge.create_Result_std__shared_ptr_Promise_std__string___(__resultCpp)
+      return bridge.create_Result_std__shared_ptr_Promise_void___(__resultCpp)
     } catch (let __error) {
       let __exceptionPtr = __error.toCpp()
-      return bridge.create_Result_std__shared_ptr_Promise_std__string___(__exceptionPtr)
+      return bridge.create_Result_std__shared_ptr_Promise_void___(__exceptionPtr)
     }
   }
   
   @inline(__always)
-  public final func startTicker(onTick: bridge.Func_void_double) -> bridge.Result_std__shared_ptr_Promise_void___ {
+  public final func reset() -> bridge.Result_std__shared_ptr_Promise_void___ {
     do {
-      let __result = try self.__implementation.startTicker(onTick: { () -> (Double) -> Void in
-        let __wrappedFunction = bridge.wrap_Func_void_double(onTick)
-        return { (__count: Double) -> Void in
-          __wrappedFunction.call(__count)
+      let __result = try self.__implementation.reset()
+      let __resultCpp = { () -> bridge.std__shared_ptr_Promise_void__ in
+        let __promise = bridge.create_std__shared_ptr_Promise_void__()
+        let __promiseHolder = bridge.wrap_std__shared_ptr_Promise_void__(__promise)
+        __result
+          .then({ __result in __promiseHolder.resolve() })
+          .catch({ __error in __promiseHolder.reject(__error.toCpp()) })
+        return __promise
+      }()
+      return bridge.create_Result_std__shared_ptr_Promise_void___(__resultCpp)
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_std__shared_ptr_Promise_void___(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func signOut() -> bridge.Result_std__shared_ptr_Promise_void___ {
+    do {
+      let __result = try self.__implementation.signOut()
+      let __resultCpp = { () -> bridge.std__shared_ptr_Promise_void__ in
+        let __promise = bridge.create_std__shared_ptr_Promise_void__()
+        let __promiseHolder = bridge.wrap_std__shared_ptr_Promise_void__(__promise)
+        __result
+          .then({ __result in __promiseHolder.resolve() })
+          .catch({ __error in __promiseHolder.reject(__error.toCpp()) })
+        return __promise
+      }()
+      return bridge.create_Result_std__shared_ptr_Promise_void___(__resultCpp)
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_std__shared_ptr_Promise_void___(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func setStateListener(onState: bridge.Func_void_std__string) -> bridge.Result_void_ {
+    do {
+      try self.__implementation.setStateListener(onState: { () -> (String) -> Void in
+        let __wrappedFunction = bridge.wrap_Func_void_std__string(onState)
+        return { (__stateJson: String) -> Void in
+          __wrappedFunction.call(std.string(__stateJson))
         }
       }())
-      let __resultCpp = { () -> bridge.std__shared_ptr_Promise_void__ in
-        let __promise = bridge.create_std__shared_ptr_Promise_void__()
-        let __promiseHolder = bridge.wrap_std__shared_ptr_Promise_void__(__promise)
-        __result
-          .then({ __result in __promiseHolder.resolve() })
-          .catch({ __error in __promiseHolder.reject(__error.toCpp()) })
-        return __promise
-      }()
-      return bridge.create_Result_std__shared_ptr_Promise_void___(__resultCpp)
+      return bridge.create_Result_void_()
     } catch (let __error) {
       let __exceptionPtr = __error.toCpp()
-      return bridge.create_Result_std__shared_ptr_Promise_void___(__exceptionPtr)
+      return bridge.create_Result_void_(__exceptionPtr)
     }
   }
   
   @inline(__always)
-  public final func stopTicker() -> bridge.Result_std__shared_ptr_Promise_void___ {
+  public final func setEventListener(onEvent: bridge.Func_void_std__string) -> bridge.Result_void_ {
     do {
-      let __result = try self.__implementation.stopTicker()
-      let __resultCpp = { () -> bridge.std__shared_ptr_Promise_void__ in
-        let __promise = bridge.create_std__shared_ptr_Promise_void__()
-        let __promiseHolder = bridge.wrap_std__shared_ptr_Promise_void__(__promise)
-        __result
-          .then({ __result in __promiseHolder.resolve() })
-          .catch({ __error in __promiseHolder.reject(__error.toCpp()) })
-        return __promise
-      }()
-      return bridge.create_Result_std__shared_ptr_Promise_void___(__resultCpp)
+      try self.__implementation.setEventListener(onEvent: { () -> (String) -> Void in
+        let __wrappedFunction = bridge.wrap_Func_void_std__string(onEvent)
+        return { (__eventJson: String) -> Void in
+          __wrappedFunction.call(std.string(__eventJson))
+        }
+      }())
+      return bridge.create_Result_void_()
     } catch (let __error) {
       let __exceptionPtr = __error.toCpp()
-      return bridge.create_Result_std__shared_ptr_Promise_void___(__exceptionPtr)
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func setSessionExpirationHandler(handler: bridge.Func_std__shared_ptr_Promise_std__shared_ptr_Promise_NitroSessionCredentials____) -> bridge.Result_void_ {
+    do {
+      try self.__implementation.setSessionExpirationHandler(handler: { () -> () -> Promise<Promise<NitroSessionCredentials>> in
+        let __wrappedFunction = bridge.wrap_Func_std__shared_ptr_Promise_std__shared_ptr_Promise_NitroSessionCredentials____(handler)
+        return { () -> Promise<Promise<NitroSessionCredentials>> in
+          let __result = __wrappedFunction.call()
+          return { () -> Promise<Promise<NitroSessionCredentials>> in
+            let __promise = Promise<Promise<NitroSessionCredentials>>()
+            let __resolver = { (__result: Promise<NitroSessionCredentials>) in
+              __promise.resolve(withResult: __result)
+            }
+            let __rejecter = { (__error: Error) in
+              __promise.reject(withError: __error)
+            }
+            let __resolverCpp = { () -> bridge.Func_void_std__shared_ptr_Promise_NitroSessionCredentials__ in
+              let __closureWrapper = Func_void_std__shared_ptr_Promise_NitroSessionCredentials__(__resolver)
+              return bridge.create_Func_void_std__shared_ptr_Promise_NitroSessionCredentials__(__closureWrapper.toUnsafe())
+            }()
+            let __rejecterCpp = { () -> bridge.Func_void_std__exception_ptr in
+              let __closureWrapper = Func_void_std__exception_ptr(__rejecter)
+              return bridge.create_Func_void_std__exception_ptr(__closureWrapper.toUnsafe())
+            }()
+            let __promiseHolder = bridge.wrap_std__shared_ptr_Promise_std__shared_ptr_Promise_NitroSessionCredentials____(__result)
+            __promiseHolder.addOnResolvedListener(__resolverCpp)
+            __promiseHolder.addOnRejectedListener(__rejecterCpp)
+            return __promise
+          }()
+        }
+      }())
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
     }
   }
 }
