@@ -7,6 +7,6 @@ module.exports = {
     '^.+\\.(ts|tsx)$': ['ts-jest', { tsconfig: { jsx: 'react' } }],
   },
   moduleNameMapper: {
-    '^expo-modules-core$': '<rootDir>/__tests__/__mocks__/expo-modules-core.ts',
+    '^react-native-nitro-modules$': '<rootDir>/__tests__/__mocks__/react-native-nitro-modules.ts',
   },
 };
