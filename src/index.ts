@@ -8,9 +8,11 @@ export { OnramperError } from './errors';
 export type { OnramperErrorCode, OnramperErrorPayload } from './errors';
 export type {
   CheckoutButtonStyle,
+  CheckoutFinalizeResponse,
   CheckoutRequest,
   CheckoutPaymentType,
   CheckoutRequirement,
+  HeadlessCheckoutData,
   OnramperConfiguration,
   OnramperEnvironment,
   OnramperLogLevel,

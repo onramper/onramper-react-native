@@ -83,6 +83,19 @@ export type RenderType = 'webview' | 'deeplink';
 // Mirrors Swift `CheckoutPaymentType` raw values from Models/SharedTypes.swift.
 export type CheckoutPaymentType = 'applepay' | 'revolutpay';
 
+// Mirrors Swift `CheckoutFinalizeResponse` / `HeadlessCheckoutData`
+// (Sources/OnramperSDK/Models/CheckoutFinalizeResponse.swift).
+export interface HeadlessCheckoutData {
+  checkoutPaymentType: CheckoutPaymentType;
+  url: string;
+  renderType: RenderType;
+}
+
+export interface CheckoutFinalizeResponse {
+  headlessCheckoutId: string;
+  headlessCheckoutData: HeadlessCheckoutData;
+}
+
 // Checkout requirements surfaced by the BFF and bridged through JSON.
 // Shape mirrors Sources/OnramperSDK/Models/CheckoutIntentResponse.swift.
 export type CheckoutRequirement =
