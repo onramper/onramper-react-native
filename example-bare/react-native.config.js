@@ -15,7 +15,7 @@ module.exports = {
       root: repoRoot,
       platforms: {
         ios: {
-          podspecPath: path.join(repoRoot, 'ios', 'OnramperReactNative.podspec'),
+          podspecPath: path.join(repoRoot, 'OnramperReactNative.podspec'),
         },
       },
     },

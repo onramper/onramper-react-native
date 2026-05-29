@@ -39,5 +39,28 @@ target 'OnramperBare' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # Xcode 16+/26 enables explicit Swift modules by default. With CocoaPods +
+    # Swift pods (NitroModules, OnramperReactNative, RN's RCTSwiftUI) this makes
+    # the app target's "Emit Swift module" phase demand each dependency's
+    # *.modulemap as an explicit input before those pods are built — failing with
+    # "module map file ... not found". Falling back to implicit modules restores
+    # normal dependency-ordered builds. Applied to the pods project AND the app
+    # target (the failing Emit Swift module is on the app target).
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['SWIFT_ENABLE_EXPLICIT_MODULES'] = 'NO'
+      end
+    end
+    installer.aggregate_targets.each do |aggregate_target|
+      user_project = aggregate_target.user_project
+      next if user_project.nil?
+      user_project.native_targets.each do |target|
+        target.build_configurations.each do |config|
+          config.build_settings['SWIFT_ENABLE_EXPLICIT_MODULES'] = 'NO'
+        end
+      end
+      user_project.save
+    end
   end
 end

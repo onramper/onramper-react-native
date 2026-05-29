@@ -1773,7 +1773,7 @@ DEPENDENCIES:
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - NitroModules (from `../node_modules/react-native-nitro-modules`)
-  - OnramperReactNative (from `../../ios`)
+  - OnramperReactNative (from `../..`)
   - RCTDeprecation (from `../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation`)
   - RCTRequired (from `../node_modules/react-native/Libraries/Required`)
   - RCTSwiftUI (from `../node_modules/react-native/ReactApple/RCTSwiftUI`)
@@ -1857,7 +1857,7 @@ EXTERNAL SOURCES:
   NitroModules:
     :path: "../node_modules/react-native-nitro-modules"
   OnramperReactNative:
-    :path: "../../ios"
+    :path: "../.."
   RCTDeprecation:
     :path: "../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation"
   RCTRequired:
@@ -2007,7 +2007,7 @@ SPEC CHECKSUMS:
   FBLazyVector: 473b935415b82ae4f7f9aa9d5b3378491143ccbf
   hermes-engine: 40c612cdf73020582dec09710c7fc301dfd4e5e0
   NitroModules: 5be94bacb7c185364172a58c4d8eeae3706966a6
-  OnramperReactNative: 3f342ee5e8e6b624d7a1328f18ff9739e5e791ac
+  OnramperReactNative: 3e56eeedb1e8e183eaa3e3a5b8e35059ba035fba
   RCTDeprecation: 225e022b85a206cf0883a909c4a114159783363c
   RCTRequired: 827a95c181af0886a11e21bc66c084088cf87839
   RCTSwiftUI: 7babb07156ae0a8e5ea97f77e43959ddaca2c6f2
@@ -2081,6 +2081,6 @@ SPEC CHECKSUMS:
   ReactNativeDependencies: 31f314df048868de6d1e345711ba71e66f2c2a2c
   Yoga: 2fe23f676416a73cb4be2c15929e352c9395b9cf
 
-PODFILE CHECKSUM: a7e28b102c2378604690b34a40ca611b2eaea7b0
+PODFILE CHECKSUM: ccd00ec74d3901490a56319174df357bc6786441
 
 COCOAPODS: 1.15.2
