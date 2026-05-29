@@ -13,7 +13,13 @@ export type CheckoutEvent =
   | { type: 'renderingStarted'; url: string; renderType: RenderType }
   | { type: 'completed'; checkoutId: string }
   | { type: 'failed'; error: OnramperErrorPayload }
-  | { type: 'cancelled' };
+  | { type: 'cancelled' }
+  // Provider-lifecycle events from third-party checkout webviews.
+  | { type: 'providerReady' }
+  | { type: 'paymentAuthorized' }
+  | { type: 'paymentProcessing' }
+  | { type: 'paymentCancelled' }
+  | { type: 'providerError'; reason: string };
 
 export type EventName = CheckoutEvent['type'];
 export type EventPayload<K extends EventName> = Extract<CheckoutEvent, { type: K }>;

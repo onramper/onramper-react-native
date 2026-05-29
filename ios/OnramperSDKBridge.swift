@@ -141,6 +141,17 @@ extension CheckoutEvent {
       return ["type": "failed", "error": err.toJSDict()]
     case .checkoutCancelled:
       return ["type": "cancelled"]
+    // Provider-lifecycle events (third-party checkout webviews).
+    case .providerReady:
+      return ["type": "providerReady"]
+    case .paymentAuthorized:
+      return ["type": "paymentAuthorized"]
+    case .paymentProcessing:
+      return ["type": "paymentProcessing"]
+    case .paymentCancelled:
+      return ["type": "paymentCancelled"]
+    case .providerError(let reason):
+      return ["type": "providerError", "reason": reason]
     }
   }
 }
