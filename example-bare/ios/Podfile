@@ -6,15 +6,6 @@ require Pod::Executable.execute_command('node', ['-p',
   )', __dir__]).strip
 
 platform :ios, '16.4'
-
-# RN 0.81+ ships a precompiled React Native Core (React-Core-prebuilt) by
-# default. Its distribution does not expose module maps for Swift the way a
-# source build does, so Swift code that imports React — the stock
-# AppDelegate.swift AND our Nitro pod's generated specs — fails with
-# "No such module 'React'" / missing module map. Building RN core from source
-# fixes it. (Slower build, but reliable for this spike/example app.)
-ENV['RCT_USE_PREBUILT_RNCORE'] = '0'
-
 prepare_react_native_project!
 
 linkage = ENV['USE_FRAMEWORKS']
@@ -40,13 +31,16 @@ target 'OnramperBare' do
       # :ccache_enabled => true
     )
 
+    # THE single RN-0.85 + Xcode-26 fix needed for this Swift/Nitro setup.
     # Xcode 16+/26 enables explicit Swift modules by default. With CocoaPods +
-    # Swift pods (NitroModules, OnramperReactNative, RN's RCTSwiftUI) this makes
-    # the app target's "Emit Swift module" phase demand each dependency's
-    # *.modulemap as an explicit input before those pods are built — failing with
-    # "module map file ... not found". Falling back to implicit modules restores
-    # normal dependency-ordered builds. Applied to the pods project AND the app
-    # target (the failing Emit Swift module is on the app target).
+    # Swift pods (NitroModules, OnramperReactNative, RN's RCTSwiftUI) the app
+    # target's "Emit Swift module" phase demands each dependency's *.modulemap as
+    # an explicit input before those pods are built — surfacing first as
+    # "No such module 'React'" and then "module map file ... not found".
+    # Falling back to implicit modules restores normal dependency-ordered builds.
+    # (Verified empirically: this alone is sufficient — the precompiled React
+    # Native Core can stay ON, so we keep the faster prebuilt builds.)
+    # Applied to the pods project AND the app target.
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
         config.build_settings['SWIFT_ENABLE_EXPLICIT_MODULES'] = 'NO'

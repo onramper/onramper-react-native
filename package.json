@@ -9,7 +9,9 @@
     "src",
     "ios",
     "android",
+    "nitrogen/generated",
     "nitro.json",
+    "OnramperReactNative.podspec",
     "README.md",
     "CHANGELOG.md",
     "LICENSE"
