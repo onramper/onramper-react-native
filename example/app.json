@@ -4,8 +4,10 @@
     "slug": "onramper-react-native-example",
     "version": "1.0.0",
     "platforms": ["ios"],
+    "newArchEnabled": true,
+    "plugins": ["@onramper/react-native"],
     "ios": {
-      "bundleIdentifier": "com.onramper.demo.react-native",
+      "bundleIdentifier": "com.onramper.demo.react-native-expo",
       "deploymentTarget": "16.4",
       "entitlements": {
         "com.apple.developer.devicecheck.appattest-environment": "development"
