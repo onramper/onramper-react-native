@@ -14,12 +14,15 @@ Pod::Spec.new do |s|
   s.swift_version  = '5.9'
   s.source         = { :git => "#{package['repository']}.git", :tag => "v#{s.version}" }
 
-  s.dependency 'ExpoModulesCore'
-
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
   }
 
-  s.source_files        = '*.{h,m,mm,swift,hpp,cpp}', 'Bridging/**/*.{h,m,mm,swift,hpp,cpp}'
+  # Legacy Expo-dependent Swift files (OnramperReactNativeModule.swift,
+  # OnramperCheckoutButtonView.swift, Bridging/*.swift, PreparedIntentRegistry.swift)
+  # are intentionally excluded during the Nitro migration. They remain in the
+  # repo for reference; new Nitro implementation files (Hybrid*.swift, Nitro*.swift)
+  # are added in subsequent tasks.
+  s.source_files        = 'Hybrid*.swift', 'Nitro*.swift'
   s.vendored_frameworks = 'Frameworks/OnramperSDK.xcframework'
 end

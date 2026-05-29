@@ -1,0 +1,12 @@
+{
+  "$schema": "https://nitro.margelo.com/nitro.schema.json",
+  "cxxNamespace": ["onramper"],
+  "ios": {
+    "iosModuleName": "OnramperReactNative"
+  },
+  "android": {
+    "androidNamespace": ["onramper"],
+    "androidCxxLibName": "OnramperReactNative"
+  },
+  "autolinking": {}
+}
