@@ -33,4 +33,11 @@ Pod::Spec.new do |s|
 
   load File.join(__dir__, 'nitrogen', 'generated', 'ios', 'OnramperReactNative+autolinking.rb')
   add_nitrogen_files(s)
+
+  # Wires up the React Native new-architecture dependencies and header search
+  # paths (React-Core, React-RCTFabric, ReactCommon, Yoga, folly, …). Required
+  # because our Nitro View's generated code includes React Fabric headers, which
+  # transitively include yoga/style/Style.h — without this the pod fails to
+  # compile with "'yoga/style/Style.h' file not found".
+  install_modules_dependencies(s)
 end

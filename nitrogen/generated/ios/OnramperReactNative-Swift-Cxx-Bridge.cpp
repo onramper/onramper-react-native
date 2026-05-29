@@ -8,12 +8,29 @@
 #include "OnramperReactNative-Swift-Cxx-Bridge.hpp"
 
 // Include C++ implementation defined types
+#include "HybridNitroSpikeViewSpecSwift.hpp"
 #include "HybridOnramperNitroSpecSwift.hpp"
 #include "OnramperReactNative-Swift-Cxx-Umbrella.hpp"
 #include <NitroModules/NitroDefines.hpp>
 
 namespace margelo::nitro::onramper::bridge::swift {
 
+  // pragma MARK: std::shared_ptr<HybridNitroSpikeViewSpec>
+  std::shared_ptr<HybridNitroSpikeViewSpec> create_std__shared_ptr_HybridNitroSpikeViewSpec_(void* NON_NULL swiftUnsafePointer) noexcept {
+    OnramperReactNative::HybridNitroSpikeViewSpec_cxx swiftPart = OnramperReactNative::HybridNitroSpikeViewSpec_cxx::fromUnsafe(swiftUnsafePointer);
+    return std::make_shared<margelo::nitro::onramper::HybridNitroSpikeViewSpecSwift>(swiftPart);
+  }
+  void* NON_NULL get_std__shared_ptr_HybridNitroSpikeViewSpec_(std__shared_ptr_HybridNitroSpikeViewSpec_ cppType) {
+    std::shared_ptr<margelo::nitro::onramper::HybridNitroSpikeViewSpecSwift> swiftWrapper = std::dynamic_pointer_cast<margelo::nitro::onramper::HybridNitroSpikeViewSpecSwift>(cppType);
+    #ifdef NITRO_DEBUG
+    if (swiftWrapper == nullptr) [[unlikely]] {
+      throw std::runtime_error("Class \"HybridNitroSpikeViewSpec\" is not implemented in Swift!");
+    }
+    #endif
+    OnramperReactNative::HybridNitroSpikeViewSpec_cxx& swiftPart = swiftWrapper->getSwiftPart();
+    return swiftPart.toUnsafe();
+  }
+  
   // pragma MARK: std::function<void(const std::string& /* result */)>
   Func_void_std__string create_Func_void_std__string(void* NON_NULL swiftClosureWrapper) noexcept {
     auto swiftClosure = OnramperReactNative::Func_void_std__string::fromUnsafe(swiftClosureWrapper);
@@ -27,6 +44,22 @@ namespace margelo::nitro::onramper::bridge::swift {
     auto swiftClosure = OnramperReactNative::Func_void_std__exception_ptr::fromUnsafe(swiftClosureWrapper);
     return [swiftClosure = std::move(swiftClosure)](const std::exception_ptr& error) mutable -> void {
       swiftClosure.call(error);
+    };
+  }
+  
+  // pragma MARK: std::function<void()>
+  Func_void create_Func_void(void* NON_NULL swiftClosureWrapper) noexcept {
+    auto swiftClosure = OnramperReactNative::Func_void::fromUnsafe(swiftClosureWrapper);
+    return [swiftClosure = std::move(swiftClosure)]() mutable -> void {
+      swiftClosure.call();
+    };
+  }
+  
+  // pragma MARK: std::function<void(double /* count */)>
+  Func_void_double create_Func_void_double(void* NON_NULL swiftClosureWrapper) noexcept {
+    auto swiftClosure = OnramperReactNative::Func_void_double::fromUnsafe(swiftClosureWrapper);
+    return [swiftClosure = std::move(swiftClosure)](double count) mutable -> void {
+      swiftClosure.call(count);
     };
   }
   

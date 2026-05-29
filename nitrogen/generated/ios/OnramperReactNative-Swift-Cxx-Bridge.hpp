@@ -8,14 +8,19 @@
 #pragma once
 
 // Forward declarations of C++ defined types
+// Forward declaration of `HybridNitroSpikeViewSpec` to properly resolve imports.
+namespace margelo::nitro::onramper { class HybridNitroSpikeViewSpec; }
 // Forward declaration of `HybridOnramperNitroSpec` to properly resolve imports.
 namespace margelo::nitro::onramper { class HybridOnramperNitroSpec; }
 
 // Forward declarations of Swift defined types
+// Forward declaration of `HybridNitroSpikeViewSpec_cxx` to properly resolve imports.
+namespace OnramperReactNative { class HybridNitroSpikeViewSpec_cxx; }
 // Forward declaration of `HybridOnramperNitroSpec_cxx` to properly resolve imports.
 namespace OnramperReactNative { class HybridOnramperNitroSpec_cxx; }
 
 // Include C++ defined types
+#include "HybridNitroSpikeViewSpec.hpp"
 #include "HybridOnramperNitroSpec.hpp"
 #include <NitroModules/Promise.hpp>
 #include <NitroModules/PromiseHolder.hpp>
@@ -31,6 +36,18 @@ namespace OnramperReactNative { class HybridOnramperNitroSpec_cxx; }
  */
 namespace margelo::nitro::onramper::bridge::swift {
 
+  // pragma MARK: std::shared_ptr<HybridNitroSpikeViewSpec>
+  /**
+   * Specialized version of `std::shared_ptr<HybridNitroSpikeViewSpec>`.
+   */
+  using std__shared_ptr_HybridNitroSpikeViewSpec_ = std::shared_ptr<HybridNitroSpikeViewSpec>;
+  std::shared_ptr<HybridNitroSpikeViewSpec> create_std__shared_ptr_HybridNitroSpikeViewSpec_(void* NON_NULL swiftUnsafePointer) noexcept;
+  void* NON_NULL get_std__shared_ptr_HybridNitroSpikeViewSpec_(std__shared_ptr_HybridNitroSpikeViewSpec_ cppType);
+  
+  // pragma MARK: std::weak_ptr<HybridNitroSpikeViewSpec>
+  using std__weak_ptr_HybridNitroSpikeViewSpec_ = std::weak_ptr<HybridNitroSpikeViewSpec>;
+  inline std__weak_ptr_HybridNitroSpikeViewSpec_ weakify_std__shared_ptr_HybridNitroSpikeViewSpec_(const std::shared_ptr<HybridNitroSpikeViewSpec>& strong) noexcept { return strong; }
+  
   // pragma MARK: std::shared_ptr<Promise<std::string>>
   /**
    * Specialized version of `std::shared_ptr<Promise<std::string>>`.
@@ -87,6 +104,62 @@ namespace margelo::nitro::onramper::bridge::swift {
     return Func_void_std__exception_ptr_Wrapper(std::move(value));
   }
   
+  // pragma MARK: std::shared_ptr<Promise<void>>
+  /**
+   * Specialized version of `std::shared_ptr<Promise<void>>`.
+   */
+  using std__shared_ptr_Promise_void__ = std::shared_ptr<Promise<void>>;
+  inline std::shared_ptr<Promise<void>> create_std__shared_ptr_Promise_void__() noexcept {
+    return Promise<void>::create();
+  }
+  inline PromiseHolder<void> wrap_std__shared_ptr_Promise_void__(std::shared_ptr<Promise<void>> promise) noexcept {
+    return PromiseHolder<void>(std::move(promise));
+  }
+  
+  // pragma MARK: std::function<void()>
+  /**
+   * Specialized version of `std::function<void()>`.
+   */
+  using Func_void = std::function<void()>;
+  /**
+   * Wrapper class for a `std::function<void()>`, this can be used from Swift.
+   */
+  class Func_void_Wrapper final {
+  public:
+    explicit Func_void_Wrapper(std::function<void()>&& func): _function(std::make_unique<std::function<void()>>(std::move(func))) {}
+    inline void call() const noexcept {
+      _function->operator()();
+    }
+  private:
+    std::unique_ptr<std::function<void()>> _function;
+  } SWIFT_NONCOPYABLE;
+  Func_void create_Func_void(void* NON_NULL swiftClosureWrapper) noexcept;
+  inline Func_void_Wrapper wrap_Func_void(Func_void value) noexcept {
+    return Func_void_Wrapper(std::move(value));
+  }
+  
+  // pragma MARK: std::function<void(double /* count */)>
+  /**
+   * Specialized version of `std::function<void(double)>`.
+   */
+  using Func_void_double = std::function<void(double /* count */)>;
+  /**
+   * Wrapper class for a `std::function<void(double / * count * /)>`, this can be used from Swift.
+   */
+  class Func_void_double_Wrapper final {
+  public:
+    explicit Func_void_double_Wrapper(std::function<void(double /* count */)>&& func): _function(std::make_unique<std::function<void(double /* count */)>>(std::move(func))) {}
+    inline void call(double count) const noexcept {
+      _function->operator()(count);
+    }
+  private:
+    std::unique_ptr<std::function<void(double /* count */)>> _function;
+  } SWIFT_NONCOPYABLE;
+  Func_void_double create_Func_void_double(void* NON_NULL swiftClosureWrapper) noexcept;
+  inline Func_void_double_Wrapper wrap_Func_void_double(Func_void_double value) noexcept {
+    return Func_void_double_Wrapper(std::move(value));
+  }
+  
   // pragma MARK: std::shared_ptr<HybridOnramperNitroSpec>
   /**
    * Specialized version of `std::shared_ptr<HybridOnramperNitroSpec>`.
@@ -106,6 +179,15 @@ namespace margelo::nitro::onramper::bridge::swift {
   }
   inline Result_std__shared_ptr_Promise_std__string___ create_Result_std__shared_ptr_Promise_std__string___(const std::exception_ptr& error) noexcept {
     return Result<std::shared_ptr<Promise<std::string>>>::withError(error);
+  }
+  
+  // pragma MARK: Result<std::shared_ptr<Promise<void>>>
+  using Result_std__shared_ptr_Promise_void___ = Result<std::shared_ptr<Promise<void>>>;
+  inline Result_std__shared_ptr_Promise_void___ create_Result_std__shared_ptr_Promise_void___(const std::shared_ptr<Promise<void>>& value) noexcept {
+    return Result<std::shared_ptr<Promise<void>>>::withValue(value);
+  }
+  inline Result_std__shared_ptr_Promise_void___ create_Result_std__shared_ptr_Promise_void___(const std::exception_ptr& error) noexcept {
+    return Result<std::shared_ptr<Promise<void>>>::withError(error);
   }
 
 } // namespace margelo::nitro::onramper::bridge::swift

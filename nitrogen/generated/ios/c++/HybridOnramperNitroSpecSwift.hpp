@@ -16,6 +16,7 @@ namespace OnramperReactNative { class HybridOnramperNitroSpec_cxx; }
 
 #include <string>
 #include <NitroModules/Promise.hpp>
+#include <functional>
 
 #include "OnramperReactNative-Swift-Cxx-Umbrella.hpp"
 
@@ -69,6 +70,30 @@ namespace margelo::nitro::onramper {
     // Methods
     inline std::shared_ptr<Promise<std::string>> ping(const std::string& message) override {
       auto __result = _swiftPart.ping(message);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
+    inline std::shared_ptr<Promise<std::string>> sdkProbe() override {
+      auto __result = _swiftPart.sdkProbe();
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
+    inline std::shared_ptr<Promise<void>> startTicker(const std::function<void(double /* count */)>& onTick) override {
+      auto __result = _swiftPart.startTicker(onTick);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
+    inline std::shared_ptr<Promise<void>> stopTicker() override {
+      auto __result = _swiftPart.stopTicker();
       if (__result.hasError()) [[unlikely]] {
         std::rethrow_exception(__result.error());
       }

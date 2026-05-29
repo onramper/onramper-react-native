@@ -8,14 +8,18 @@
 #pragma once
 
 // Forward declarations of C++ defined types
+// Forward declaration of `HybridNitroSpikeViewSpec` to properly resolve imports.
+namespace margelo::nitro::onramper { class HybridNitroSpikeViewSpec; }
 // Forward declaration of `HybridOnramperNitroSpec` to properly resolve imports.
 namespace margelo::nitro::onramper { class HybridOnramperNitroSpec; }
 
 // Include C++ defined types
+#include "HybridNitroSpikeViewSpec.hpp"
 #include "HybridOnramperNitroSpec.hpp"
 #include <NitroModules/Promise.hpp>
 #include <NitroModules/Result.hpp>
 #include <exception>
+#include <functional>
 #include <memory>
 #include <string>
 
@@ -29,6 +33,8 @@ namespace margelo::nitro::onramper { class HybridOnramperNitroSpec; }
 #include <NitroModules/DateToChronoDate.hpp>
 
 // Forward declarations of Swift defined types
+// Forward declaration of `HybridNitroSpikeViewSpec_cxx` to properly resolve imports.
+namespace OnramperReactNative { class HybridNitroSpikeViewSpec_cxx; }
 // Forward declaration of `HybridOnramperNitroSpec_cxx` to properly resolve imports.
 namespace OnramperReactNative { class HybridOnramperNitroSpec_cxx; }
 

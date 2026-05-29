@@ -14,6 +14,9 @@ public protocol HybridOnramperNitroSpec_protocol: HybridObject {
 
   // Methods
   func ping(message: String) throws -> Promise<String>
+  func sdkProbe() throws -> Promise<String>
+  func startTicker(onTick: @escaping (_ count: Double) -> Void) throws -> Promise<Void>
+  func stopTicker() throws -> Promise<Void>
 }
 
 public extension HybridOnramperNitroSpec_protocol {

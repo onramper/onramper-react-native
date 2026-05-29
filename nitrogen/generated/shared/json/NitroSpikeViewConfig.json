@@ -1,0 +1,10 @@
+{
+  "uiViewClassName": "NitroSpikeView",
+  "supportsRawText": false,
+  "bubblingEventTypes": {},
+  "directEventTypes": {},
+  "validAttributes": {
+    "label": true,
+    "hybridRef": true
+  }
+}

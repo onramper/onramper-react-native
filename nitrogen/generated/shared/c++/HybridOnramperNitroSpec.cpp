@@ -15,6 +15,9 @@ namespace margelo::nitro::onramper {
     // load custom methods/properties
     registerHybrids(this, [](Prototype& prototype) {
       prototype.registerHybridMethod("ping", &HybridOnramperNitroSpec::ping);
+      prototype.registerHybridMethod("sdkProbe", &HybridOnramperNitroSpec::sdkProbe);
+      prototype.registerHybridMethod("startTicker", &HybridOnramperNitroSpec::startTicker);
+      prototype.registerHybridMethod("stopTicker", &HybridOnramperNitroSpec::stopTicker);
     });
   }
 
