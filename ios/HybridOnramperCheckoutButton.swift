@@ -42,6 +42,10 @@ final class CheckoutContainerView: UIView {
 
   @MainActor
   func host(_ rootView: AnyView) {
+    // Re-hosting (e.g. when `intentHandle` changes) must tear the previous
+    // controller down first, otherwise its view/constraints accumulate and the
+    // old controller stays childed to the parent VC.
+    detachHosted()
     let controller = UIHostingController(rootView: rootView)
     controller.view.backgroundColor = .clear
     controller.view.translatesAutoresizingMaskIntoConstraints = false
@@ -77,7 +81,20 @@ final class CheckoutContainerView: UIView {
     return nil
   }
 
+  /// Detaches the currently hosted controller from the VC hierarchy and removes
+  /// its view/constraints. Safe to call when nothing is hosted.
+  @MainActor
+  private func detachHosted() {
+    guard let controller = hostingController else { return }
+    controller.willMove(toParent: nil)
+    controller.view.removeFromSuperview()
+    controller.removeFromParent()
+    hostingController = nil
+  }
+
   deinit {
+    // deinit can't hop to @MainActor; the container is torn down on the main
+    // thread by UIKit, so touching the controller here is safe.
     if let controller = hostingController {
       controller.willMove(toParent: nil)
       controller.view.removeFromSuperview()

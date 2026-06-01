@@ -19,6 +19,10 @@ final class HybridOnramperNitro: HybridOnramperNitroSpec {
   // returns Promise<NitroSessionCredentials>, hence the doubly-nested Promise.
   private var sessionHandler: (() -> Promise<Promise<NitroSessionCredentials>>)?
 
+  // Handle of the most recent prepared intent owned by *this* client, used to
+  // enforce single-flight per client without touching other clients' intents.
+  private var lastPreparedHandle: String?
+
   // MARK: - Listener registration (synchronous)
 
   func setStateListener(onState: @escaping (String) -> Void) {
@@ -148,17 +152,25 @@ final class HybridOnramperNitro: HybridOnramperNitroSpec {
     let request = try decodeCheckoutRequest(requestJson)
     let style = decodeCheckoutButtonStyle(styleJson)
 
-    // Single-flight: a new prepared intent supersedes any prior unconsumed one.
-    await PreparedIntentRegistry.shared.invalidateAll()
+    // Single-flight, scoped to this client: a new prepared intent supersedes
+    // this instance's prior unconsumed one, but leaves other clients' intents
+    // in the shared registry untouched.
+    if let prev = lastPreparedHandle {
+      await PreparedIntentRegistry.shared.drop(prev)
+    }
 
     let result = try await client.getCheckoutRequirements(request, buttonStyle: style)
     let entry = PreparedIntentRegistry.PreparedIntent(button: AnyView(result.button), createdAt: Date())
     let handle = await PreparedIntentRegistry.shared.store(entry)
+    lastPreparedHandle = handle
     let quoteDict = (codableToJSValue(result.quote) as? [String: Any]) ?? [:]
     return PreparedIntentResult(intentHandle: handle, quoteJson: jsonString(quoteDict))
   }
 
   func cancelPreparedIntent(intentHandle: String) throws -> Promise<Void> {
+    if intentHandle == lastPreparedHandle {
+      lastPreparedHandle = nil
+    }
     return Promise.async {
       await PreparedIntentRegistry.shared.drop(intentHandle)
     }
@@ -176,6 +188,7 @@ final class HybridOnramperNitro: HybridOnramperNitroSpec {
     onState = nil
     onEvent = nil
     sessionHandler = nil
+    lastPreparedHandle = nil
     client = nil
   }
 }

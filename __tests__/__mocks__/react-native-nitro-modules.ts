@@ -11,6 +11,8 @@ export interface MockNative {
   setStateListener: jest.Mock;
   setEventListener: jest.Mock;
   setSessionExpirationHandler: jest.Mock;
+  getCheckoutRequirements: jest.Mock;
+  cancelPreparedIntent: jest.Mock;
   dispose: jest.Mock;
   // Captured callbacks (set by the corresponding setters):
   __stateListener?: (json: string) => void;
@@ -33,6 +35,8 @@ function makeNative(): MockNative {
     setSessionExpirationHandler: jest.fn((fn: () => Promise<{ sessionId: string; sessionToken: string }>) => {
       native.__sessionHandler = fn;
     }),
+    getCheckoutRequirements: jest.fn().mockResolvedValue({ intentHandle: 'handle', quoteJson: '{}' }),
+    cancelPreparedIntent: jest.fn().mockResolvedValue(undefined),
     dispose: jest.fn(),
   } as MockNative;
   return native;

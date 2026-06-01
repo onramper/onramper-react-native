@@ -1,10 +1,21 @@
+import { isValidElement } from 'react';
 import { OnramperClient } from '../src/OnramperClient';
+import type { CheckoutRequest } from '../src/types';
 import { __lastNative } from './__mocks__/react-native-nitro-modules';
 
 const baseConfig = {
   apiKey: 'k',
   clientId: 'c',
   environment: 'development' as const,
+};
+
+const checkoutRequest: CheckoutRequest = {
+  source: 'usd',
+  destination: 'eth',
+  amount: 100,
+  type: 'buy',
+  paymentMethod: 'creditcard',
+  wallet: { network: 'ethereum', address: '0xabc' },
 };
 
 const tick = () => new Promise<void>((r) => setImmediate(r));
@@ -60,6 +71,47 @@ describe('OnramperClient', () => {
     await client.signOut();
     expect(native.configure).toHaveBeenCalled();
     expect(native.signOut).toHaveBeenCalledTimes(1);
+  });
+
+  it('getCheckoutRequirements serializes request/style and parses the quote', async () => {
+    const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
+    const native = __lastNative();
+    const quote = { quoteId: 'q1', ramp: 'moonpay', payout: 0.03 };
+    native.getCheckoutRequirements.mockResolvedValueOnce({
+      intentHandle: 'intent-1',
+      quoteJson: JSON.stringify(quote),
+    });
+
+    const style = { borderRadius: 12 };
+    const result = await client.getCheckoutRequirements(checkoutRequest, style);
+
+    // JSON contract: request and style are serialized as JSON strings.
+    expect(native.getCheckoutRequirements).toHaveBeenCalledWith(JSON.stringify(checkoutRequest), JSON.stringify(style));
+    // Quote is parsed back from quoteJson.
+    expect(result.quote).toEqual(quote);
+    // A native checkout button element is returned for rendering.
+    expect(isValidElement(result.button)).toBe(true);
+  });
+
+  it('getCheckoutRequirements defaults buttonStyle to {} when omitted', async () => {
+    const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
+    const native = __lastNative();
+    native.getCheckoutRequirements.mockResolvedValueOnce({ intentHandle: 'h', quoteJson: '{}' });
+    await client.getCheckoutRequirements(checkoutRequest);
+    expect(native.getCheckoutRequirements).toHaveBeenCalledWith(JSON.stringify(checkoutRequest), '{}');
+  });
+
+  it('getCheckoutRequirements wraps native errors as OnramperError', async () => {
+    const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
+    __lastNative().getCheckoutRequirements.mockRejectedValueOnce({ code: 'quoteUnavailable', message: 'no quote' });
+    await expect(client.getCheckoutRequirements(checkoutRequest)).rejects.toMatchObject({ code: 'quoteUnavailable' });
+  });
+
+  it('cancelPreparedIntent forwards the handle to native', async () => {
+    const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
+    const native = __lastNative();
+    await client.cancelPreparedIntent('intent-1');
+    expect(native.cancelPreparedIntent).toHaveBeenCalledWith('intent-1');
   });
 
   it('fans out parsed state to addStateListener', () => {
