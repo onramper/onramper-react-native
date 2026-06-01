@@ -1,5 +1,5 @@
 import { getHostComponent } from 'react-native-nitro-modules';
-import OnramperCheckoutButtonConfig from '../nitrogen/generated/shared/json/OnramperCheckoutButtonConfig.json';
+import OnramperCheckoutButtonConfig from './generated/OnramperCheckoutButtonConfig.json';
 import type { OnramperCheckoutButtonMethods, OnramperCheckoutButtonProps } from './specs/OnramperCheckoutButton.nitro';
 
 export type { OnramperCheckoutButtonProps as OnramperCheckoutButtonViewProps };
