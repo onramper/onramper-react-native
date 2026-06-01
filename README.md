@@ -11,7 +11,7 @@ npm install @onramper/react-native react-native-nitro-modules
 cd ios && pod install
 ```
 
-Requires React Native 0.85+, `react-native-nitro-modules` 0.35+, the **New Architecture**, and iOS deployment target 16.4. Works in **bare React Native (no Expo required)** and **Expo** apps — not Expo Go, since the package vendors a native binary.
+Requires React Native 0.85+, `react-native-nitro-modules` 0.35+, the **New Architecture**, and an iOS **16.0+** deployment target. Works in **bare React Native (no Expo required)** and **Expo** apps — not Expo Go, since the package vendors a native binary.
 
 **Expo apps** — add the bundled config plugin to `app.json`, then prebuild:
 
@@ -19,7 +19,7 @@ Requires React Native 0.85+, `react-native-nitro-modules` 0.35+, the **New Archi
 { "expo": { "plugins": ["@onramper/react-native"] } }
 ```
 
-The plugin applies the iOS deployment target and required build flags. For bare-RN Podfile setup (Xcode 16+/26) and full details, see the [integration guide](docs/INTEGRATION.md).
+The plugin applies the required iOS build flag (it does not change your deployment target). Set your app's deployment target to **16.4+** — Expo SDK 56's own minimum (bare RN only needs 16.0). For bare-RN Podfile setup (Xcode 16+/26) and full details, see the [integration guide](docs/INTEGRATION.md).
 
 ## Quick start
 

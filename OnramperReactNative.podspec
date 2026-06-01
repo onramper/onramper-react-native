@@ -10,7 +10,7 @@ Pod::Spec.new do |s|
   s.license        = { :type => 'UNLICENSED' }
   s.author         = package['author']
   s.homepage       = package['homepage']
-  s.platforms      = { :ios => '16.4' }
+  s.platforms      = { :ios => '16.0' }
   s.swift_version  = '5.9'
   s.source         = { :git => "#{package['repository']}.git", :tag => "v#{s.version}" }
 

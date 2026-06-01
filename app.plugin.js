@@ -1,28 +1,21 @@
 // Expo config plugin for @onramper/react-native.
 //
-// Lets the (Nitro-based) package work in Expo prebuild / CNG apps by applying the
-// two iOS build requirements that aren't Expo defaults:
-//   1. iOS deployment target 16.4 — the vendored OnramperSDK.xcframework requires it.
-//   2. SWIFT_ENABLE_EXPLICIT_MODULES = NO — Xcode 16+/26 + CocoaPods + Swift pods
-//      (NitroModules, OnramperReactNative, RN's RCTSwiftUI) otherwise fail the app
-//      target's "Emit Swift module" phase with "module map file ... not found".
+// Applies the one iOS build fix that an Expo prebuild app can't be expected to
+// know about: disabling explicit Swift modules. On Xcode 16+/26, CocoaPods +
+// Swift pods (NitroModules, OnramperReactNative, RN's RCTSwiftUI) otherwise fail
+// the app target's "Emit Swift module" phase with "module map file ... not found".
 //
-// New Architecture is required by Nitro but is the default on the SDK versions
-// this package targets (RN 0.85 / Expo SDK 56), so the plugin doesn't force it.
+// It deliberately does NOT touch the iOS deployment target — that's a product
+// decision (which OS versions you support). The package declares its floor
+// (iOS 16) in its podspec; set your app's deployment target to 16.0+ yourself.
+// New Architecture (required by Nitro) is the default on the targeted RN/Expo
+// versions, so the plugin doesn't force it either.
 
-const { withPodfileProperties, withDangerousMod } = require('@expo/config-plugins');
+const { withDangerousMod } = require('@expo/config-plugins');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const IOS_DEPLOYMENT_TARGET = '16.4';
 const MARKER = '# @onramper/react-native: disable explicit Swift modules';
-
-function withOnramperDeploymentTarget(config) {
-  return withPodfileProperties(config, (cfg) => {
-    cfg.modResults['ios.deploymentTarget'] = IOS_DEPLOYMENT_TARGET;
-    return cfg;
-  });
-}
 
 function withOnramperDisableExplicitModules(config) {
   return withDangerousMod(config, [
@@ -54,7 +47,5 @@ function withOnramperDisableExplicitModules(config) {
 }
 
 module.exports = function withOnramper(config) {
-  config = withOnramperDeploymentTarget(config);
-  config = withOnramperDisableExplicitModules(config);
-  return config;
+  return withOnramperDisableExplicitModules(config);
 };

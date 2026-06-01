@@ -26,7 +26,7 @@ Not compatible with Expo Go (the package vendors a native binary).
 
 | Requirement | Version | Notes |
 |---|---|---|
-| iOS | 16.4+ | Deployment target (the vendored xcframework requires it) |
+| iOS | 16.0+ | The package's floor (bare RN). **Expo SDK 56 apps require 16.4** — Expo's own minimum. |
 | React Native | 0.85+ | With the New Architecture enabled |
 | New Architecture | Required | Nitro Modules run on the New Architecture only |
 | `react-native-nitro-modules` | 0.35+ | Peer dependency — the package's native bridge is built with Nitro |
@@ -55,8 +55,10 @@ build settings automatically:
 { "expo": { "plugins": ["@onramper/react-native"] } }
 ```
 
-Then run `npx expo prebuild` followed by `npx expo run:ios`. You can skip §2:
-the plugin sets the deployment target and the required build flag for you.
+Set your app's iOS deployment target to **16.4+** — Expo SDK 56's own minimum
+(e.g. `ios.deploymentTarget` in `app.json`). Then run `npx expo prebuild`
+followed by `npx expo run:ios`. You can skip §2 — the plugin applies the
+required build flag for you.
 
 ---
 
@@ -65,11 +67,11 @@ the plugin sets the deployment target and the required build flag for you.
 Bare RN apps need two iOS settings the package requires. (Expo apps get these
 from the config plugin above.)
 
-In `ios/Podfile`, set the deployment target and disable explicit Swift modules
-in `post_install`:
+Set your app's iOS deployment target to **16.0+**, and disable explicit Swift
+modules in the `Podfile` `post_install`:
 
 ```ruby
-platform :ios, '16.4'
+platform :ios, '16.0'
 
 # ... target block ...
 
@@ -92,8 +94,8 @@ post_install do |installer|
 end
 ```
 
-The `OnramperSDK.xcframework` requires iOS 16.4; set your app target's
-deployment target to 16.4 (or higher) as well. Autolinking is automatic — the
+The SDK's minimum is iOS 16.0; set your app target's deployment target to 16.0
+(or higher) as well. Autolinking is automatic — the
 package's podspec is discovered without any `react-native.config.js` change.
 
 ---
