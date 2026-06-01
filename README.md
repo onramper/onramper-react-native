@@ -7,17 +7,19 @@ React Native wrapper for the Onramper iOS SDK.
 ## Install
 
 ```bash
-npm install @onramper/react-native expo-modules-core
+npm install @onramper/react-native react-native-nitro-modules
 cd ios && pod install
 ```
 
-Requires React Native 0.81+, `expo-modules-core` 56+, and iOS deployment target 16.4. Works in bare RN and Expo dev clients (not Expo Go — the package vendors a native binary).
+Requires React Native 0.85+, `react-native-nitro-modules` 0.35+, the **New Architecture**, and iOS deployment target 16.4. Works in **bare React Native (no Expo required)** and **Expo** apps — not Expo Go, since the package vendors a native binary.
 
-If your app doesn't yet use Expo Modules:
+**Expo apps** — add the bundled config plugin to `app.json`, then prebuild:
 
-```bash
-npx install-expo-modules@latest
+```json
+{ "expo": { "plugins": ["@onramper/react-native"] } }
 ```
+
+The plugin applies the iOS deployment target and required build flags. For bare-RN Podfile setup (Xcode 16+/26) and full details, see the [integration guide](docs/INTEGRATION.md).
 
 ## Quick start
 
@@ -100,13 +102,13 @@ Full code list in `src/errors.ts`.
 
 The vendored `OnramperSDK.xcframework` already ships its own `PrivacyInfo.xcprivacy`. Don't add a duplicate.
 
-## Known limitations (v1)
+## Known limitations
 
-- `CheckoutEvent.checkoutCancelled` is not surfaced in this release — the bundled `OnramperSDK@1.0.0` xcframework doesn't include the case. It will be available when the SDK is rebuilt with the case.
-- Native checkout outcomes flow via the module-level event stream (`client.addEventListener(...)`), not per-view event handlers. The view's `onCheckoutCompleted`/`onCheckoutFailed`/`onCheckoutCancelled` props are declared for forward-compat but only `onCheckoutFailed` fires today (for handle-binding errors).
+- Native checkout outcomes are observed via the module-level event stream (`client.addEventListener(...)`); the native checkout button exposes no per-instance callbacks.
 
 ## Troubleshooting
 
 - **`pod install` fails finding the xcframework** — confirm `node_modules/@onramper/react-native/ios/Frameworks/OnramperSDK.xcframework/` exists.
+- **Bare RN build fails with `module map file ... not found` (Xcode 16+/26)** — disable explicit Swift modules in your `Podfile` `post_install` (`SWIFT_ENABLE_EXPLICIT_MODULES = NO`). Expo apps get this automatically via the config plugin. See the [integration guide](docs/INTEGRATION.md).
 - **App Attest errors in simulator** — expected. App Attest only works on real devices. The SDK surfaces this as `attestationFailed`.
 - **Buttons appear but sheets don't open** — the host RN screen must be inside a normal `UIViewController` (the default). Modal-presented screens may need extra care; report an issue with a repro.
