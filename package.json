@@ -55,10 +55,10 @@
   ],
   "repository": "https://github.com/onramper/onramper-react-native",
   "author": "Onramper <engineering@onramper.com>",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "homepage": "https://github.com/onramper/onramper-react-native#readme",
   "onramperSDK": {
-    "checksum": "4ea47e79e0b678d334c4b443947deb92693d165e9d67c42a09430f22a0902369"
+    "checksum": "bd0697e80b0ca0a49c83f84969d5a0cccd6bfd4b3b83639eee9d6b000fb586b2"
   },
   "peerDependencies": {
     "react": ">=19.0.0",
