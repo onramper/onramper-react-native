@@ -27,7 +27,7 @@ Not compatible with Expo Go (the package vendors a native binary).
 | Requirement | Version | Notes |
 |---|---|---|
 | iOS | 16.0+ | The package's floor (bare RN). **Expo SDK 56 apps require 16.4** — Expo's own minimum. |
-| React Native | 0.85+ | With the New Architecture enabled |
+| React Native | 0.79+ | With the New Architecture enabled |
 | New Architecture | Required | Nitro Modules run on the New Architecture only |
 | `react-native-nitro-modules` | 0.35+ | Peer dependency — the package's native bridge is built with Nitro |
 | Node | 22.11.0+ | |
@@ -46,7 +46,7 @@ npm install @onramper/react-native react-native-nitro-modules
 `react-native-nitro-modules` is a peer dependency — install it in your app.
 The native binary (`OnramperSDK.xcframework`) and the Nitro module autolink in
 during `pod install`. Ensure the **New Architecture** is enabled (the default
-on RN 0.85+).
+on RN 0.76+).
 
 **Expo apps** — add the bundled config plugin so prebuild applies the iOS
 build settings automatically:
