@@ -16,5 +16,5 @@
     "rootDir": "."
   },
   "include": ["src"],
-  "exclude": ["lib", "build", "**/__mocks__/*", "**/__tests__/*", "example", "example-bare"]
+  "exclude": ["lib", "build", "**/__mocks__/*", "**/__tests__/*", "example", "example-expo"]
 }

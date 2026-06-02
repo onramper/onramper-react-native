@@ -2,11 +2,8 @@
  * @format
  */
 
-import { registerRootComponent } from 'expo';
-
+import { AppRegistry } from 'react-native';
 import App from './App';
+import { name as appName } from './app.json';
 
-// Imports `expo/Expo.fx` under the hood, which installs `globalThis.expo`
-// and wires up the TurboModule registry. Plain AppRegistry.registerComponent
-// would skip that setup and leave Bridgeless mode with empty TurboModules.
-registerRootComponent(App);
+AppRegistry.registerComponent(appName, () => App);

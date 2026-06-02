@@ -4,9 +4,9 @@ export interface DemoSession {
 }
 
 /**
- * Mints a fresh session pair via the staging demo endpoint. Used both for the
- * initial bootstrap before `initialize(...)` and as the SDK's `onSessionExpired`
- * callback so token refresh runs against real traffic.
+ * Mints a fresh session pair via the staging demo endpoint. Used both for
+ * the initial bootstrap before `initialize(...)` and as the SDK's
+ * `onSessionExpired` callback so token refresh runs against real traffic.
  */
 export async function createDemoSession(demoToken: string): Promise<DemoSession> {
   const r = await fetch('https://demo-stg.onramper.dev/demo/create-session', {

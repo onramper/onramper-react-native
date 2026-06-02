@@ -77,9 +77,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.onramperbare"
+    namespace "com.onramperreactnativeexample"
     defaultConfig {
-        applicationId "com.onramperbare"
+        applicationId "com.onramperreactnativeexample"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
