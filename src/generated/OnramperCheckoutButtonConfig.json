@@ -1,0 +1,10 @@
+{
+  "uiViewClassName": "OnramperCheckoutButton",
+  "supportsRawText": false,
+  "bubblingEventTypes": {},
+  "directEventTypes": {},
+  "validAttributes": {
+    "intentHandle": true,
+    "hybridRef": true
+  }
+}

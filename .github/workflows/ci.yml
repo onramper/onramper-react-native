@@ -14,7 +14,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-      - run: npm ci --legacy-peer-deps
+      - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
       - run: npx jest
@@ -34,6 +34,12 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-      - run: npm ci --legacy-peer-deps
+      - run: npm ci
       - run: npm run fetch-xcframework
+        env:
+          # Cross-repo read of the private onramper/onramper-ios release.
+          # The auto GITHUB_TOKEN is scoped to this repo only, so a
+          # fine-grained PAT (Contents: Read-only on onramper-ios) is required.
+          # Remove this once onramper-ios is public.
+          GH_TOKEN: ${{ secrets.RELEASE_REPO_TOKEN }}
       - run: npm run verify-version

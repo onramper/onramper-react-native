@@ -63,7 +63,7 @@ jobs:
           node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json'));p.version=process.env.VERSION;p.onramperSDK={checksum:'PENDING_FETCH'};fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n');"
 
       - name: Fetch xcframework + checksum
-        run: npm ci --legacy-peer-deps && npm run fetch-xcframework
+        run: npm ci && npm run fetch-xcframework
 
       - name: Verify checksum recorded
         run: npm run verify-version

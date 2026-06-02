@@ -1,9 +1,0 @@
-{
-  "platforms": ["apple", "android"],
-  "apple": {
-    "modules": ["OnramperReactNativeModule"]
-  },
-  "android": {
-    "modules": ["com.onramper.reactnative.OnramperReactNativeModule"]
-  }
-}

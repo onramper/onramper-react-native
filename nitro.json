@@ -1,0 +1,19 @@
+{
+  "$schema": "https://nitro.margelo.com/nitro.schema.json",
+  "cxxNamespace": ["onramper"],
+  "ios": {
+    "iosModuleName": "OnramperReactNative"
+  },
+  "android": {
+    "androidNamespace": ["onramper"],
+    "androidCxxLibName": "OnramperReactNative"
+  },
+  "autolinking": {
+    "OnramperNitro": {
+      "ios": { "language": "swift", "implementationClassName": "HybridOnramperNitro" }
+    },
+    "OnramperCheckoutButton": {
+      "ios": { "language": "swift", "implementationClassName": "HybridOnramperCheckoutButton" }
+    }
+  }
+}

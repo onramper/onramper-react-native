@@ -1,24 +1,21 @@
 {
   "name": "onramper-react-native-example",
   "version": "0.0.1",
-  "main": "index.js",
   "private": true,
   "scripts": {
-    "android": "expo run:android",
-    "ios": "expo run:ios",
+    "android": "react-native run-android",
+    "ios": "react-native run-ios",
     "lint": "eslint .",
-    "start": "expo start --dev-client",
+    "start": "react-native start",
     "test": "jest"
   },
   "dependencies": {
     "@onramper/react-native": "file:..",
-    "@react-native/new-app-screen": "0.85.2",
-    "expo": "^56.0.3",
-    "expo-application": "~56.0.3",
-    "expo-modules-core": "~56.0.12",
     "react": "19.2.3",
     "react-native": "0.85.3",
-    "react-native-safe-area-context": "~5.7.0"
+    "@react-native/new-app-screen": "0.85.3",
+    "react-native-nitro-modules": "0.35.9",
+    "react-native-safe-area-context": "^5.5.2"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
@@ -35,12 +32,11 @@
     "@types/jest": "^29.5.13",
     "@types/react": "^19.2.0",
     "@types/react-test-renderer": "^19.1.0",
-    "babel-preset-expo": "^56.0.11",
     "eslint": "^8.19.0",
     "jest": "^29.6.3",
     "prettier": "2.8.8",
     "react-test-renderer": "19.2.3",
-    "typescript": "~6.0.3"
+    "typescript": "^5.8.3"
   },
   "engines": {
     "node": ">= 22.11.0"

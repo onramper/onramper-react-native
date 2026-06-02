@@ -52,32 +52,16 @@ export class OnramperError extends Error implements OnramperErrorPayload {
   static from(value: unknown): OnramperError {
     if (value instanceof OnramperError) return value;
     if (value && typeof value === 'object') {
-      const v = value as {
-        code?: string;
-        message?: string;
-        userInfo?: Record<string, unknown>;
-        info?: Record<string, unknown>;
-      };
-      const code = (v.code ?? 'unrecoverable') as OnramperErrorCode;
-      const rawMessage = v.message ?? 'Unknown error';
-
-      // The native bridge folds structured detail into the message as
-      // `... [info: {<json>}]` (Expo SDK 56 JavaScriptThrowable only bridges
-      // `message` + `code`, not NSError.userInfo). Recover it here so
-      // consumers can read `err.info.debugInfo` etc. without parsing.
-      let info = v.info ?? v.userInfo;
-      let message = rawMessage;
-      const infoMatch = rawMessage.match(/^(.*) \[info: (\{.*\})\]$/s);
-      if (infoMatch) {
-        message = infoMatch[1] ?? rawMessage;
-        try {
-          info = JSON.parse(infoMatch[2] ?? '{}');
-        } catch {
-          // Fall through with the original message if the suffix isn't valid JSON.
-        }
-      }
-
-      return new OnramperError({ code, message, info });
+      // Structured errors (from the `.failed` state) arrive as a plain
+      // `{ code, message, info? }` object. Thrown promise rejections surface
+      // as a JS Error with just a message; we default the code in that case
+      // (the structured error is also available on `client.state` / lastError).
+      const v = value as { code?: string; message?: string; info?: Record<string, unknown> };
+      return new OnramperError({
+        code: (v.code ?? 'unrecoverable') as OnramperErrorCode,
+        message: v.message ?? 'Unknown error',
+        info: v.info,
+      });
     }
     return new OnramperError({ code: 'unrecoverable', message: String(value) });
   }

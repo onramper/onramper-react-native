@@ -7,22 +7,18 @@ app via this wrapper.
 
 ## What kind of app can use this?
 
-The wrapper is an **Expo Module**. It needs the Expo Modules layer
-(`expo-modules-core` + the `ExpoReactNativeFactory` AppDelegate setup) to
-boot. It does **not** require Expo CLI, Expo Go, EAS, or any cloud services
-— just the native runtime layer.
-
-Three consumer scenarios, in order of effort:
+The wrapper is built with **Nitro Modules** and requires React Native's
+**New Architecture** (the default on the versions it targets). There is **no
+Expo Modules dependency** — it works in a plain bare React Native app as well
+as an Expo app:
 
 | You have… | What you need to do |
 |---|---|
-| **An Expo SDK 56+ app** (managed or with prebuild) | Just `npm install @onramper/react-native` + `pod install`. Skip to §3. |
-| **A bare RN app that already uses Expo Modules** (e.g. you previously ran `npx install-expo-modules`) | Same as above — skip to §3. |
-| **A pure bare RN app, no Expo Modules at all** | Add the Expo Modules layer first (§2), then install the wrapper (§3). |
+| **A bare React Native app** (no Expo) | `npm install @onramper/react-native react-native-nitro-modules`, apply the iOS build settings (§2), then `pod install` (§3). |
+| **An Expo app** (prebuild / CNG) | `npm install @onramper/react-native react-native-nitro-modules`, add the bundled config plugin to `app.json` `plugins`, then `npx expo prebuild` — the plugin applies the iOS build settings for you. |
 
-If you're unsure: check your `package.json`. If you see `"expo"` or
-`"expo-modules-core"` in dependencies, you're in one of the first two
-scenarios.
+No `install-expo-modules` step and no AppDelegate changes are required.
+Not compatible with Expo Go (the package vendors a native binary).
 
 ---
 
@@ -30,156 +26,83 @@ scenarios.
 
 | Requirement | Version | Notes |
 |---|---|---|
-| iOS | 16.4+ | Deployment target |
-| React Native | 0.85.3 | Exact pin matching Expo SDK 56's RN |
-| `expo-modules-core` | 56.0.12+ | Autolinked via the `expo` package |
-| Node | 22.11.0+ | Per Expo's engines field |
-| Xcode | 16+ (Xcode 26 tested) | New Architecture / Bridgeless mandatory in SDK 56+ |
-| Real iOS device | Required for App Attest | Simulator can launch but attestation will return `attestationFailed` |
-| Apple Developer account | Required for signing | Free or paid; need App Attest capability under your team |
+| iOS | 16.0+ | The package's floor (bare RN). **Expo SDK 56 apps require 16.4** — Expo's own minimum. |
+| React Native | 0.79+ | With the New Architecture enabled |
+| New Architecture | Required | Nitro Modules run on the New Architecture only |
+| `react-native-nitro-modules` | 0.35+ | Peer dependency — the package's native bridge is built with Nitro |
+| Node | 22.11.0+ | |
+| Xcode | 16+ (Xcode 26 tested) | |
+| Real iOS device | Required for App Attest | Simulator can launch but attestation returns `attestationFailed` |
+| Apple Developer account | Required for signing | Free or paid; needs the App Attest capability under your team |
 
 ---
 
-## 1. Install the wrapper
+## 1. Install
 
 ```bash
-npm install @onramper/react-native
-cd ios && pod install
+npm install @onramper/react-native react-native-nitro-modules
 ```
 
-That's it for the wrapper itself. The native binary
-(`OnramperSDK.xcframework`) and the Expo Module autolink in. If you're in
-the **first scenario above** (already on Expo SDK 56+), you can skip to §3.
+`react-native-nitro-modules` is a peer dependency — install it in your app.
+The native binary (`OnramperSDK.xcframework`) and the Nitro module autolink in
+during `pod install`. Ensure the **New Architecture** is enabled (the default
+on RN 0.76+).
+
+**Expo apps** — add the bundled config plugin so prebuild applies the iOS
+build settings automatically:
+
+```json
+{ "expo": { "plugins": ["@onramper/react-native"] } }
+```
+
+Set your app's iOS deployment target to **16.4+** — Expo SDK 56's own minimum
+(e.g. `ios.deploymentTarget` in `app.json`). Then run `npx expo prebuild`
+followed by `npx expo run:ios`. You can skip §2 — the plugin applies the
+required build flag for you.
 
 ---
 
-## 2. Adding the Expo Modules layer to a bare RN app (only if needed)
+## 2. iOS build settings (bare React Native)
 
-If your `package.json` doesn't yet have `expo-modules-core`, run:
+Bare RN apps need two iOS settings the package requires. (Expo apps get these
+from the config plugin above.)
 
-```bash
-npx install-expo-modules@latest
-```
-
-This patches your `AppDelegate.swift`, `Podfile`, and `Info.plist` to enable
-Expo Modules autolinking. After it completes, re-run `npm install` +
-`pod install`.
-
-If `install-expo-modules` doesn't work for you (some setups can't auto-detect
-SDK version), hand-apply the changes documented in §3 below: the AppDelegate
-template, Podfile snippets, and babel/Metro config.
-
-Your `package.json` should end up with at least:
-
-```json
-{
-  "dependencies": {
-    "@onramper/react-native": "^1.0.0",
-    "expo": "^56.0.3",
-    "expo-modules-core": "~56.0.12",
-    "react": "19.2.3",
-    "react-native": "0.85.3"
-  }
-}
-```
-
-Run `npx expo-doctor` and resolve any version mismatches it flags.
-
----
-
-## 3. iOS configuration
-
-The rest of this section applies to **all** consumers. Already-Expo apps
-will likely have most of this in place; bare-RN-with-fresh-Expo-Modules
-consumers may need to apply some of it manually.
-
-### 2.1 Podfile properties
-
-`ios/Podfile.properties.json`:
-
-```json
-{
-  "expo.jsEngine": "hermes",
-  "ios.deploymentTarget": "16.4"
-}
-```
-
-### 2.2 Podfile post-install
-
-Add this to your `Podfile`'s `post_install` block to align deployment targets
-and (on Xcode 26+) disable User Script Sandboxing so React's pre-build script
-phases can extract framework intermediates:
+Set your app's iOS deployment target to **16.0+**, and disable explicit Swift
+modules in the `Podfile` `post_install`:
 
 ```ruby
-post_install do |installer|
-  installer.pods_project.targets.each do |target|
-    target.build_configurations.each do |config|
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.4'
-      config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
-    end
-  end
+platform :ios, '16.0'
 
-  user_project = installer.aggregate_targets.first&.user_project
-  user_project&.targets&.each do |target|
-    target.build_configurations.each do |config|
-      config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
-    end
+# ... target block ...
+
+post_install do |installer|
+  react_native_post_install(installer, config[:reactNativePath], :mac_catalyst_enabled => false)
+
+  # Xcode 16+/26: explicit Swift modules break the app target's "Emit Swift
+  # module" phase for CocoaPods Swift pods (NitroModules, OnramperReactNative,
+  # RN's RCTSwiftUI) with "module map file ... not found". Build implicit modules.
+  installer.pods_project.targets.each do |t|
+    t.build_configurations.each { |c| c.build_settings['SWIFT_ENABLE_EXPLICIT_MODULES'] = 'NO' }
   end
-  user_project&.save
+  installer.aggregate_targets.each do |at|
+    next if at.user_project.nil?
+    at.user_project.native_targets.each do |t|
+      t.build_configurations.each { |c| c.build_settings['SWIFT_ENABLE_EXPLICIT_MODULES'] = 'NO' }
+    end
+    at.user_project.save
+  end
 end
 ```
 
-### 2.3 AppDelegate (Expo template, mandatory)
+The SDK's minimum is iOS 16.0; set your app target's deployment target to 16.0
+(or higher) as well. Autolinking is automatic — the
+package's podspec is discovered without any `react-native.config.js` change.
 
-Your `AppDelegate.swift` **must** use `ExpoReactNativeFactory`, not the bare
-RN `RCTReactNativeFactory`. The Expo factory installs the JSI runtime hooks
-that initialize `globalThis.expo` and register TurboModules — without it the
-JS bundle starts before the bridge is ready and `requireNativeModule` returns
-undefined.
+---
 
-If you scaffolded with `npx create-expo-app` or `expo prebuild` you already
-have the right AppDelegate. If you started from bare RN, swap it for:
+## 3. App Attest & first build
 
-```swift
-internal import Expo
-import React
-import ReactAppDependencyProvider
-
-@main
-class AppDelegate: ExpoAppDelegate {
-  var window: UIWindow?
-  var reactNativeDelegate: ExpoReactNativeFactoryDelegate?
-  var reactNativeFactory: RCTReactNativeFactory?
-
-  public override func application(
-    _ application: UIApplication,
-    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
-  ) -> Bool {
-    let delegate = ReactNativeDelegate()
-    let factory = ExpoReactNativeFactory(delegate: delegate)
-    delegate.dependencyProvider = RCTAppDependencyProvider()
-    reactNativeDelegate = delegate
-    reactNativeFactory = factory
-
-    window = UIWindow(frame: UIScreen.main.bounds)
-    factory.startReactNative(withModuleName: "main", in: window, launchOptions: launchOptions)
-    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
-  }
-}
-
-class ReactNativeDelegate: ExpoReactNativeFactoryDelegate {
-  override func sourceURL(for bridge: RCTBridge) -> URL? { bridge.bundleURL ?? bundleURL() }
-  override func bundleURL() -> URL? {
-#if DEBUG
-    return RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: ".expo/.virtual-metro-entry")
-#else
-    return Bundle.main.url(forResource: "main", withExtension: "jsbundle")
-#endif
-  }
-}
-```
-
-### 2.4 App Attest capability
+### 3.1 App Attest capability
 
 The SDK attests every session via Apple's `DCAppAttestService`. Without the
 entitlement, attestation returns `attestationFailed`.
@@ -199,53 +122,44 @@ The SDK works with any team; the bundle ID just needs to be registered with
 Apple Developer Portal (Xcode does this automatically when you enable
 automatic signing).
 
-### 2.5 Pod install + first build
+### 3.2 Pod install + first build
+
+Bare RN:
 
 ```bash
 cd ios && pod install
-cd .. && npx expo run:ios
+cd .. && npx react-native run-ios --device
 ```
 
-If `pod install` fails with `Unable to find compatibility version string for
-object version '70'` (Xcode 26+ project format), downgrade your project file:
+Expo:
 
 ```bash
-sed -i '' 's/objectVersion = 70;/objectVersion = 60;/' \
-  ios/<YourApp>.xcodeproj/project.pbxproj
+npx expo prebuild
+npx expo run:ios --device
 ```
-
-Xcode may re-upgrade this each time you open the project in the UI; just
-re-run the `sed` before each `pod install`.
 
 ---
 
 ## 4. Metro configuration
 
-Use Expo's Metro config (not bare RN's):
+Use the standard Metro and Babel config for your app type — no special setup
+is required for this package.
 
-`metro.config.js`:
-
-```js
-const { getDefaultConfig } = require('expo/metro-config');
-module.exports = getDefaultConfig(__dirname);
-```
-
-`babel.config.js`:
+**Bare RN** (the React Native Community CLI defaults):
 
 ```js
-module.exports = {
-  presets: ['babel-preset-expo'],
-};
+// metro.config.js
+const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+module.exports = mergeConfig(getDefaultConfig(__dirname), {});
 ```
 
-Start Metro with Expo's CLI:
-
-```bash
-npx expo start --dev-client
+```js
+// babel.config.js
+module.exports = { presets: ['module:@react-native/babel-preset'] };
 ```
 
-(Not `react-native start` — bare RN's Metro doesn't know about Expo's virtual
-entry or the polyfills required for TurboModule init.)
+**Expo** apps use Expo's defaults (`expo/metro-config`, `babel-preset-expo`) —
+unchanged.
 
 ---
 
@@ -368,8 +282,7 @@ const offState = client.addStateListener((state) => {
 });
 
 // Each subscribe returns an unsubscribe. Call `client.destroy()` on unmount
-// to drop all listeners (including the two internal ones the client uses
-// for state mirroring and session refresh).
+// to drop all listeners and release the native client.
 ```
 
 ### 5.6 Re-requesting on input changes
@@ -418,7 +331,7 @@ interface CheckoutButtonStyle {
 }
 ```
 
-Only those three fields are styleable in v0. The button label ("Buy"), height, internal padding, font, ToS sentence rendering, and the login / payment sheets are SDK-owned in this release — partners cannot override them. If your design needs more, raise it with the SDK team rather than wrapping the button in a custom container (the underlying SwiftUI view is opaque and may relayout).
+Only those three fields are styleable. The button label ("Buy"), height, internal padding, font, ToS sentence rendering, and the login / payment sheets are SDK-owned in this release — partners cannot override them. If your design needs more, raise it with the SDK team rather than wrapping the button in a custom container (the underlying SwiftUI view is opaque and may relayout).
 
 ### 5.9 Error handling
 
@@ -544,6 +457,13 @@ Pass `logLevel: 'info'` while integrating to see HTTP method, URL path, and stat
 | `'completed'` | Terminal success. Carries `checkoutId`. |
 | `'failed'` | Terminal failure. Carries `error`. |
 | `'cancelled'` | User dismissed the payment webview. The SDK transparently re-prepares the intent (Onramper backend intent ids are single-use) and lands back in `'readyToCheckout'` — tapping Buy again starts a fresh checkout. |
+| `'providerReady'` | A provider checkout page (e.g. Coinbase) loaded and is ready for input. |
+| `'paymentAuthorized'` | The user authorized payment in the provider's native sheet (e.g. Apple Pay). Not terminal — settling follows. |
+| `'paymentProcessing'` | The provider accepted the payment and is settling it. |
+| `'paymentCancelled'` | The provider reported the user cancelled (e.g. dismissed the Apple Pay sheet). Distinct from `'cancelled'`, which is the SDK-level webview dismissal. |
+| `'providerError'` | The provider reported a non-recoverable failure. Carries `reason`. |
+
+These provider-lifecycle events come from third-party checkout webviews; not every provider emits every one.
 
 ### 5.12 What you don't need to do
 
@@ -583,52 +503,49 @@ A sample dev-only client-side session mint is in `example/createDemoSession.ts`
 Always returns `attestationFailed`. Apple's `DCAppAttestService` only works
 on physical iOS 14+ devices. Use a real device for any end-to-end test.
 
-### Xcode 26 project format
-Xcode 26 saves projects in `objectVersion = 70`, which the bundled xcodeproj
-gem in CocoaPods 1.16 doesn't yet support. Downgrade to `60` before each
-`pod install`:
-
-```bash
-sed -i '' 's/objectVersion = 70;/objectVersion = 60;/' ios/<YourApp>.xcodeproj/project.pbxproj
-```
+### Xcode 16+/26 Swift modules
+The app target's "Emit Swift module" phase can fail with `module map file ...
+not found` for the Swift pods. Disable explicit Swift modules
+(`SWIFT_ENABLE_EXPLICIT_MODULES = NO`) — see §2 for the Podfile snippet. Expo
+apps get this from the config plugin.
 
 ### Android
 Stub-only. All Android calls throw `platformUnsupported`. A native Android
 SDK is not part of this release.
 
 ### Local development via `file:` symlink (contributors only)
-If you're developing the wrapper itself by linking it into a host app via
-`"@onramper/react-native": "file:.."`, Metro will resolve `expo-modules-core`
-and `react-native` from BOTH the host app and the wrapper repo's own
-node_modules. That gives you two parallel `ReactNativeViewConfigRegistry`
-Maps and a confusing "View config getter callback for component
-`ViewManagerAdapter_OnramperReactNative` must be a function (received
-`undefined`)" error.
+If you link the wrapper into a host app via `"@onramper/react-native": "file:.."`,
+Metro can resolve `react-native-nitro-modules` and `react-native` from BOTH the
+host app and the wrapper repo's own node_modules — two parallel module instances,
+which break native view/registry lookups.
 
-Fix it in the host app's `metro.config.js`:
+Fix it in the host app's `metro.config.js` (force a single copy):
 
 ```js
 config.resolver.disableHierarchicalLookup = true;
 config.resolver.nodeModulesPaths = [path.resolve(__dirname, 'node_modules')];
 ```
 
-Consumers installing from the npm registry don't see this — there's no
-symlink, so only one copy resolves.
+On a **bare RN (Community CLI)** host, the `file:..` symlink also hides the
+package from CLI autolinking; add a `react-native.config.js` in the host app
+pointing at the package root and its podspec. Registry installs hit neither
+issue — there's no symlink.
 
 ---
 
 ## 8. Verifying your setup
 
-After installation, you should be able to:
+After installation, you should be able to build and run on a device:
 
 ```bash
-# JS contract checks
-npx tsc --noEmit                # types resolve
-npx expo-doctor                 # config validation
-
-# iOS build
+# Bare RN
 cd ios && pod install
-cd .. && npx expo run:ios --device "Your iPhone"
+cd .. && npx react-native run-ios --device
+
+# Expo
+npx expo prebuild
+npx expo-doctor              # validates Expo config
+npx expo run:ios --device
 ```
 
 In Xcode (or via `codesign -dvv path/to/YourApp.app`), confirm:
@@ -644,17 +561,17 @@ can't reach the Onramper backend.
 
 ---
 
-## 9. Going-live checklist
+## 9. Before going live
 
-- [ ] Production `apiKey` and `clientId` configured per build flavour (no staging credentials in release builds).
-- [ ] App Attest entitlement enabled on the production app id; signing team set under **Signing & Capabilities**.
-- [ ] Backend session-mint endpoint deployed and reachable from the production app; returns both `sessionId` and `sessionToken`.
-- [ ] `onSessionExpired` wired to your auth client and **tested end-to-end** by forcing a session expiry (e.g. revoke the SDK session server-side mid-checkout) and confirming the user sees no error.
-- [ ] `logLevel: 'off'` in production JS bundles.
-- [ ] Tested on a real device (not just simulator) — attestation path verified.
-- [ ] Error UI covers at minimum `amountOutOfRange`, `quoteUnavailable`, `checkoutForbidden`, `temporaryFailure`, `networkError`, `deviceBlocked`, `configurationError`, and `unrecoverable`.
-- [ ] Analytics / observability hooked into `addStateListener` or `addEventListener('failed' | 'completed', …)`.
-- [ ] `client.destroy()` called on unmount so re-mounting doesn't leak listeners.
+- Production `apiKey` and `clientId` configured per build flavour (no staging credentials in release builds).
+- App Attest entitlement enabled on the production app id; signing team set under **Signing & Capabilities**.
+- Backend session-mint endpoint deployed and reachable from the production app; returns both `sessionId` and `sessionToken`.
+- `onSessionExpired` wired to your auth client and **tested end-to-end** by forcing a session expiry (e.g. revoke the SDK session server-side mid-checkout) and confirming the user sees no error.
+- `logLevel: 'off'` in production JS bundles.
+- Tested on a real device (not just simulator) — attestation path verified.
+- Error UI covers at minimum `amountOutOfRange`, `quoteUnavailable`, `checkoutForbidden`, `temporaryFailure`, `networkError`, `deviceBlocked`, `configurationError`, and `unrecoverable`.
+- Analytics / observability hooked into `addStateListener` or `addEventListener('failed' | 'completed', …)`.
+- `client.destroy()` called on unmount so re-mounting doesn't leak listeners.
 
 ---
 

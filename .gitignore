@@ -1,6 +1,6 @@
 # Node
 node_modules/
-build/
+lib/
 *.log
 npm-debug.log
 yarn-debug.log
@@ -14,17 +14,17 @@ ios/Pods/
 android/build/
 android/.gradle/
 
-# Example app
-example/node_modules/
-example/ios/Pods/
-example/ios/build/
-example/android/build/
-example/android/.gradle/
-example/android/app/build/
-example/.expo/
-example/.bundle/
-example/vendor/
-example/env.local.ts
+# Expo example app
+example-expo/node_modules/
+example-expo/ios/Pods/
+example-expo/ios/build/
+example-expo/android/build/
+example-expo/android/.gradle/
+example-expo/android/app/build/
+example-expo/.expo/
+example-expo/.bundle/
+example-expo/vendor/
+example-expo/env.local.ts
 
 # Xcode
 *.pbxuser
@@ -67,5 +67,6 @@ jsconfig.json
 # Local secrets
 .env
 .env.local
-example/.env
-example/.env.local
+example-expo/.env
+example-expo/.env.local
+example/env.local.ts

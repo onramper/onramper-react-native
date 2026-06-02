@@ -3,6 +3,12 @@ import Security
 import SwiftUI
 
 actor PreparedIntentRegistry {
+    /// Process-wide registry. `getCheckoutRequirements` (on HybridOnramperNitro)
+    /// stores the SwiftUI button under a ULID handle; the separate
+    /// HybridOnramperCheckoutButton view consumes it by handle. Handles are
+    /// unique ULIDs, so a single shared registry is safe across clients.
+    static let shared = PreparedIntentRegistry()
+
     struct PreparedIntent {
         let button: AnyView
         let createdAt: Date
