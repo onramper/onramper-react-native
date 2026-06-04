@@ -5,6 +5,28 @@ app via this wrapper.
 
 ---
 
+## At a glance
+
+Three calls and a native button — no checkout UI, ToS screen, or login flow to build:
+
+```ts
+const client = new OnramperClient({ apiKey, clientId, environment, onSessionExpired });
+
+await client.initialize({ sessionId, sessionToken });            // 1. bootstrap
+
+const { button, quote } = await client.getCheckoutRequirements({ // 2. priced quote + Buy button
+  source: 'usd', destination: 'sol', amount: 100,
+  type: 'buy', paymentMethod: 'applepay',
+  wallet: { network: 'solana', address: 'Br2j...' },
+});
+
+client.addEventListener('completed', (e) => console.log(e.checkoutId)); // 3. outcome
+
+return <View><Text>≈ {quote.payout} SOL</Text>{button}</View>;
+```
+
+---
+
 ## What kind of app can use this?
 
 The wrapper is built with **Nitro Modules** and requires React Native's
