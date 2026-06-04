@@ -96,7 +96,7 @@ Cover it before your first build, then return here for usage. (Expo apps get the
 
 ### 3.1 Concepts: the checkout flow & OnramperID
 
-For a step-by-step walkthrough of how a checkout flows through the kit, and what OnramperID is, see ➡️ **[What this kit does](doc:what-this-kit-does)**.
+For a step-by-step walkthrough of how a checkout flows through the wrapper, and what OnramperID is, see ➡️ **[What this wrapper does](doc:what-this-kit-does)**.
 
 ### 3.2 Constructing the client
 
@@ -376,7 +376,7 @@ Pass `logLevel: 'info'` while integrating to see HTTP method, URL path, and stat
 
 These provider-lifecycle events come from third-party checkout webviews; not every provider emits every one.
 
-> For what the Headless Wrapper handles so you don't have to (ToS, login, token refresh, payment surface), see ➡️ **[What this kit does](doc:what-this-kit-does)**.
+> For what the Headless Wrapper handles so you don't have to (ToS, login, token refresh, payment surface), see ➡️ **[What this wrapper does](doc:what-this-kit-does)**.
 
 ---
 
