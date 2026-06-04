@@ -163,9 +163,9 @@ unchanged.
 
 ---
 
-## 5. JavaScript usage
+## 5. How to use
 
-### 5.1 How the pieces fit together
+### 5.1 What this kit does
 
 A typical checkout maps to these calls, in order:
 
