@@ -26,13 +26,13 @@ return <View><Text>≈ {quote.payout} SOL</Text>{button}</View>;
 
 ---
 
-## Why this kit
+## Why this wrapper
 
 Ship fully compliant, aggregated headless onramping without building the hard parts. 
 
 Terms-of-Service consent, KYC, token refresh, and the Apple Pay / card payment surface are all owned by the Headless Wrapper — you **wire up three calls and render a native Buy button**. No checkout UI, no PII to hold, no auth plumbing to maintain.
 
-➡️ **See [what this kit does for you](doc:what-this-kit-does)** — the full list of what you get out of the box, and how a checkout flows end to end.
+➡️ **See [what this wrapper does for you](doc:what-this-kit-does)** — the full list of what you get out of the box, and how a checkout flows end to end.
 
 ---
 
