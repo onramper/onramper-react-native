@@ -1,5 +1,3 @@
-# Debugging your integration
-
 Known limitations and gotchas when integrating `@onramper/react-native`. For the full integration walkthrough — install, usage, error handling, API reference — see [Getting started](doc:getting-started-1).
 
 ---

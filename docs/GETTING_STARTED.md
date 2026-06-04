@@ -1,5 +1,3 @@
-# Getting started with `@onramper/react-native`
-
 A consumer-facing guide to embedding the Onramper Headless solution in a React Native app via this wrapper.
 
 ---
