@@ -102,9 +102,18 @@ jobs:
           VERSION: ${{ steps.ver.outputs.version }}
         run: |
           git add package.json
-          git commit -m "chore(release): v${VERSION}"
+          # package.json may already be at the target version/checksum (e.g. it
+          # was pre-populated on master), in which case there is nothing to
+          # commit — that's fine. The tag is what the publish + podspec git
+          # source need, so always create and push it.
+          if git diff --cached --quiet; then
+            echo "package.json already at v${VERSION} with recorded checksum; nothing to commit."
+          else
+            git commit -m "chore(release): v${VERSION}"
+            git push origin master
+          fi
           git tag "v${VERSION}"
-          git push origin master --tags
+          git push origin "v${VERSION}"
 
       - name: Publish to npm
         env:
