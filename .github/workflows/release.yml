@@ -52,7 +52,7 @@ jobs:
         env:
           VERSION: ${{ steps.ver.outputs.version }}
         run: |
-          if npm view "@onramper/react-native@${VERSION}" version 2>/dev/null; then
+          if npm view "@onramper/onramper-react-native@${VERSION}" version 2>/dev/null; then
             echo "Version ${VERSION} already on npm."; exit 1
           fi
 
@@ -67,6 +67,9 @@ jobs:
 
       - name: Verify checksum recorded
         run: npm run verify-version
+
+      - name: Slim xcframework for npm
+        run: npm run slim-xcframework
 
       - name: Test + build
         run: |

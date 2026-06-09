@@ -24,8 +24,8 @@
   "files": [
     "lib",
     "src",
-    "ios",
-    "android",
+    "ios/*.swift",
+    "ios/Frameworks/OnramperSDK.xcframework",
     "nitrogen/generated",
     "nitro.json",
     "OnramperReactNative.podspec",
@@ -43,8 +43,13 @@
     "typecheck": "tsc --noEmit",
     "nitrogen": "nitrogen && node scripts/sync-view-config.js",
     "prepare": "bob build",
+    "prepack": "node scripts/check-xcframework.js",
     "verify-version": "node scripts/verify-version.js",
-    "fetch-xcframework": "node scripts/fetch-xcframework.js"
+    "fetch-xcframework": "node scripts/fetch-xcframework.js",
+    "slim-xcframework": "node scripts/slim-xcframework.js"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "keywords": [
     "react-native",
@@ -58,7 +63,7 @@
   "license": "MIT",
   "homepage": "https://github.com/onramper/onramper-react-native#readme",
   "onramperSDK": {
-    "checksum": "26cd91f63b8f6ab40a9e572d2ad3f2254151fc66005cd54e88e7f3c787dda4c6"
+    "checksum": "c644d91bc2fb03e79213e5c326310875a07889ab8ba009bc29449ea7517590bf"
   },
   "peerDependencies": {
     "react": ">=19.0.0",
@@ -83,8 +88,18 @@
     "source": "src",
     "output": "lib",
     "targets": [
-      ["commonjs", { "esm": true }],
-      ["module", { "esm": true }],
+      [
+        "commonjs",
+        {
+          "esm": true
+        }
+      ],
+      [
+        "module",
+        {
+          "esm": true
+        }
+      ],
       "typescript"
     ]
   }

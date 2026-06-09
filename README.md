@@ -2,7 +2,7 @@
 
 React Native wrapper for the Onramper iOS SDK.
 
-> **iOS only.** Android calls throw `platformUnsupported`. A native Android SDK is not part of this release.
+> **iOS only.** Constructing an `OnramperClient` on a non-iOS platform throws immediately with a clear "iOS-only in this release" error. A native Android SDK is not part of this release, and no Android native code is shipped.
 
 ## Install
 
