@@ -31,7 +31,11 @@ jobs:
 
       - name: Verify iOS release exists
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # onramper/onramper-ios is a separate private repo; the auto
+          # GITHUB_TOKEN is scoped to THIS repo only and can't read it.
+          # RELEASE_REPO_TOKEN is a fine-grained PAT (Contents: Read-only on
+          # onramper-ios). Remove once onramper-ios is public.
+          GH_TOKEN: ${{ secrets.RELEASE_REPO_TOKEN }}
           IOS_VERSION: ${{ github.event.inputs.ios-version }}
         run: |
           set -e
@@ -69,6 +73,10 @@ jobs:
           node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json'));p.version=process.env.VERSION;p.onramperSDK={checksum:'PENDING_FETCH'};fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n');"
 
       - name: Fetch xcframework + checksum
+        env:
+          # Same cross-repo access as ci.yml: `gh release download` in
+          # scripts/fetch-xcframework.js reads GH_TOKEN to reach onramper-ios.
+          GH_TOKEN: ${{ secrets.RELEASE_REPO_TOKEN }}
         run: npm ci && npm run fetch-xcframework
 
       - name: Verify checksum recorded
