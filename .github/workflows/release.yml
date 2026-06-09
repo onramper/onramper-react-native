@@ -14,6 +14,12 @@ on:
 jobs:
   release:
     runs-on: macos-14
+    permissions:
+      # contents: write — the job pushes the release commit/tag and creates a
+      # GitHub release. id-token: write — lets `npm publish --provenance` mint a
+      # Sigstore signing identity for the provenance attestation.
+      contents: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -96,7 +102,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_TAG: ${{ steps.ver.outputs.tag }}
-        run: npm publish --tag "$NPM_TAG" --access public
+        run: npm publish --tag "$NPM_TAG" --access public --provenance
 
       - name: Create GitHub release
         env:
