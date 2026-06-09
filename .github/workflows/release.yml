@@ -112,8 +112,15 @@ jobs:
             git commit -m "chore(release): v${VERSION}"
             git push origin master
           fi
-          git tag "v${VERSION}"
-          git push origin "v${VERSION}"
+          # Idempotent: a prior run that failed at publish may have already
+          # created/pushed the tag. Skip if it exists (HEAD is unchanged in the
+          # nothing-to-commit path, so the existing tag is correct).
+          if git ls-remote --exit-code --tags origin "v${VERSION}" >/dev/null 2>&1; then
+            echo "tag v${VERSION} already exists on origin; skipping."
+          else
+            git tag "v${VERSION}"
+            git push origin "v${VERSION}"
+          fi
 
       - name: Publish to npm
         env:
