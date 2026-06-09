@@ -15,7 +15,7 @@ export async function createDemoSession(demoToken: string): Promise<DemoSession>
       authorization: `Bearer ${demoToken}`,
       'content-type': 'application/json',
     },
-    body: '{}',
+    body: '{"scope": ["quotes:read", "checkout:write"]}',
   });
   if (!r.ok) {
     const errText = await r.text().catch(() => '<no body>');

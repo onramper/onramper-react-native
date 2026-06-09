@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import * as Application from 'expo-application';
-import { OnramperClient, type OnramperState, type QuoteResponse } from '@onramper/react-native';
+import { OnramperClient, type OnramperState, type QuoteResponse } from '@onramper/onramper-react-native';
 import { ENV } from './env.local';
 import { createDemoSession } from './createDemoSession';
 
@@ -22,6 +22,8 @@ const TX_DEFAULTS = {
   destination: 'sol',
   amount: '100',
   paymentMethod: 'applepay',
+  country: 'es',
+  subdivision: '',
   walletNetwork: 'solana',
   walletAddress: 'Br2jjHYskB1JJikv3Qw2QcmWVQGfZvkJFng4ZEwiGSjv',
 };
@@ -32,6 +34,8 @@ export default function App() {
   const [destination, setDestination] = useState(TX_DEFAULTS.destination);
   const [amount, setAmount] = useState(TX_DEFAULTS.amount);
   const [paymentMethod, setPaymentMethod] = useState(TX_DEFAULTS.paymentMethod);
+  const [country, setCountry] = useState(TX_DEFAULTS.country);
+  const [subdivision, setSubdivision] = useState(TX_DEFAULTS.subdivision);
   const [walletNetwork, setWalletNetwork] = useState(TX_DEFAULTS.walletNetwork);
   const [walletAddress, setWalletAddress] = useState(TX_DEFAULTS.walletAddress);
 
@@ -83,6 +87,7 @@ export default function App() {
         clientId: ENV.clientId,
         environment: 'development',
         logLevel: 'debug',
+        theme: 'light',
         onSessionExpired: async () => {
           info('onSessionExpired invoked — refreshing');
           return createDemoSession(ENV.demoToken);
@@ -120,6 +125,8 @@ export default function App() {
           destination,
           amount: parsed,
           type: 'buy',
+          country,
+          subdivision: subdivision || undefined,
           paymentMethod,
           wallet: { network: walletNetwork, address: walletAddress },
         },
@@ -188,6 +195,10 @@ export default function App() {
           <Text style={styles.section}>Transaction</Text>
           <Row>
             <Field label="payment" value={paymentMethod} onChangeText={setPaymentMethod} />
+          </Row>
+          <Row>
+            <Field label="country" value={country} onChangeText={setCountry} compact />
+            <Field label="subdivision" value={subdivision} onChangeText={setSubdivision} compact />
           </Row>
           <Row>
             <Field label="source" value={source} onChangeText={setSource} compact />

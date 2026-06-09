@@ -1,10 +1,10 @@
 # Onramper React Native — Expo example
 
-The **Expo** demo for [`@onramper/react-native`](../). It exercises `OnramperClient` end-to-end
+The **Expo** demo for [`@onramper/onramper-react-native`](../). It exercises `OnramperClient` end-to-end
 (prepare intent → quote → present widget) inside an Expo app using **prebuild** and a **dev client**.
 
 > This app is **iOS-only** (`app.json` → `platforms: ["ios"]`) and integrates the SDK via its Expo
-> [config plugin](app.json) (`plugins: ["@onramper/react-native"]`).
+> [config plugin](app.json) (`plugins: ["@onramper/onramper-react-native"]`).
 >
 > Looking for the **bare React Native** integration instead? See [`../example`](../example).
 
@@ -13,7 +13,7 @@ The **Expo** demo for [`@onramper/react-native`](../). It exercises `OnramperCli
 - **Node** ≥ 22.11.0
 - **Xcode** + an iOS Simulator (or a provisioned device)
 - **CocoaPods** + Ruby bundler (`bundle install` on first clone)
-- The library is consumed as `@onramper/react-native: file:..`, so the **parent package must be built**
+- The library is consumed as `@onramper/onramper-react-native: file:..`, so the **parent package must be built**
   and its native **xcframework fetched** before this app can build (see Step 1).
 
 ## Step 1 — Build the library (from the repo root)

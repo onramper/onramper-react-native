@@ -1,5 +1,5 @@
 {
-  "name": "@onramper/react-native",
+  "name": "@onramper/onramper-react-native",
   "version": "1.0.0",
   "description": "React Native wrapper for the Onramper iOS SDK",
   "main": "./lib/commonjs/index.js",
@@ -58,7 +58,7 @@
   "license": "MIT",
   "homepage": "https://github.com/onramper/onramper-react-native#readme",
   "onramperSDK": {
-    "checksum": "bd0697e80b0ca0a49c83f84969d5a0cccd6bfd4b3b83639eee9d6b000fb586b2"
+    "checksum": "26cd91f63b8f6ab40a9e572d2ad3f2254151fc66005cd54e88e7f3c787dda4c6"
   },
   "peerDependencies": {
     "react": ">=19.0.0",

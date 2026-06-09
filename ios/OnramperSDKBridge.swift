@@ -36,6 +36,7 @@ extension OnramperError {
     case .configurationError: return "configurationError"
     case .deviceBlocked: return "deviceBlocked"
     case .securityStorageFailed: return "securityStorageFailed"
+    case .securityTrustFailed: return "securityTrustFailed"
     }
   }
 
@@ -47,6 +48,8 @@ extension OnramperError {
       return ["status": code]
     case .securityStorageFailed(let status):
       return ["status": Int(status)]
+    case .securityTrustFailed(let host):
+      return ["host": host]
     case .invalidStateTransition(let from, let to):
       return ["from": from, "to": to]
     case .invalidState(let expected, let actual):

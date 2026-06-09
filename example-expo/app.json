@@ -3,9 +3,13 @@
     "name": "OnramperReactNativeExample",
     "slug": "onramper-react-native-example",
     "version": "1.0.0",
-    "platforms": ["ios"],
+    "platforms": [
+      "ios"
+    ],
     "newArchEnabled": true,
-    "plugins": ["@onramper/react-native"],
+    "plugins": [
+      "@onramper/onramper-react-native"
+    ],
     "ios": {
       "bundleIdentifier": "com.onramper.demo.react-native-expo",
       "deploymentTarget": "16.4",
@@ -17,7 +21,8 @@
           "NSAllowsArbitraryLoads": false,
           "NSAllowsLocalNetworking": true
         }
-      }
+      },
+      "appleTeamId": "P3JUP9FF82"
     }
   }
 }

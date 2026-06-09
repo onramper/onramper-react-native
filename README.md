@@ -1,4 +1,4 @@
-# @onramper/react-native
+# @onramper/onramper-react-native
 
 React Native wrapper for the Onramper iOS SDK.
 
@@ -7,7 +7,7 @@ React Native wrapper for the Onramper iOS SDK.
 ## Install
 
 ```bash
-npm install @onramper/react-native react-native-nitro-modules
+npm install @onramper/onramper-react-native react-native-nitro-modules
 cd ios && pod install
 ```
 
@@ -16,7 +16,7 @@ Requires React Native 0.79+, `react-native-nitro-modules` 0.35+, the **New Archi
 **Expo apps** — add the bundled config plugin to `app.json`, then prebuild:
 
 ```json
-{ "expo": { "plugins": ["@onramper/react-native"] } }
+{ "expo": { "plugins": ["@onramper/onramper-react-native"] } }
 ```
 
 The plugin applies the required iOS build flag (it does not change your deployment target). Set your app's deployment target to **16.4+** — Expo SDK 56's own minimum (bare RN only needs 16.0). For bare-RN Podfile setup (Xcode 16+/26) and full details, see the [integration guide](docs/INTEGRATION.md).
@@ -24,7 +24,7 @@ The plugin applies the required iOS build flag (it does not change your deployme
 ## Quick start
 
 ```ts
-import { OnramperClient } from '@onramper/react-native';
+import { OnramperClient } from '@onramper/onramper-react-native';
 
 const client = new OnramperClient({
   apiKey: 'pk_live_...',
@@ -77,7 +77,7 @@ const onFailed = client.addEventListener('failed', (e) => {
 All native errors arrive as `OnramperError` with a typed `code`:
 
 ```ts
-import { OnramperError } from '@onramper/react-native';
+import { OnramperError } from '@onramper/onramper-react-native';
 
 try {
   await client.initialize({ sessionId, sessionToken });
@@ -96,7 +96,7 @@ Full code list in `src/errors.ts`.
 
 ## Versioning
 
-`@onramper/react-native@X.Y.Z` always bundles `OnramperSDK@X.Y.Z` (iOS). Wrapper-only patches are published as `X.Y.Z-N` pre-releases (`npm install @onramper/react-native@next` to opt in).
+`@onramper/onramper-react-native@X.Y.Z` always bundles `OnramperSDK@X.Y.Z` (iOS). Wrapper-only patches are published as `X.Y.Z-N` pre-releases (`npm install @onramper/onramper-react-native@next` to opt in).
 
 ## Privacy manifest
 
@@ -108,7 +108,7 @@ The vendored `OnramperSDK.xcframework` already ships its own `PrivacyInfo.xcpriv
 
 ## Troubleshooting
 
-- **`pod install` fails finding the xcframework** — confirm `node_modules/@onramper/react-native/ios/Frameworks/OnramperSDK.xcframework/` exists.
+- **`pod install` fails finding the xcframework** — confirm `node_modules/@onramper/onramper-react-native/ios/Frameworks/OnramperSDK.xcframework/` exists.
 - **Bare RN build fails with `module map file ... not found` (Xcode 16+/26)** — disable explicit Swift modules in your `Podfile` `post_install` (`SWIFT_ENABLE_EXPLICIT_MODULES = NO`). Expo apps get this automatically via the config plugin. See the [integration guide](docs/INTEGRATION.md).
 - **App Attest errors in simulator** — expected. App Attest only works on real devices. The SDK surfaces this as `attestationFailed`.
 - **Buttons appear but sheets don't open** — the host RN screen must be inside a normal `UIViewController` (the default). Modal-presented screens may need extra care; report an issue with a repro.

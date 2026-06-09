@@ -1,4 +1,4 @@
-// Expo config plugin for @onramper/react-native.
+// Expo config plugin for @onramper/onramper-react-native.
 //
 // Applies the one iOS build fix that an Expo prebuild app can't be expected to
 // know about: disabling explicit Swift modules. On Xcode 16+/26, CocoaPods +
@@ -15,7 +15,7 @@ const { withDangerousMod } = require('@expo/config-plugins');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const MARKER = '# @onramper/react-native: disable explicit Swift modules';
+const MARKER = '# @onramper/onramper-react-native: disable explicit Swift modules';
 
 function withOnramperDisableExplicitModules(config) {
   return withDangerousMod(config, [

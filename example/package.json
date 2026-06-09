@@ -10,7 +10,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "@onramper/react-native": "file:..",
+    "@onramper/onramper-react-native": "file:..",
     "react": "19.2.3",
     "react-native": "0.85.3",
     "@react-native/new-app-screen": "0.85.3",

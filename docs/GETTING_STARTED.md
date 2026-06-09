@@ -40,8 +40,8 @@ The wrapper is built with **Nitro Modules** and requires React Native's **New Ar
 
 | You have… | What you need to do |
 |---|---|
-| **A bare React Native app** (no Expo) | `npm install @onramper/react-native react-native-nitro-modules`, apply the iOS build settings, then `pod install` ([iOS build setup](doc:ios-build-setup)). |
-| **An Expo app** (prebuild / CNG) | `npm install @onramper/react-native react-native-nitro-modules`, add the bundled config plugin to `app.json` `plugins`, then `npx expo prebuild` — the plugin applies the iOS build settings for you. |
+| **A bare React Native app** (no Expo) | `npm install @onramper/onramper-react-native react-native-nitro-modules`, apply the iOS build settings, then `pod install` ([iOS build setup](doc:ios-build-setup)). |
+| **An Expo app** (prebuild / CNG) | `npm install @onramper/onramper-react-native react-native-nitro-modules`, add the bundled config plugin to `app.json` `plugins`, then `npx expo prebuild` — the plugin applies the iOS build settings for you. |
 
 No `install-expo-modules` step and no AppDelegate changes are required. Not compatible with Expo Go (the package vendors a native binary).
 
@@ -65,7 +65,7 @@ No `install-expo-modules` step and no AppDelegate changes are required. Not comp
 ## 1. Install
 
 ```bash
-npm install @onramper/react-native react-native-nitro-modules
+npm install @onramper/onramper-react-native react-native-nitro-modules
 ```
 
 `react-native-nitro-modules` is a peer dependency — install it in your app. The native binary (`OnramperSDK.xcframework`) and the Nitro module autolink in during `pod install`. Ensure the **New Architecture** is enabled (the default on RN 0.76+).
@@ -73,7 +73,7 @@ npm install @onramper/react-native react-native-nitro-modules
 **Expo apps** — add the bundled config plugin so prebuild applies the iOS build settings automatically:
 
 ```json
-{ "expo": { "plugins": ["@onramper/react-native"] } }
+{ "expo": { "plugins": ["@onramper/onramper-react-native"] } }
 ```
 
 Set your app's iOS deployment target to **16.4+** — Expo SDK 56's own minimum (e.g. `ios.deploymentTarget` in `app.json`). Then run `npx expo prebuild` followed by `npx expo run:ios`. You can skip the [iOS build setup](doc:ios-build-setup) — the plugin applies the required build flag for you.
@@ -99,7 +99,7 @@ For a step-by-step walkthrough of how a checkout flows through the wrapper, and 
 ### 3.2 Constructing the client
 
 ```ts
-import { OnramperClient } from '@onramper/react-native';
+import { OnramperClient } from '@onramper/onramper-react-native';
 
 const client = new OnramperClient({
   apiKey: 'pk_live_...',           // your partner API key
@@ -247,7 +247,7 @@ Only those three fields are styleable. The button label ("Buy"), height, interna
 Every native error surfaces as `OnramperError` (a real JS `Error` subclass) with a typed `code`. The taxonomy is small, stable, and actionable — internal plumbing (token refresh, DPoP, re-bootstrap) is handled silently, so you only see what you can act on.
 
 ```ts
-import { OnramperError } from '@onramper/react-native';
+import { OnramperError } from '@onramper/onramper-react-native';
 
 try {
   const { button, quote } = await client.getCheckoutRequirements(request, style);

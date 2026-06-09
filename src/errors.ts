@@ -25,6 +25,7 @@ export type OnramperErrorCode =
   | 'configurationError'
   | 'deviceBlocked'
   | 'securityStorageFailed'
+  | 'securityTrustFailed'
   // JS-only codes
   | 'platformUnsupported'
   | 'intentInvalidated'

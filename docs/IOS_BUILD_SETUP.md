@@ -1,4 +1,4 @@
-# iOS build setup for `@onramper/react-native`
+# iOS build setup for `@onramper/onramper-react-native`
 
 Build-time configuration for embedding the Onramper iOS SDK: iOS build settings, App Attest, the first build, and Metro. For the full integration walkthrough — install, usage, error handling, API reference — see [Getting started](doc:getting-started-1).
 
