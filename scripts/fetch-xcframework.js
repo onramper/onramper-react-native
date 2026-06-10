@@ -58,7 +58,10 @@ if (!recordedChecksum || recordedChecksum === 'PENDING_FETCH') {
 
 const xcfPath = path.join(dest, 'OnramperSDK.xcframework');
 fs.rmSync(xcfPath, { recursive: true, force: true });
-const unzip = spawnSync('unzip', ['-q', zipPath, '-d', dest], { stdio: 'inherit' });
+// -o: overwrite without prompting. The zip also contains a sibling LICENSE that
+// may already exist from a prior fetch; without -o, unzip blocks on an
+// interactive prompt and aborts (fine in fresh CI, breaks local re-fetch).
+const unzip = spawnSync('unzip', ['-oq', zipPath, '-d', dest], { stdio: 'inherit' });
 if (unzip.status !== 0) {
   console.error('unzip failed');
   process.exit(unzip.status ?? 1);

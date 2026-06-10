@@ -32,7 +32,8 @@
     "app.plugin.js",
     "README.md",
     "CHANGELOG.md",
-    "LICENSE"
+    "LICENSE",
+    "NOTICE"
   ],
   "scripts": {
     "build": "bob build",
@@ -60,10 +61,10 @@
   ],
   "repository": "https://github.com/onramper/onramper-react-native",
   "author": "Onramper <engineering@onramper.com>",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "homepage": "https://github.com/onramper/onramper-react-native#readme",
   "onramperSDK": {
-    "checksum": "c644d91bc2fb03e79213e5c326310875a07889ab8ba009bc29449ea7517590bf"
+    "checksum": "64662328ca5bcc63c236a538d917f6177b3c55136eadbd08e7010a00b3873ed5"
   },
   "peerDependencies": {
     "react": ">=19.0.0",
