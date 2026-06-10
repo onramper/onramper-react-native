@@ -1,12 +1,12 @@
 # iOS build setup for `@onramper/react-native`
 
-Build-time configuration for embedding the Onramper iOS SDK: iOS build settings, App Attest, the first build, and Metro. For the full integration walkthrough — install, usage, error handling, API reference — see [Getting started](doc:getting-started-1).
+Build-time configuration for embedding the Onramper iOS SDK: iOS build settings, App Attest, the first build, and Metro. For the full integration walkthrough — install, usage, error handling, API reference — see [Getting started](doc:headless-react-native-getting-started).
 
 ---
 
 ## 1. iOS build settings (bare React Native)
 
-Bare RN apps need two iOS settings the package requires. (Expo apps get these from the config plugin — see [Getting started](doc:getting-started-1).)
+Bare RN apps need two iOS settings the package requires. (Expo apps get these from the config plugin — see [Getting started](doc:headless-react-native-getting-started).)
 
 Set your app's iOS deployment target to **16.0+**, and disable explicit Swift modules in the `Podfile` `post_install`:
 

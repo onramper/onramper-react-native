@@ -32,6 +32,8 @@ Terms-of-Service consent, KYC, token refresh, and the Apple Pay / card payment s
 
 ➡️ **See [what this wrapper does for you](doc:what-this-kit-does)** — the full list of what you get out of the box, and how a checkout flows end to end.
 
+➡️ **See [Coverage](doc:headless-coverage)** — the supported regions, payment methods, and onramp providers.
+
 ---
 
 ## What kind of app can use this?
