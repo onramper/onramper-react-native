@@ -8,5 +8,6 @@ module.exports = {
   },
   moduleNameMapper: {
     '^react-native-nitro-modules$': '<rootDir>/__tests__/__mocks__/react-native-nitro-modules.ts',
+    '^react-native$': '<rootDir>/__tests__/__mocks__/react-native.ts',
   },
 };

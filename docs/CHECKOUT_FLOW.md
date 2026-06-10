@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 How a checkout flows through `@onramper/react-native`. For the full integration walkthrough — install, usage, error handling, API reference — see [Getting started](doc:headless-react-native-getting-started).
+=======
+How a checkout flows through `@onramper/onramper-react-native`. For the full integration walkthrough — install, usage, error handling, API reference — see [Getting started](doc:getting-started-1).
+>>>>>>> refs/remotes/origin/master
 
 ---
 

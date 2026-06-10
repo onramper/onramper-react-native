@@ -11,8 +11,8 @@
     "test": "jest"
   },
   "dependencies": {
-    "@onramper/react-native": "file:..",
-    "@react-native/new-app-screen": "0.85.2",
+    "@onramper/onramper-react-native": "file:..",
+    "@react-native/new-app-screen": "0.85.3",
     "expo": "^56.0.3",
     "expo-application": "~56.0.3",
     "expo-modules-core": "~56.0.12",

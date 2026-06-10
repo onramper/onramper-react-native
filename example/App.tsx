@@ -10,7 +10,7 @@ import type { ReactElement } from 'react';
 import { useRef, useState } from 'react';
 import { Button, ScrollView, StatusBar, StyleSheet, Text, useColorScheme, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { OnramperClient, type OnramperState, type QuoteResponse } from '@onramper/react-native';
+import { OnramperClient, type OnramperState, type QuoteResponse } from '@onramper/onramper-react-native';
 import { ENV } from './env.local';
 import { createDemoSession } from './createDemoSession';
 
@@ -68,6 +68,7 @@ function AppContent() {
         apiKey: ENV.apiKey,
         clientId: ENV.clientId,
         environment: 'development',
+        theme: 'dark',
         logLevel: 'debug',
         onSessionExpired: async () => {
           info('onSessionExpired — refreshing');

@@ -14,6 +14,12 @@ on:
 jobs:
   release:
     runs-on: macos-14
+    permissions:
+      # contents: write — the job pushes the release commit/tag and creates a
+      # GitHub release. id-token: write — lets `npm publish --provenance` mint a
+      # Sigstore signing identity for the provenance attestation.
+      contents: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,7 +31,11 @@ jobs:
 
       - name: Verify iOS release exists
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # onramper/onramper-ios is a separate private repo; the auto
+          # GITHUB_TOKEN is scoped to THIS repo only and can't read it.
+          # RELEASE_REPO_TOKEN is a fine-grained PAT (Contents: Read-only on
+          # onramper-ios). Remove once onramper-ios is public.
+          GH_TOKEN: ${{ secrets.RELEASE_REPO_TOKEN }}
           IOS_VERSION: ${{ github.event.inputs.ios-version }}
         run: |
           set -e
@@ -52,7 +62,7 @@ jobs:
         env:
           VERSION: ${{ steps.ver.outputs.version }}
         run: |
-          if npm view "@onramper/react-native@${VERSION}" version 2>/dev/null; then
+          if npm view "@onramper/onramper-react-native@${VERSION}" version 2>/dev/null; then
             echo "Version ${VERSION} already on npm."; exit 1
           fi
 
@@ -63,10 +73,17 @@ jobs:
           node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json'));p.version=process.env.VERSION;p.onramperSDK={checksum:'PENDING_FETCH'};fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n');"
 
       - name: Fetch xcframework + checksum
+        env:
+          # Same cross-repo access as ci.yml: `gh release download` in
+          # scripts/fetch-xcframework.js reads GH_TOKEN to reach onramper-ios.
+          GH_TOKEN: ${{ secrets.RELEASE_REPO_TOKEN }}
         run: npm ci && npm run fetch-xcframework
 
       - name: Verify checksum recorded
         run: npm run verify-version
+
+      - name: Slim xcframework for npm
+        run: npm run slim-xcframework
 
       - name: Test + build
         run: |
@@ -85,15 +102,31 @@ jobs:
           VERSION: ${{ steps.ver.outputs.version }}
         run: |
           git add package.json
-          git commit -m "chore(release): v${VERSION}"
-          git tag "v${VERSION}"
-          git push origin master --tags
+          # package.json may already be at the target version/checksum (e.g. it
+          # was pre-populated on master), in which case there is nothing to
+          # commit — that's fine. The tag is what the publish + podspec git
+          # source need, so always create and push it.
+          if git diff --cached --quiet; then
+            echo "package.json already at v${VERSION} with recorded checksum; nothing to commit."
+          else
+            git commit -m "chore(release): v${VERSION}"
+            git push origin master
+          fi
+          # Idempotent: a prior run that failed at publish may have already
+          # created/pushed the tag. Skip if it exists (HEAD is unchanged in the
+          # nothing-to-commit path, so the existing tag is correct).
+          if git ls-remote --exit-code --tags origin "v${VERSION}" >/dev/null 2>&1; then
+            echo "tag v${VERSION} already exists on origin; skipping."
+          else
+            git tag "v${VERSION}"
+            git push origin "v${VERSION}"
+          fi
 
       - name: Publish to npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_TAG: ${{ steps.ver.outputs.tag }}
-        run: npm publish --tag "$NPM_TAG" --access public
+        run: npm publish --tag "$NPM_TAG" --access public --provenance
 
       - name: Create GitHub release
         env:

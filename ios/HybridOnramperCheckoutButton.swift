@@ -30,7 +30,14 @@ final class HybridOnramperCheckoutButton: HybridOnramperCheckoutButtonSpec {
         // Handle was invalidated or already consumed — leave the view empty.
         return
       }
-      self.container.host(AnyView(entry.button))
+      // Pin the SwiftUI content to the container's width so long ToS text wraps
+      // instead of laying out at its intrinsic (single-line) width and spilling
+      // past the right edge. `.fixedSize(vertical:)` lets it grow downward.
+      self.container.host(AnyView(
+        entry.button
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .fixedSize(horizontal: false, vertical: true)
+      ))
     }
   }
 }

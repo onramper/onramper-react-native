@@ -7,12 +7,10 @@ yarn-debug.log
 yarn-error.log
 
 # Native
-ios/Frameworks/OnramperSDK.xcframework/
-ios/Frameworks/OnramperSDK.xcframework.zip
+# Fetched at build/publish time (npm `files` force-includes the xcframework); never tracked
+ios/Frameworks/
 ios/build/
 ios/Pods/
-android/build/
-android/.gradle/
 
 # Expo example app
 example-expo/node_modules/

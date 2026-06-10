@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 Known limitations and gotchas when integrating `@onramper/react-native`. For the full integration walkthrough — install, usage, error handling, API reference — see [Getting started](doc:headless-react-native-getting-started).
+=======
+Known limitations and gotchas when integrating `@onramper/onramper-react-native`. For the full integration walkthrough — install, usage, error handling, API reference — see [Getting started](doc:getting-started-1).
+>>>>>>> refs/remotes/origin/master
 
 ---
 
@@ -12,7 +16,7 @@ The app target's "Emit Swift module" phase can fail with `module map file ... no
 Stub-only. All Android calls throw `platformUnsupported`. A native Android SDK is not part of this release.
 
 ## Local development via `file:` symlink (contributors only)
-If you link the wrapper into a host app via `"@onramper/react-native": "file:.."`, Metro can resolve `react-native-nitro-modules` and `react-native` from BOTH the host app and the wrapper repo's own node_modules — two parallel module instances, which break native view/registry lookups.
+If you link the wrapper into a host app via `"@onramper/onramper-react-native": "file:.."`, Metro can resolve `react-native-nitro-modules` and `react-native` from BOTH the host app and the wrapper repo's own node_modules — two parallel module instances, which break native view/registry lookups.
 
 Fix it in the host app's `metro.config.js` (force a single copy):
 
