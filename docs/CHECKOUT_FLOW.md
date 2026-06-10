@@ -1,5 +1,4 @@
 How a checkout flows through `@onramper/onramper-react-native`. For the full integration walkthrough — install, usage, error handling, API reference — see [Getting started](doc:headless-react-native-getting-started).
----
 
 ## What the Headless Wrapper handles for you
 
