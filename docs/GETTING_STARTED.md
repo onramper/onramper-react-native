@@ -4,6 +4,10 @@ A consumer-facing guide to embedding the Onramper Headless solution in a React N
 
 ---
 
+> ℹ️ **iOS only for now.** This wrapper currently supports iOS only. Android support is coming soon.
+
+---
+
 ## At a glance
 
 Three calls and a native button — no checkout UI, ToS screen, or login flow to build:
