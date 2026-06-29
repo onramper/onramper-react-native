@@ -138,7 +138,7 @@ export default function App() {
       );
       setQuote(result.quote);
       setButton(result.button);
-      info(`got intent: rate=${result.quote.rate ?? 'n/a'} payout=${result.quote.payout ?? 'n/a'}`);
+      info(`got intent: rate=${result.quote.rate} payout=${result.quote.payout}`);
     } catch (e: unknown) {
       const err = e as { code?: string; message?: string };
       fail(`getCheckoutRequirements error: ${err.code ?? 'unknown'} — ${err.message ?? String(e)}`);
@@ -217,12 +217,11 @@ export default function App() {
             <>
               <View style={styles.divider} />
               <Text style={styles.section}>Quote</Text>
-              <Text style={styles.kv}>ramp: {quote.ramp ?? '—'}</Text>
-              <Text style={styles.kv}>rate: {quote.rate ?? '—'}</Text>
-              <Text style={styles.kv}>networkFee: {quote.networkFee ?? '—'}</Text>
-              <Text style={styles.kv}>transactionFee: {quote.transactionFee ?? '—'}</Text>
-              <Text style={styles.kv}>payout: {quote.payout ?? '—'}</Text>
-              {quote.errors?.length ? <Text style={styles.error}>errors: {JSON.stringify(quote.errors)}</Text> : null}
+              <Text style={styles.kv}>ramp: {quote.ramp}</Text>
+              <Text style={styles.kv}>rate: {quote.rate}</Text>
+              <Text style={styles.kv}>networkFee: {quote.networkFee}</Text>
+              <Text style={styles.kv}>transactionFee: {quote.transactionFee}</Text>
+              <Text style={styles.kv}>payout: {quote.payout}</Text>
             </>
           )}
 

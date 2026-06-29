@@ -2,6 +2,23 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.1.0]
+
+Bundles `OnramperSDK@1.1.0`. The SDK is pre-adoption, so breaking changes ship within the 1.x line.
+
+### Changed (breaking)
+- `QuoteResponse` is now success-only: `quoteId`, `ramp`, `rate`, `payout`, `paymentMethod`, `networkFee`, and `transactionFee` are non-optional, and `errors` / the `QuoteError` type are removed. `getCheckoutRequirements()` rejects with `OnramperError` (e.g. `quoteUnavailable`) when a quote can't be priced, rather than resolving with a partial quote.
+- `CheckoutRequest.destination` is now required (was optional).
+
+### Added
+- Phone **reverification**: a `reverification` member on the `CheckoutRequirement` union (`field`, `requiredRecencyDays`, `lastVerifiedAt`), surfaced through the existing OnramperID flow — the native button handles it automatically. `requirementSatisfied` reports each resolved requirement type.
+- `amountLimitSatisfied` on the `amount_limit` requirement.
+- `UserInfoField.satisfied` and the typed `UserInfoFieldType` union (was `string`).
+- New `docs/TYPE_REFERENCE.md` consolidating every client-facing type.
+
+### Fixed
+- `CheckoutRequirement` is now serialized by the native bridge in the flat `{ type, ...fields }` shape the TypeScript union declares (previously the Swift `Codable` nesting `{ type, requirement: {...} }` leaked through).
+
 ## [1.0.0] — 2026-05-20
 
 ### Added

@@ -104,7 +104,7 @@ function AppContent() {
       );
       setQuote(result.quote);
       setButton(result.button);
-      info(`got intent: rate=${result.quote.rate ?? 'n/a'} payout=${result.quote.payout ?? 'n/a'}`);
+      info(`got intent: rate=${result.quote.rate} payout=${result.quote.payout}`);
     } catch (e: unknown) {
       const err = e as { code?: string; message?: string };
       fail(`getCheckoutRequirements error: ${err.code ?? 'unknown'} — ${err.message ?? String(e)}`);
@@ -163,9 +163,9 @@ function AppContent() {
       {quote && (
         <>
           <Text style={[styles.section, { color: fg }]}>Quote</Text>
-          <Text style={[styles.kv, { color: muted }]}>ramp: {quote.ramp ?? '—'}</Text>
-          <Text style={[styles.kv, { color: muted }]}>rate: {quote.rate ?? '—'}</Text>
-          <Text style={[styles.kv, { color: muted }]}>payout: {quote.payout ?? '—'}</Text>
+          <Text style={[styles.kv, { color: muted }]}>ramp: {quote.ramp}</Text>
+          <Text style={[styles.kv, { color: muted }]}>rate: {quote.rate}</Text>
+          <Text style={[styles.kv, { color: muted }]}>payout: {quote.payout}</Text>
         </>
       )}
 

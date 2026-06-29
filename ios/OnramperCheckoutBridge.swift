@@ -10,7 +10,9 @@ import SwiftUI
 
 private struct CheckoutRequestJSON: Decodable {
   let source: String
-  let destination: String?
+  // Required — the SDK can't price a trade without it. Decoding throws (→
+  // invalidRequest) if absent; the TS `CheckoutRequest.destination` guarantees it.
+  let destination: String
   let amount: Double
   let type: String
   let country: String?

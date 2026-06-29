@@ -91,6 +91,43 @@ extension CheckoutPaymentType {
   var jsValue: String { rawValue } // "applepay" | "revolutpay"
 }
 
+// MARK: - Requirements → flat dict
+
+// The TS layer expects each requirement flattened to `{ type, ...fields }`.
+// Swift's `Codable` would instead nest under `{ type, requirement: {...} }`, so
+// we map explicitly here. Nested `items`/`fields` reuse `codableToJSArray` since
+// `ToSItem`/`UserInfoField` already encode to the flat shape the TS expects.
+func requirementToJSDict(_ requirement: CheckoutRequirement) -> [String: Any] {
+  switch requirement {
+  case .tos(let r):
+    return ["type": "tos", "providerId": r.providerId, "items": codableToJSArray(r.items)]
+  case .amountLimit(let r):
+    var dict: [String: Any] = [
+      "type": "amount_limit",
+      "providerId": r.providerId,
+      "amountLimitSatisfied": r.amountLimitSatisfied,
+    ]
+    if let min = r.minAmountLimit { dict["minAmountLimit"] = min }
+    if let max = r.maxAmountLimit { dict["maxAmountLimit"] = max }
+    return dict
+  case .userInfo(let r):
+    return ["type": "user_info", "providerId": r.providerId, "fields": codableToJSArray(r.fields)]
+  case .reverification(let r):
+    var dict: [String: Any] = [
+      "type": "reverification",
+      "providerId": r.providerId,
+      "field": r.field.rawValue,
+      "requiredRecencyDays": r.requiredRecencyDays,
+    ]
+    if let last = r.lastVerifiedAt { dict["lastVerifiedAt"] = last }
+    return dict
+  }
+}
+
+func requirementsToJSArray(_ requirements: [CheckoutRequirement]) -> [Any] {
+  requirements.map { requirementToJSDict($0) }
+}
+
 // MARK: - State → dict
 
 extension OnramperState {
@@ -101,7 +138,7 @@ extension OnramperState {
     case .ready: return ["kind": "ready"]
     case .checkoutPreparing: return ["kind": "checkoutPreparing"]
     case .requireLogin(let requirements):
-      return ["kind": "requireLogin", "requirements": codableToJSArray(requirements)]
+      return ["kind": "requireLogin", "requirements": requirementsToJSArray(requirements)]
     case .authenticating: return ["kind": "authenticating"]
     case .readyToCheckout: return ["kind": "readyToCheckout"]
     case .finalizing: return ["kind": "finalizing"]
@@ -129,7 +166,7 @@ extension CheckoutEvent {
     case .checkoutStarted(let intentId):
       return ["type": "checkoutStarted", "intentId": intentId]
     case .loginRequired(let requirements):
-      return ["type": "loginRequired", "requirements": codableToJSArray(requirements)]
+      return ["type": "loginRequired", "requirements": requirementsToJSArray(requirements)]
     case .readyToCheckout:
       return ["type": "readyToCheckout"]
     case .requirementSatisfied(let kind):
