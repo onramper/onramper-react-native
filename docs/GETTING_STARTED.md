@@ -102,7 +102,39 @@ Cover it before your first build, then return here for usage. (Expo apps get the
 
 For a step-by-step walkthrough of how a checkout flows through the wrapper, and what OnramperID is, see ➡️ **[What this wrapper does](doc:what-this-kit-does)**.
 
-### 3.2 Constructing the client
+### 3.2 Backend session endpoint
+
+Your backend must expose an endpoint that mints sessions for the app — both at startup and when `onSessionExpired` fires. It authenticates your end user, makes a SigV2-signed call to the Onramper partners-api with your partner secret (which **never** leaves your server), and returns `{ sessionId, sessionToken }`.
+
+The app expects exactly these two fields back from your endpoint:
+
+```ts
+type OnramperSession = {
+  sessionId: string;
+  sessionToken: string;
+};
+
+// You implement this on the frontend — it calls YOUR backend endpoint
+// (with your own user auth) and returns the { sessionId, sessionToken } pair.
+async function createSession(): Promise<OnramperSession> {
+  const res = await fetch('https://api.yourapp.com/onramper-session', {
+    method: 'POST',
+    headers: { authorization: `Bearer ${userJWT}` },
+  });
+  return res.json();
+}
+
+const { sessionId, sessionToken } = await createSession();
+
+// both are passed straight into the wrapper:
+await client.initialize({ sessionId, sessionToken });
+```
+
+> ## ➡️ [**Backend session endpoint**](doc:backend-session-endpoint)
+>
+> Read this guide for what that endpoint should look like, with a TypeScript reference implementation and the SigV2 signing details.
+
+### 3.3 Constructing the client
 
 ```ts
 import { OnramperClient } from '@onramper/onramper-react-native';
@@ -138,7 +170,7 @@ await client.initialize({ sessionId, sessionToken });
 
 If your backend is unreachable when the Headless Wrapper calls `onSessionExpired`, throw or reject — the Headless Wrapper surfaces it as `OnramperError` with code `userTokenRefreshFailed` (or `initializationFailed` if the failure happens during `initialize`).
 
-### 3.3 Requesting the checkout button
+### 3.4 Requesting the checkout button
 
 ```ts
 const { button, quote } = await client.getCheckoutRequirements(
@@ -178,7 +210,7 @@ When the user taps **Buy**, the button:
 
 If the user's OnramperID session expires mid-checkout, the button automatically re-presents the login sheet — the user signs in again and the checkout resumes from where it was.
 
-### 3.4 Observing outcomes
+### 3.5 Observing outcomes
 
 The native button doesn't expose per-instance callbacks. Subscribe to the Headless Wrapper's event stream:
 
@@ -200,7 +232,7 @@ const offState = client.addStateListener((state) => {
 // to drop all listeners and release the native client.
 ```
 
-### 3.5 Re-requesting on input changes
+### 3.6 Re-requesting on input changes
 
 If the user changes amount, payment method, or country, call `getCheckoutRequirements()` again with the updated request. The Headless Wrapper resets internally and returns a fresh button — no need to call `reset()` first.
 
@@ -221,7 +253,7 @@ The native side single-flights this: any prior in-flight call is invalidated whe
 
 After a `completed` or `failed` outcome, call `await client.reset()` to return to `ready`. The Headless Wrapper session and OnramperID login both remain valid; you don't need to re-`initialize()` unless the Headless Wrapper itself surfaces an unrecoverable failure.
 
-### 3.6 Signing the OnramperID user out
+### 3.7 Signing the OnramperID user out
 
 `reset()` keeps the user's OnramperID login active so the next checkout skips the login sheet. Call `await client.signOut()` when you want to clear the stored OIDC tokens — useful for a "Sign out" menu item, a "Switch account" flow, or for ending a session when your app's own user logs out.
 
@@ -234,7 +266,7 @@ await client.signOut();
 // session itself has expired.
 ```
 
-### 3.7 Customizing the Buy button
+### 3.8 Customizing the Buy button
 
 `CheckoutButtonStyle` exposes three fields. Style is **per-checkout** (not global) — pass the same value on every `getCheckoutRequirements()` call if you want a consistent look.
 
@@ -248,7 +280,7 @@ interface CheckoutButtonStyle {
 
 Only those three fields are styleable. The button label ("Buy"), height, internal padding, font, ToS sentence rendering, and the login / payment sheets are Headless Wrapper-owned in this release — partners cannot override them. If your design needs more, raise it with the Headless Wrapper team rather than wrapping the button in a custom container (the underlying SwiftUI view is opaque and may relayout).
 
-### 3.8 Error handling
+### 3.9 Error handling
 
 Every native error surfaces as `OnramperError` (a real JS `Error` subclass) with a typed `code`. The taxonomy is small, stable, and actionable — internal plumbing (token refresh, DPoP, re-bootstrap) is handled silently, so you only see what you can act on.
 
@@ -316,7 +348,7 @@ The Headless Wrapper absorbs these signals internally — they never surface to 
 
 Many errors carry an `info` payload (e.g., `{ debugInfo: 'OnramperBackend-40005: ...' }`). Treat it as opaque support-ticket fodder: **log it, but don't switch on its contents.** The format is non-localized and may change without notice.
 
-### 3.9 Logging
+### 3.10 Logging
 
 Pass `logLevel: 'info'` while integrating to see HTTP method, URL path, and status for every Onramper-backend + security call in the device console. Levels:
 
@@ -327,7 +359,7 @@ Pass `logLevel: 'info'` while integrating to see HTTP method, URL path, and stat
 | `'info'` | Adds method + URL path + status for every request. |
 | `'debug'` | Adds low-level detail. |
 
-### 3.10 Reference: state, events, methods
+### 3.11 Reference: state, events, methods
 
 #### Methods on `OnramperClient`
 
@@ -384,21 +416,7 @@ These provider-lifecycle events come from third-party checkout webviews; not eve
 
 ---
 
-## 4. Backend requirements
-
-The Headless Wrapper calls the Onramper backend directly. Your **backend** is responsible for:
-
-1. **Minting session tokens.** Before constructing `OnramperClient`, your app should call your backend's session endpoint, which in turn calls `https://demo-stg.onramper.dev/demo/create-session` (or production equivalent) with your private partner secret. The endpoint returns `{ sessionId, sessionToken }` that you pass to `client.initialize(...)`.
-
-2. **Refreshing tokens** when the Headless Wrapper invokes your `onSessionExpired` handler. Same flow as above.
-
-3. **Holding the partner secret** server-side. **Never** embed the demo token or partner secret in the client app.
-
-A sample dev-only client-side session mint is in `example/createDemoSession.ts` — do not copy this pattern to production.
-
----
-
-## 5. Debugging your integration
+## 4. Debugging your integration
 
 Known limitations and gotchas — App Attest in the simulator, Xcode Swift modules, Android, and `file:` symlink local development — live in a dedicated guide:
 
@@ -406,7 +424,7 @@ Known limitations and gotchas — App Attest in the simulator, Xcode Swift modul
 
 ---
 
-## 6. Verifying your setup
+## 5. Verifying your setup
 
 After installation, you should be able to build and run on a device:
 
@@ -430,7 +448,7 @@ In the running app, calling `client.initialize(...)` with valid staging credenti
 
 ---
 
-## 7. Before going live
+## 6. Before going live
 
 - Production `apiKey` and `clientId` configured per build flavour (no staging credentials in release builds).
 - App Attest entitlement enabled on the production app id; signing team set under **Signing & Capabilities**.
