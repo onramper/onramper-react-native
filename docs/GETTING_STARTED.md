@@ -1,5 +1,7 @@
 A consumer-facing guide to embedding the Onramper Headless solution in a React Native app via this wrapper.
 
+> **iOS-only in this release.** The wrapper vendors the native `OnramperSDK.xcframework`; every API runs on iOS. On Android the module is a stub — calls throw `OnramperError` with code `platformUnsupported`, so guard call sites with a platform check. Android is not part of this release.
+
 ---
 
 > ℹ️ **iOS only for now.** This wrapper currently supports iOS only. Android support is coming soon.
@@ -192,19 +194,21 @@ const { button, quote } = await client.getCheckoutRequirements(
 // `button` is a ready-to-render React element. Drop it anywhere in your tree.
 return (
   <View>
-    <Text>Rate: {quote.rate ?? 'unavailable'}</Text>
-    <Text>Payout: {quote.payout ?? 'unavailable'}</Text>
+    <Text>Rate: {quote.rate}</Text>
+    <Text>Payout: {quote.payout}</Text>
     {button}
   </View>
 );
 ```
+
+`getCheckoutRequirements()` resolves only with a **successful** quote — a request that can't be priced rejects with `OnramperError` (e.g. `quoteUnavailable`) instead. So `quote`'s core fields (`quoteId`, `ramp`, `rate`, `payout`, `paymentMethod`, `networkFee`, `transactionFee`) are always present — no null checks needed. See the [type reference](doc:type-reference) for the full shape.
 
 The Buy button renders natively (SwiftUI under the hood) and presents OIDC login + payment webview sheets internally. Terms-of-service text appears below the button automatically.
 
 When the user taps **Buy**, the button:
 
 1. Records the Terms-of-Service consent timestamp.
-2. Presents the OnramperID login sheet, if required by the provider.
+2. Presents the OnramperID login sheet, if required by the provider — this also covers **phone re-verification** (when a provider needs a recent phone verification, the same sheet opens and the user re-verifies their existing number). Both are handled automatically; you don't wire anything.
 3. Finalizes the transaction.
 4. Presents the appropriate payment view (Apple Pay, card, etc. — chosen automatically based on the onramp's response).
 
@@ -382,7 +386,7 @@ Pass `logLevel: 'info'` while integrating to see HTTP method, URL path, and stat
 | `'initializing'` | `initialize()` is in flight. |
 | `'ready'` | Bootstrap complete; ready for `getCheckoutRequirements()`. |
 | `'checkoutPreparing'` | `getCheckoutRequirements()` is in flight. |
-| `'requireLogin'` | Intent created; requires `user_info` — login sheet will present on Buy. Carries `requirements: CheckoutRequirement[]`. |
+| `'requireLogin'` | Intent created; requires `user_info` or phone `reverification` — the OnramperID sheet will present on Buy. Carries `requirements: CheckoutRequirement[]`. |
 | `'authenticating'` | OnramperID login sheet is on screen. |
 | `'readyToCheckout'` | All requirements satisfied; tapping Buy goes straight to finalize. |
 | `'finalizing'` | Backend finalize is in flight. |
@@ -396,9 +400,9 @@ Pass `logLevel: 'info'` while integrating to see HTTP method, URL path, and stat
 |---|---|
 | `'stateChanged'` | Any state transition. Carries `state`. |
 | `'checkoutStarted'` | Intent has been created. Carries `intentId`. |
-| `'loginRequired'` | The current intent requires `user_info`. Carries `requirements`. |
+| `'loginRequired'` | The current intent requires `user_info` or phone `reverification`. Carries `requirements`. |
 | `'readyToCheckout'` | All requirements satisfied. |
-| `'requirementSatisfied'` | A requirement (`tos`, `amount_limit`, `user_info`) just passed. |
+| `'requirementSatisfied'` | A requirement (`tos`, `amount_limit`, `user_info`, `reverification`) just passed. The OnramperID flow emits one per type it resolves. |
 | `'checkoutFinalized'` | Backend finalized; payment surface is about to render. |
 | `'renderingStarted'` | The payment view is on screen. Carries `url`, `renderType`. |
 | `'completed'` | Terminal success. Carries `checkoutId`. |

@@ -42,7 +42,7 @@ export interface WalletInfo {
 // `country`, `subdivision`) are lowercased by the SDK; pass either case.
 export interface CheckoutRequest {
   source: string;
-  destination?: string;
+  destination: string;
   amount: number;
   type: TransactionType;
   country?: string;
@@ -52,24 +52,21 @@ export interface CheckoutRequest {
   onlyOnramps?: string[];
 }
 
-// Mirrors Swift QuoteResponse exactly — all fields optional because the BFF
-// can return a partial quote with `errors` populated when the onramp can't
-// honor the request. Integrators must handle nulls.
+// Mirrors Swift `QuoteResponse`. The Onramper backend only returns a
+// *successful* quote: a request that can't be priced fails with an
+// `OnramperError` (e.g. `quoteUnavailable`) rather than a partial quote. So the
+// core pricing fields are always present — integrators don't null-check them.
+// `networkFee` and `transactionFee` are present too; `recommendations` is
+// optional metadata.
 export interface QuoteResponse {
-  quoteId?: string;
-  ramp?: string;
-  rate?: number;
-  networkFee?: number;
-  transactionFee?: number;
-  payout?: number;
-  paymentMethod?: string;
+  quoteId: string;
+  ramp: string;
+  rate: number;
+  payout: number;
+  paymentMethod: string;
+  networkFee: number;
+  transactionFee: number;
   recommendations?: string[];
-  errors?: QuoteError[];
-}
-
-export interface QuoteError {
-  type: string;
-  message: string;
 }
 
 export interface CheckoutButtonStyle {
@@ -96,12 +93,27 @@ export interface CheckoutFinalizeResponse {
   headlessCheckoutData: HeadlessCheckoutData;
 }
 
-// Checkout requirements surfaced by the BFF and bridged through JSON.
-// Shape mirrors Sources/OnramperSDK/Models/CheckoutIntentResponse.swift.
+// Checkout requirements surfaced by the Onramper backend and bridged through JSON.
+// Shape mirrors Sources/OnramperSDK/Models/CheckoutIntentResponse.swift. The
+// native bridge flattens each requirement to `{ type, ...fields }` (the Swift
+// wire shape is `{ type, requirement: {...} }`).
 export type CheckoutRequirement =
   | { type: 'tos'; providerId: string; items: ToSItem[] }
-  | { type: 'amount_limit'; providerId: string; minAmountLimit?: number; maxAmountLimit?: number }
-  | { type: 'user_info'; providerId: string; fields: UserInfoField[] };
+  | {
+      type: 'amount_limit';
+      providerId: string;
+      minAmountLimit?: number;
+      maxAmountLimit?: number;
+      amountLimitSatisfied: boolean;
+    }
+  | { type: 'user_info'; providerId: string; fields: UserInfoField[] }
+  | {
+      type: 'reverification';
+      providerId: string;
+      field: ReverificationField;
+      requiredRecencyDays: number;
+      lastVerifiedAt?: string;
+    };
 
 export interface ToSItem {
   type: 'tos' | 'privacy_policy' | 'user_agreement';
@@ -111,11 +123,26 @@ export interface ToSItem {
   content?: string;
 }
 
+// Mirrors Swift `UserInfoFieldType` raw values.
+export type UserInfoFieldType =
+  | 'first_name'
+  | 'last_name'
+  | 'email'
+  | 'email_verification'
+  | 'phone_number'
+  | 'phone_verification'
+  | 'ssn_last_four'
+  | 'address';
+
 export interface UserInfoField {
-  type: string; // backend can extend; safer to leave open
+  type: UserInfoFieldType;
   required: boolean;
-  // other fields omitted for v1 — extend later if needed
+  satisfied: boolean;
 }
+
+// Mirrors Swift `ReverificationField`. The SDK only drives a client flow for
+// `phone` today; `email` is decoded but has no re-verify UI.
+export type ReverificationField = 'email' | 'phone';
 
 export type OnramperState =
   | { kind: 'idle' }

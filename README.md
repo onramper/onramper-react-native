@@ -50,7 +50,7 @@ const { button, quote } = await client.getCheckoutRequirements({
 
 return (
   <View>
-    <Text>Rate: {quote.rate ?? 'unavailable'}</Text>
+    <Text>Rate: {quote.rate}</Text>
     {button}
   </View>
 );

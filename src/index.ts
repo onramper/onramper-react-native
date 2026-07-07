@@ -18,13 +18,14 @@ export type {
   OnramperLogLevel,
   OnramperState,
   OnramperTheme,
-  QuoteError,
   QuoteResponse,
   RenderType,
+  ReverificationField,
   SessionCredentials,
   ToSItem,
   TransactionType,
   UserInfoField,
+  UserInfoFieldType,
   WalletInfo,
 } from './types';
 export type { CheckoutEvent, EventName, EventPayload } from './events';

@@ -76,7 +76,16 @@ describe('OnramperClient', () => {
   it('getCheckoutRequirements serializes request/style and parses the quote', async () => {
     const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
     const native = __lastNative();
-    const quote = { quoteId: 'q1', ramp: 'moonpay', payout: 0.03 };
+    // Success-only quote: core fields are always present (failures arrive as OnramperError).
+    const quote = {
+      quoteId: 'q1',
+      ramp: 'moonpay',
+      rate: 1800,
+      payout: 0.03,
+      paymentMethod: 'creditcard',
+      networkFee: 1.5,
+      transactionFee: 3.99,
+    };
     native.getCheckoutRequirements.mockResolvedValueOnce({
       intentHandle: 'intent-1',
       quoteJson: JSON.stringify(quote),
@@ -105,6 +114,33 @@ describe('OnramperClient', () => {
     const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
     __lastNative().getCheckoutRequirements.mockRejectedValueOnce({ code: 'quoteUnavailable', message: 'no quote' });
     await expect(client.getCheckoutRequirements(checkoutRequest)).rejects.toMatchObject({ code: 'quoteUnavailable' });
+  });
+
+  it('parses requireLogin requirements in the flat bridge shape (incl. reverification)', async () => {
+    const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
+    const native = __lastNative();
+
+    // The native bridge flattens each requirement to `{ type, ...fields }`.
+    const requirements = [
+      { type: 'tos', providerId: 'coinbasepay', items: [{ type: 'tos', required: true, satisfied: false }] },
+      { type: 'amount_limit', providerId: 'moonpay', minAmountLimit: 20, amountLimitSatisfied: false },
+      { type: 'user_info', providerId: 'moonpay', fields: [{ type: 'phone_number', required: true, satisfied: false }] },
+      { type: 'reverification', providerId: 'moonpay', field: 'phone', requiredRecencyDays: 30, lastVerifiedAt: '2026-01-01T00:00:00Z' },
+    ];
+
+    let observed: typeof client.state | undefined;
+    client.addStateListener((s) => {
+      observed = s;
+    });
+    native.__stateListener?.(JSON.stringify({ kind: 'requireLogin', requirements }));
+
+    expect(client.state).toEqual({ kind: 'requireLogin', requirements });
+    expect(observed).toEqual({ kind: 'requireLogin', requirements });
+    // The reverification requirement narrows on `type` and carries phone fields.
+    if (observed?.kind === 'requireLogin') {
+      const reverify = observed.requirements.find((r) => r.type === 'reverification');
+      expect(reverify).toMatchObject({ field: 'phone', requiredRecencyDays: 30 });
+    }
   });
 
   it('cancelPreparedIntent forwards the handle to native', async () => {
