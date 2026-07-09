@@ -40,6 +40,8 @@ Terms-of-Service consent, KYC, token refresh, and the Apple Pay / card payment s
 
 ➡️ **See [Coverage](doc:headless-coverage)** — the supported regions, payment methods, and onramp providers.
 
+➡️ **See [React Native type reference](doc:react-native-type-reference)** — the description of used types
+
 ---
 
 ## What kind of app can use this?
