@@ -1,5 +1,3 @@
-# Backend session endpoint
-
 The Headless Wrapper never talks to Onramper's session-minting API directly —
 that call has to be **signed with your partner secret**, which must stay on
 your server. So your backend needs to expose a small endpoint that the app
