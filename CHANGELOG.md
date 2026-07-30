@@ -2,6 +2,9 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.1.1]
+Minor version bundling security enhancements from Onramper iOS SDK v1.1.1
+
 ## [1.1.0]
 
 Bundles `OnramperSDK@1.1.0`. The SDK is pre-adoption, so breaking changes ship within the 1.x line.
