@@ -26,7 +26,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - OnramperReactNative (1.1.1):
+  - OnramperReactNative (1.2.0):
     - hermes-engine
     - NitroModules
     - RCTRequired
@@ -2145,7 +2145,7 @@ SPEC CHECKSUMS:
   FBLazyVector: 24e62c765683b8d89006a88a2c8f5cf019f0074d
   hermes-engine: f633e9180f19a297f9465f365b3c55f6cdf54eca
   NitroModules: 16bc17a076b12304d608f7c915b9d321f56dfc19
-  OnramperReactNative: 54cf83a6766f6d147fe3bf39f2a65dd8edff4c88
+  OnramperReactNative: 61c5d989e975493e4f61c583fd59ccc6de18d358
   RCTDeprecation: a4c521821fab57cbb125b36effe84d897d0dfa12
   RCTRequired: 9f3a7e5645d4bc3f551593de7550bb66ab6e42bc
   RCTSwiftUI: 239ed2eb9e73de5a6f518810630f0c95e01c8702

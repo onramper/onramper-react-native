@@ -108,8 +108,8 @@ namespace margelo::nitro::onramper {
       auto __value = std::move(__result.value());
       return __value;
     }
-    inline std::shared_ptr<Promise<PreparedIntentResult>> getCheckoutRequirements(const std::string& requestJson, const std::string& styleJson) override {
-      auto __result = _swiftPart.getCheckoutRequirements(requestJson, styleJson);
+    inline std::shared_ptr<Promise<PreparedIntentResult>> getCheckoutRequirements(const std::string& requestJson, const std::string& prefillJson, const std::string& styleJson) override {
+      auto __result = _swiftPart.getCheckoutRequirements(requestJson, prefillJson, styleJson);
       if (__result.hasError()) [[unlikely]] {
         std::rethrow_exception(__result.error());
       }

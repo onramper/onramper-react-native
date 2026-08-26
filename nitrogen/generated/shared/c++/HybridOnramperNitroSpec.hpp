@@ -62,7 +62,7 @@ namespace margelo::nitro::onramper {
       virtual std::shared_ptr<Promise<void>> initialize(const std::string& sessionId, const std::string& sessionToken) = 0;
       virtual std::shared_ptr<Promise<void>> reset() = 0;
       virtual std::shared_ptr<Promise<void>> signOut() = 0;
-      virtual std::shared_ptr<Promise<PreparedIntentResult>> getCheckoutRequirements(const std::string& requestJson, const std::string& styleJson) = 0;
+      virtual std::shared_ptr<Promise<PreparedIntentResult>> getCheckoutRequirements(const std::string& requestJson, const std::string& prefillJson, const std::string& styleJson) = 0;
       virtual std::shared_ptr<Promise<void>> cancelPreparedIntent(const std::string& intentHandle) = 0;
       virtual void setStateListener(const std::function<void(const std::string& /* stateJson */)>& onState) = 0;
       virtual void setEventListener(const std::function<void(const std::string& /* eventJson */)>& onEvent) = 0;

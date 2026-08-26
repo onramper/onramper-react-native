@@ -207,6 +207,40 @@ return (
 
 The Buy button renders natively (SwiftUI under the hood) and presents OIDC login + payment webview sheets internally. Terms-of-service text appears below the button automatically.
 
+#### Prefilling known user values
+
+If your app already knows the user — from your own account system, a previous purchase, or your own KYC — pass those values as a third argument and the OnramperID screens arrive pre-populated instead of blank.
+
+```ts
+const { button, quote } = await client.getCheckoutRequirements(
+  request,
+  style,
+  {
+    firstName: 'Ada',
+    lastName: 'Lovelace',
+    phoneNumber: '+3712345678',  // E.164
+    // email: 'ada@example.com', // only if you're sure — see the caveat below
+  },
+);
+```
+
+| Field | Format | Notes |
+|---|---|---|
+| `email` | valid email address | Identifies which account the other values belong to — read the warning below before supplying it. |
+| `firstName` | up to 200 characters, no `<` or `>` | Must not be blank. |
+| `lastName` | up to 200 characters, no `<` or `>` | Must not be blank. |
+| `phoneNumber` | E.164, e.g. `+3712345678` | Always a *candidate*: the user still verifies it, and a number already verified on the account takes precedence. Prefill never skips phone verification. |
+
+Every field is optional — supply only what you know. An `email`-only prefill is valid and pre-populates just the sign-in field.
+
+**Prefill never blocks sign-in.** If it can't be applied, the login sheet opens normally without it. There is no error to handle and nothing surfaces to your app; set `logLevel: 'info'` while integrating if you want to see whether it was applied.
+
+> **Supply `email` only when you're confident.** It identifies which account the other values belong to, so it is not just another prefilled value. If it matches the account that signs in, the remaining values may be applied automatically. If it does **not** match, the **whole** prefill is dropped — strictly worse than omitting `email`, where the values are still offered to the user for confirmation. When you aren't sure which address the user will use, leave `email` out.
+
+Whether prefilled values are shown to the user for confirmation or applied without a prompt is configured per integration, as is prefill itself. Talk to your Onramper representative before relying on it — without it enabled, sign-in simply proceeds without prefill.
+
+Both example apps have a prefill panel wired to this argument, so you can try it on device before integrating.
+
 When the user taps **Buy**, the button:
 
 1. Records the Terms-of-Service consent timestamp.
@@ -365,6 +399,8 @@ Pass `logLevel: 'info'` while integrating to see HTTP method, URL path, and stat
 | `'info'` | Adds method + URL path + status for every request. |
 | `'debug'` | Adds low-level detail. |
 
+Values you pass as `prefill` are never logged at any level.
+
 ### 3.11 Reference: state, events, methods
 
 #### Methods on `OnramperClient`
@@ -372,7 +408,7 @@ Pass `logLevel: 'info'` while integrating to see HTTP method, URL path, and stat
 | Method | Returns | Notes |
 |---|---|---|
 | `initialize({ sessionId, sessionToken })` | `Promise<void>` | Runs attestation + Headless Wrapper-session bootstrap. Call once per app session. |
-| `getCheckoutRequirements(request, buttonStyle?)` | `Promise<{ button, quote }>` | Creates the intent, resolves requirements, returns a ready-to-render React element + priced quote. Safe to call repeatedly. |
+| `getCheckoutRequirements(request, buttonStyle?, prefill?)` | `Promise<{ button, quote }>` | Creates the intent, resolves requirements, returns a ready-to-render React element + priced quote. Safe to call repeatedly. `prefill` pre-populates the OnramperID screens — best-effort, never blocks sign-in. |
 | `reset()` | `Promise<void>` | Returns the Headless Wrapper to `ready` after `completed` / `failed`. Does not invalidate the session token or OIDC login. |
 | `signOut()` | `Promise<void>` | Clears stored OIDC tokens (access + refresh) and calls `reset()`. Next checkout re-presents the OnramperID login sheet. Does not invalidate the partner Headless Wrapper session. |
 | `cancelPreparedIntent(intentHandle)` | `Promise<void>` | Drops a prepared-intent handle on the native side. Rarely needed — `getCheckoutRequirements()` invalidates the prior intent automatically. |

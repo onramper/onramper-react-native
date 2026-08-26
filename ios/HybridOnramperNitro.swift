@@ -139,17 +139,33 @@ final class HybridOnramperNitro: HybridOnramperNitroSpec {
 
   // MARK: - Checkout
 
-  func getCheckoutRequirements(requestJson: String, styleJson: String) throws -> Promise<PreparedIntentResult> {
+  func getCheckoutRequirements(
+    requestJson: String,
+    prefillJson: String,
+    styleJson: String
+  ) throws -> Promise<PreparedIntentResult> {
     return Promise.async { [weak self] in
       guard let self else { throw OnramperError.notInitialized }
-      return try await self.performGetCheckoutRequirements(requestJson: requestJson, styleJson: styleJson)
+      return try await self.performGetCheckoutRequirements(
+        requestJson: requestJson,
+        prefillJson: prefillJson,
+        styleJson: styleJson
+      )
     }
   }
 
   @MainActor
-  private func performGetCheckoutRequirements(requestJson: String, styleJson: String) async throws -> PreparedIntentResult {
+  private func performGetCheckoutRequirements(
+    requestJson: String,
+    prefillJson: String,
+    styleJson: String
+  ) async throws -> PreparedIntentResult {
     let client = try requireClient()
     let request = try decodeCheckoutRequest(requestJson)
+    // Best-effort: an unusable prefill payload decodes to nil and the checkout
+    // proceeds without it. Never logged — the values are user PII, and the SDK
+    // makes the same guarantee at every log level.
+    let prefill = decodeUserPrefill(prefillJson)
     let style = decodeCheckoutButtonStyle(styleJson)
 
     // Single-flight, scoped to this client: a new prepared intent supersedes
@@ -159,7 +175,7 @@ final class HybridOnramperNitro: HybridOnramperNitroSpec {
       await PreparedIntentRegistry.shared.drop(prev)
     }
 
-    let result = try await client.getCheckoutRequirements(request, buttonStyle: style)
+    let result = try await client.getCheckoutRequirements(request, prefill: prefill, buttonStyle: style)
     let entry = PreparedIntentRegistry.PreparedIntent(button: AnyView(result.button), createdAt: Date())
     let handle = await PreparedIntentRegistry.shared.store(entry)
     lastPreparedHandle = handle

@@ -6,12 +6,18 @@ import {
   SafeAreaView,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   View,
 } from 'react-native';
 import * as Application from 'expo-application';
-import { OnramperClient, type OnramperState, type QuoteResponse } from '@onramper/onramper-react-native';
+import {
+  OnramperClient,
+  type OnramperState,
+  type OnramperUserPrefill,
+  type QuoteResponse,
+} from '@onramper/onramper-react-native';
 import { ENV } from './env.local';
 import { createDemoSession } from './createDemoSession';
 
@@ -28,6 +34,20 @@ const TX_DEFAULTS = {
   walletAddress: 'Br2jjHYskB1JJikv3Qw2QcmWVQGfZvkJFng4ZEwiGSjv',
 };
 
+// Every prefill field is optional — supply only what your app actually knows.
+//
+// `email` and `phoneNumber` start blank deliberately. `email` is the binding
+// identity: when it matches the account that signs in, the other values may be
+// applied automatically, but when it does *not* match, the server drops the
+// whole prefill — strictly worse than omitting it, where the values are still
+// offered to the user for confirmation. Fill it in only to test that path.
+const PREFILL_DEFAULTS = {
+  email: '',
+  firstName: 'Ada',
+  lastName: 'Lovelace',
+  phoneNumber: '',
+};
+
 export default function App() {
   const [log, setLog] = useState<LogEntry[]>([]);
   const [source, setSource] = useState(TX_DEFAULTS.source);
@@ -38,6 +58,12 @@ export default function App() {
   const [subdivision, setSubdivision] = useState(TX_DEFAULTS.subdivision);
   const [walletNetwork, setWalletNetwork] = useState(TX_DEFAULTS.walletNetwork);
   const [walletAddress, setWalletAddress] = useState(TX_DEFAULTS.walletAddress);
+
+  const [sendPrefill, setSendPrefill] = useState(true);
+  const [prefillEmail, setPrefillEmail] = useState(PREFILL_DEFAULTS.email);
+  const [prefillFirstName, setPrefillFirstName] = useState(PREFILL_DEFAULTS.firstName);
+  const [prefillLastName, setPrefillLastName] = useState(PREFILL_DEFAULTS.lastName);
+  const [prefillPhone, setPrefillPhone] = useState(PREFILL_DEFAULTS.phoneNumber);
 
   const [client, setClient] = useState<OnramperClient | null>(null);
   const [state, setState] = useState<OnramperState>({ kind: 'idle' });
@@ -108,6 +134,20 @@ export default function App() {
     }
   };
 
+  // Only fields the user actually filled in are sent: an omitted field is not
+  // the same as an empty one, and a prefill with nothing in it is skipped
+  // entirely rather than spending a request the server would reject.
+  const buildPrefill = (): OnramperUserPrefill => {
+    if (!sendPrefill) return {};
+    const supplied = (v: string) => (v.trim() === '' ? undefined : v.trim());
+    return {
+      email: supplied(prefillEmail),
+      firstName: supplied(prefillFirstName),
+      lastName: supplied(prefillLastName),
+      phoneNumber: supplied(prefillPhone),
+    };
+  };
+
   const onGetRequirements = async () => {
     if (!client) {
       fail('configure + initialize first');
@@ -119,6 +159,14 @@ export default function App() {
         fail('amount must be a positive number');
         return;
       }
+      const prefill = buildPrefill();
+      // Log which fields were sent, never their values — they're user PII, and
+      // the SDK makes the same guarantee at every log level.
+      const prefilled = Object.entries(prefill)
+        .filter(([, v]) => v !== undefined)
+        .map(([k]) => k);
+      info(`prefill: ${prefilled.length > 0 ? prefilled.join(', ') : 'none'}`);
+
       const result = await client.getCheckoutRequirements(
         {
           source,
@@ -135,6 +183,7 @@ export default function App() {
           foregroundColor: '#FFFFFF',
           borderRadius: 12,
         },
+        prefill,
       );
       setQuote(result.quote);
       setButton(result.button);
@@ -207,6 +256,55 @@ export default function App() {
           </Row>
           <Field label="wallet.network" value={walletNetwork} onChangeText={setWalletNetwork} />
           <Field label="wallet.address" value={walletAddress} onChangeText={setWalletAddress} />
+
+          <View style={styles.divider} />
+          <Text style={styles.section}>User prefill (optional)</Text>
+          <View style={styles.switchRow}>
+            <Switch value={sendPrefill} onValueChange={setSendPrefill} />
+            <Text style={styles.switchLabel}>send prefill with the next request</Text>
+          </View>
+          <Text style={styles.note}>
+            Pre-populates the OnramperID sign-in and additional-info screens. Best-effort: if it can't be applied,
+            sign-in opens normally and nothing surfaces to the app. A prefilled phone is always a candidate — the user
+            still verifies it.
+          </Text>
+          <Text style={styles.note}>
+            email is left blank on purpose. It identifies which account the other values belong to: if it doesn't match
+            the account that signs in, the whole prefill is dropped — worse than omitting it, where the values are still
+            offered for confirmation.
+          </Text>
+          <Field
+            label="email"
+            value={prefillEmail}
+            onChangeText={setPrefillEmail}
+            placeholder="(blank — only if you're sure)"
+            editable={sendPrefill}
+          />
+          <Row>
+            <Field
+              label="firstName"
+              value={prefillFirstName}
+              onChangeText={setPrefillFirstName}
+              compact
+              editable={sendPrefill}
+            />
+            <Field
+              label="lastName"
+              value={prefillLastName}
+              onChangeText={setPrefillLastName}
+              compact
+              editable={sendPrefill}
+            />
+          </Row>
+          <Field
+            label="phoneNumber"
+            value={prefillPhone}
+            onChangeText={setPrefillPhone}
+            placeholder="(blank — E.164, e.g. +3712345678)"
+            editable={sendPrefill}
+          />
+
+          <View style={styles.divider} />
           <Button title="Get checkout requirements" onPress={onGetRequirements} disabled={!client} />
           <View style={{ height: 8 }} />
           <Button title="Reset SDK" onPress={onReset} disabled={!client} color="#888" />
@@ -262,12 +360,16 @@ function Field({
   onChangeText,
   compact = false,
   numeric = false,
+  placeholder,
+  editable = true,
 }: {
   label: string;
   value: string;
   onChangeText: (v: string) => void;
   compact?: boolean;
   numeric?: boolean;
+  placeholder?: string;
+  editable?: boolean;
 }) {
   return (
     <View style={[styles.field, compact && { flex: 1 }]}>
@@ -275,10 +377,13 @@ function Field({
       <TextInput
         value={value}
         onChangeText={onChangeText}
-        style={styles.input}
+        style={[styles.input, !editable && styles.inputDisabled]}
         autoCapitalize="none"
         autoCorrect={false}
         keyboardType={numeric ? 'decimal-pad' : 'default'}
+        placeholder={placeholder}
+        placeholderTextColor="#AAA"
+        editable={editable}
       />
     </View>
   );
@@ -304,7 +409,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     fontSize: 14,
   },
+  inputDisabled: { backgroundColor: '#EFEFEF', color: '#999' },
   row: { flexDirection: 'row', gap: 8 },
+  switchRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  switchLabel: { fontSize: 13, color: '#333' },
+  note: { fontSize: 11, color: '#777', lineHeight: 15, marginBottom: 8 },
   kv: { fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', fontSize: 12, marginVertical: 1 },
   log: { fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', fontSize: 11, marginVertical: 1, color: '#333' },
   eventLine: { color: '#0066CC' },

@@ -50,6 +50,39 @@ func decodeCheckoutRequest(_ json: String) throws -> CheckoutIntentRequest {
   }
 }
 
+private struct UserPrefillJSON: Decodable {
+  let email: String?
+  let firstName: String?
+  let lastName: String?
+  let phoneNumber: String?
+}
+
+/// Decodes the JS `OnramperUserPrefill` JSON, or `nil` when the caller supplied
+/// nothing (`{}`) or the payload is unusable.
+///
+/// Never throws. Prefill is best-effort on the SDK side and must never fail a
+/// checkout that would otherwise succeed, so a malformed payload degrades to
+/// "no prefill" rather than surfacing an error. `nil` for an all-empty payload
+/// also spares a token mint the server is guaranteed to reject
+/// (`no_fields_supplied`) — the SDK's own `hasAnyValue` check.
+///
+/// Only nil-ness is checked. Present-but-invalid values (a malformed phone
+/// number, say) are passed through to the server, which is authoritative;
+/// mirroring its validation here would drift the moment either side changed.
+func decodeUserPrefill(_ json: String) -> OnramperUserPrefill? {
+  guard let data = json.data(using: .utf8),
+        let p = try? JSONDecoder().decode(UserPrefillJSON.self, from: data) else {
+    return nil
+  }
+  let prefill = OnramperUserPrefill(
+    email: p.email,
+    firstName: p.firstName,
+    lastName: p.lastName,
+    phoneNumber: p.phoneNumber
+  )
+  return prefill == OnramperUserPrefill() ? nil : prefill
+}
+
 private struct CheckoutButtonStyleJSON: Decodable {
   let backgroundColor: String?
   let foregroundColor: String?

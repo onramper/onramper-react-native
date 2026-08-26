@@ -69,6 +69,31 @@ export interface QuoteResponse {
   recommendations?: string[];
 }
 
+// Mirrors Swift `OnramperUserPrefill`. Values you already know about the user,
+// used to pre-populate the OnramperID sign-in and additional-info screens.
+// Every field is optional — supply only what you know.
+//
+// Prefill is **best-effort and never blocks sign-in**: if it can't be applied,
+// the login flow opens without it. Nothing surfaces to your app, and there is
+// no error to handle.
+//
+// `email` is the *binding identity*, not merely another prefilled value. When
+// it matches the account that signs in, the remaining values may be applied
+// automatically; when it does not match, the whole prefill is dropped — which
+// is strictly worse than omitting `email`, where the values are still offered
+// to the user for confirmation. Supply it only when you're confident it's the
+// address the user will sign in with.
+//
+// Prefill is enabled per integration — talk to your Onramper representative
+// before relying on it.
+export interface OnramperUserPrefill {
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  /** E.164 format, e.g. `+3712345678`. Always a candidate — the user still verifies it. */
+  phoneNumber?: string;
+}
+
 export interface CheckoutButtonStyle {
   backgroundColor?: string; // hex #RRGGBB or #RRGGBBAA
   foregroundColor?: string;

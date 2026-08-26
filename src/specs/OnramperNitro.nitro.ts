@@ -42,8 +42,11 @@ export interface OnramperNitro extends HybridObject<{ ios: 'swift' }> {
   // Fetches checkout requirements + quote, stores the SDK's SwiftUI checkout
   // button under a handle, and returns the handle + JSON-encoded quote. The
   // OnramperCheckoutButton Nitro view renders the stored button by handle.
-  // `requestJson` is a JSON CheckoutRequest; `styleJson` a JSON CheckoutButtonStyle.
-  getCheckoutRequirements(requestJson: string, styleJson: string): Promise<PreparedIntentResult>;
+  // `requestJson` is a JSON CheckoutRequest; `prefillJson` a JSON
+  // OnramperUserPrefill (`{}` when the caller supplied none); `styleJson` a JSON
+  // CheckoutButtonStyle. Argument order mirrors the SDK's
+  // `getCheckoutRequirements(_:prefill:buttonStyle:)`.
+  getCheckoutRequirements(requestJson: string, prefillJson: string, styleJson: string): Promise<PreparedIntentResult>;
   cancelPreparedIntent(intentHandle: string): Promise<void>;
 
   // Single native callback per stream; the JS wrapper fans out to multiple listeners.
