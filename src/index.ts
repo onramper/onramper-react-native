@@ -18,6 +18,7 @@ export type {
   OnramperLogLevel,
   OnramperState,
   OnramperTheme,
+  OnramperUserPrefill,
   QuoteResponse,
   RenderType,
   ReverificationField,

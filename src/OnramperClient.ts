@@ -9,6 +9,7 @@ import type {
   CheckoutRequest,
   OnramperConfiguration,
   OnramperState,
+  OnramperUserPrefill,
   QuoteResponse,
   SessionCredentials,
 } from './types';
@@ -118,14 +119,29 @@ export class OnramperClient {
    * Fetches checkout requirements + quote and returns a native checkout button
    * to render plus the quote. The button handles login / finalize / webview
    * internally; outcomes surface via the event stream (`addEventListener`).
+   *
+   * Pass `prefill` to pre-populate the OnramperID sign-in and additional-info
+   * screens with values you already know about the user. It is best-effort and
+   * never blocks sign-in — there is no error to handle. Note the caveat on
+   * `OnramperUserPrefill.email` before supplying it.
+   *
+   * `prefill` trails `buttonStyle` here, unlike the Swift
+   * `getCheckoutRequirements(_:prefill:buttonStyle:)` where argument labels make
+   * the middle position free: appending it keeps every existing JS call site
+   * working unchanged.
    */
   async getCheckoutRequirements(
     request: CheckoutRequest,
     buttonStyle: CheckoutButtonStyle = {},
+    prefill: OnramperUserPrefill = {},
   ): Promise<GetCheckoutRequirementsResult> {
     try {
       await this.configured;
-      const result = await this.native.getCheckoutRequirements(JSON.stringify(request), JSON.stringify(buttonStyle));
+      const result = await this.native.getCheckoutRequirements(
+        JSON.stringify(request),
+        JSON.stringify(prefill),
+        JSON.stringify(buttonStyle),
+      );
       const quote = JSON.parse(result.quoteJson) as QuoteResponse;
       const button = createElement(OnramperCheckoutButtonView, {
         intentHandle: result.intentHandle,

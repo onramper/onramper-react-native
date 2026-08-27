@@ -29,7 +29,7 @@ A typical checkout maps to these calls, in order:
 
 1. **Your backend mints a session.** Your server calls Onramper's partner endpoint with your private partner key and gets back a one-shot `{ sessionId, sessionToken }` pair. It hands them to the app over your normal channel.
 2. **Your app constructs `OnramperClient`** with config (`apiKey`, `clientId`, `environment`, `onSessionExpired`) and calls `initialize({ sessionId, sessionToken })`. The native side runs device attestation and exchanges the token for an authenticated Headless Wrapper session. State becomes `ready`.
-3. **Your app requests a checkout.** `getCheckoutRequirements(request, style)` creates a checkout intent, resolves what consent / KYC is needed for this user + amount, and returns `{ button, quote }`.
+3. **Your app requests a checkout.** `getCheckoutRequirements(request, style, prefill?)` creates a checkout intent, resolves what consent / KYC is needed for this user + amount, and returns `{ button, quote }`. Pass `prefill` when you already know the user's email / name / phone and want the OnramperID screens pre-populated.
 4. **Your app embeds `button`.** The user sees "Buy" and the Terms-of-Service sentence the Headless Wrapper rendered for the selected provider.
 5. **User taps Buy.** The button records ToS consent, presents the OnramperID login sheet if the provider needs user identity, then finalizes the intent.
 6. **The Headless Wrapper renders the payment surface.** Apple Pay, card webview, or other — chosen automatically from the provider's response. State transitions through `finalizing` → `rendering`.

@@ -32,7 +32,7 @@ Passed to `new OnramperClient(...)`.
 
 ### `CheckoutRequest`
 
-Passed to `getCheckoutRequirements(request, buttonStyle?)`. Flattened from the Swift
+Passed to `getCheckoutRequirements(request, buttonStyle?, prefill?)`. Flattened from the Swift
 `OnramperTransactionData`; ISO codes are lowercased by the SDK (pass either case).
 
 | Field | Type | Required | Description |
@@ -64,6 +64,33 @@ Optional second argument to `getCheckoutRequirements`. Per-checkout, not global.
 | `backgroundColor` | `string?` | system blue | Hex `'#RRGGBB'` or `'#RRGGBBAA'`. |
 | `foregroundColor` | `string?` | white | Hex `'#RRGGBB'` or `'#RRGGBBAA'`. |
 | `borderRadius` | `number?` | `12` | Corner radius in pt. |
+
+### `OnramperUserPrefill`
+
+Optional third argument to `getCheckoutRequirements`. Values you already know about the
+user, used to pre-populate the OnramperID sign-in and additional-info screens. Every field
+is optional — supply only what you know.
+
+| Field | Type | Format | Notes |
+|---|---|---|---|
+| `email` | `string?` | valid email address | Identifies which account the other values belong to — read the warning below before supplying it. |
+| `firstName` | `string?` | up to 200 chars, no `<` or `>` | Must not be blank. |
+| `lastName` | `string?` | up to 200 chars, no `<` or `>` | Must not be blank. |
+| `phoneNumber` | `string?` | E.164, e.g. `'+3712345678'` | Always a *candidate*: the user still verifies it, and a number already verified on the account takes precedence. Prefill never skips phone verification. |
+
+**Prefill never blocks sign-in.** If it can't be applied, the login sheet opens normally
+without it. There is no error to handle and nothing surfaces to your app.
+
+> **Supply `email` only when you're confident.** It identifies which account the other
+> values belong to, so it is not just another prefilled value. If it matches the account
+> that signs in, the remaining values may be applied automatically. If it does **not**
+> match, the **whole** prefill is dropped — strictly worse than omitting `email`, where the
+> values are still offered to the user for confirmation.
+
+Prefill is enabled per integration, as is whether values are shown for confirmation or
+applied silently. Talk to your Onramper representative before relying on it — without it
+enabled, sign-in simply proceeds without prefill. See
+[prefilling known user values](doc:headless-react-native-getting-started) in the getting-started guide.
 
 ---
 

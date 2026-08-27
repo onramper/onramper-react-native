@@ -2,6 +2,36 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.2.0]
+
+Bundles `OnramperSDK@1.2.0`.
+
+### Added
+
+- Client-supplied **user-field prefill**. `getCheckoutRequirements()` accepts an optional third argument carrying values you already know about the user, and the OnramperID sign-in and additional-info screens arrive pre-populated instead of blank. New exported type: `OnramperUserPrefill` — `email`, `firstName`, `lastName`, `phoneNumber`, all optional; supply only what you know.
+
+  ```ts
+  const { button, quote } = await client.getCheckoutRequirements(request, style, {
+    firstName: 'Ada',
+    lastName: 'Lovelace',
+    phoneNumber: '+3712345678', // E.164
+  });
+  ```
+
+  Prefill is **best-effort and never blocks sign-in.** If it can't be applied, the login flow opens normally without it. No error surfaces to your app, and there is nothing to handle. Prefill values are never logged at any `logLevel`.
+
+  A prefilled phone number is always a *candidate*: the user still verifies it, and a number already verified on the account takes precedence.
+
+  **Supply `email` only when you are confident** it is the address the user will sign in with. It identifies which account the other values belong to, so it is not merely another prefilled value: when it matches the account that signs in, the remaining values may be applied automatically; when it does not match, the whole prefill is dropped — which is strictly worse than omitting `email`, where the values are still offered to the user for confirmation.
+
+  Prefill is enabled per integration. Talk to your Onramper representative before relying on it — without it enabled, sign-in simply proceeds without prefill.
+
+- Both example apps gained a prefill panel (a send/don't-send switch plus editable fields) so the flow can be exercised on device. `email` and `phoneNumber` start blank deliberately.
+
+### Changed
+
+- `getCheckoutRequirements(request, buttonStyle?)` gains a trailing `prefill?` parameter and is now `getCheckoutRequirements(request, buttonStyle?, prefill?)`. Existing call sites are unaffected; no migration is required. (The Swift SDK places `prefill` before `buttonStyle`, where argument labels keep it non-breaking — JavaScript has no labels, so the wrapper appends it instead.)
+
 ## [1.1.1]
 Minor version bundling security enhancements from Onramper iOS SDK v1.1.1
 

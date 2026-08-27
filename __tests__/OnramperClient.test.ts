@@ -94,8 +94,13 @@ describe('OnramperClient', () => {
     const style = { borderRadius: 12 };
     const result = await client.getCheckoutRequirements(checkoutRequest, style);
 
-    // JSON contract: request and style are serialized as JSON strings.
-    expect(native.getCheckoutRequirements).toHaveBeenCalledWith(JSON.stringify(checkoutRequest), JSON.stringify(style));
+    // JSON contract: request, prefill and style are serialized as JSON strings,
+    // in the native argument order (request, prefill, style).
+    expect(native.getCheckoutRequirements).toHaveBeenCalledWith(
+      JSON.stringify(checkoutRequest),
+      '{}',
+      JSON.stringify(style),
+    );
     // Quote is parsed back from quoteJson.
     expect(result.quote).toEqual(quote);
     // A native checkout button element is returned for rendering.
@@ -107,7 +112,43 @@ describe('OnramperClient', () => {
     const native = __lastNative();
     native.getCheckoutRequirements.mockResolvedValueOnce({ intentHandle: 'h', quoteJson: '{}' });
     await client.getCheckoutRequirements(checkoutRequest);
-    expect(native.getCheckoutRequirements).toHaveBeenCalledWith(JSON.stringify(checkoutRequest), '{}');
+    expect(native.getCheckoutRequirements).toHaveBeenCalledWith(JSON.stringify(checkoutRequest), '{}', '{}');
+  });
+
+  it('getCheckoutRequirements serializes prefill as the second native argument', async () => {
+    const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
+    const native = __lastNative();
+    native.getCheckoutRequirements.mockResolvedValueOnce({ intentHandle: 'h', quoteJson: '{}' });
+
+    const prefill = {
+      email: 'ada@example.com',
+      firstName: 'Ada',
+      lastName: 'Lovelace',
+      phoneNumber: '+3712345678',
+    };
+    await client.getCheckoutRequirements(checkoutRequest, {}, prefill);
+
+    expect(native.getCheckoutRequirements).toHaveBeenCalledWith(
+      JSON.stringify(checkoutRequest),
+      JSON.stringify(prefill),
+      '{}',
+    );
+  });
+
+  it('getCheckoutRequirements carries only the prefill fields that were supplied', async () => {
+    const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
+    const native = __lastNative();
+    native.getCheckoutRequirements.mockResolvedValueOnce({ intentHandle: 'h', quoteJson: '{}' });
+
+    // A names-only prefill (no email, no phone) is valid — undefined fields drop
+    // out of JSON.stringify rather than crossing the bridge as nulls.
+    await client.getCheckoutRequirements(checkoutRequest, {}, { firstName: 'Ada', lastName: 'Lovelace' });
+
+    expect(native.getCheckoutRequirements).toHaveBeenCalledWith(
+      JSON.stringify(checkoutRequest),
+      '{"firstName":"Ada","lastName":"Lovelace"}',
+      '{}',
+    );
   });
 
   it('getCheckoutRequirements wraps native errors as OnramperError', async () => {

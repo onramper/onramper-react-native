@@ -201,9 +201,9 @@ open class HybridOnramperNitroSpec_cxx {
   }
   
   @inline(__always)
-  public final func getCheckoutRequirements(requestJson: std.string, styleJson: std.string) -> bridge.Result_std__shared_ptr_Promise_PreparedIntentResult___ {
+  public final func getCheckoutRequirements(requestJson: std.string, prefillJson: std.string, styleJson: std.string) -> bridge.Result_std__shared_ptr_Promise_PreparedIntentResult___ {
     do {
-      let __result = try self.__implementation.getCheckoutRequirements(requestJson: String(requestJson), styleJson: String(styleJson))
+      let __result = try self.__implementation.getCheckoutRequirements(requestJson: String(requestJson), prefillJson: String(prefillJson), styleJson: String(styleJson))
       let __resultCpp = { () -> bridge.std__shared_ptr_Promise_PreparedIntentResult__ in
         let __promise = bridge.create_std__shared_ptr_Promise_PreparedIntentResult__()
         let __promiseHolder = bridge.wrap_std__shared_ptr_Promise_PreparedIntentResult__(__promise)
