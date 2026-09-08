@@ -5,9 +5,9 @@
 // and (if checksum was 'PENDING_FETCH') writes the computed checksum back to
 // package.json.
 //
-// Uses `gh release download` so the same script works for public AND private
-// releases transparently — the user's `gh auth` token is used implicitly.
-// `spawnSync` with an argv array (no shell) keeps the call injection-safe.
+// The release repository is public, so download its stable asset URL directly.
+// No GitHub account or token is required. `spawnSync` with an argv array (no
+// shell) keeps the call injection-safe.
 
 const fs = require('node:fs');
 const path = require('node:path');
@@ -22,25 +22,38 @@ const baseVersion = pkg.version.split('-')[0];
 const releaseTag = `v${baseVersion}`;
 const releaseRepo = 'onramper/onramper-ios';
 const assetName = 'OnramperSDK.xcframework.zip';
+const assetUrl = `https://github.com/${releaseRepo}/releases/download/${releaseTag}/${assetName}`;
 const recordedChecksum = pkg.onramperSDK?.checksum;
 
 const dest = path.join(root, 'ios', 'Frameworks');
 fs.mkdirSync(dest, { recursive: true });
 const zipPath = path.join(dest, assetName);
 
-// Clean up any prior download so `gh release download` doesn't refuse.
+// Clean up any prior download so a failed/retried fetch cannot reuse stale data.
 if (fs.existsSync(zipPath)) fs.rmSync(zipPath, { force: true });
 
 console.log(`Downloading ${releaseTag}/${assetName} from ${releaseRepo} ...`);
-const gh = spawnSync(
-  'gh',
-  ['release', 'download', releaseTag, '-R', releaseRepo, '-p', assetName, '-D', dest],
+const curl = spawnSync(
+  'curl',
+  [
+    '--fail',
+    '--location',
+    '--silent',
+    '--show-error',
+    '--retry',
+    '3',
+    '--retry-delay',
+    '1',
+    '--output',
+    zipPath,
+    assetUrl,
+  ],
   { stdio: 'inherit' },
 );
-if (gh.status !== 0) {
-  console.error(`gh release download failed (status ${gh.status}).`);
-  console.error('Ensure `gh auth status` shows an active account with access to the repo.');
-  process.exit(gh.status ?? 1);
+if (curl.status !== 0) {
+  console.error(`Public release download failed (status ${curl.status}).`);
+  console.error(`Release asset: ${assetUrl}`);
+  process.exit(curl.status ?? 1);
 }
 
 const computed = crypto.createHash('sha256').update(fs.readFileSync(zipPath)).digest('hex');

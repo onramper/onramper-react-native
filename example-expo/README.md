@@ -29,8 +29,8 @@ npm install                  # install + build the library (bob)
 npm run fetch-xcframework    # download OnramperSDK.xcframework into ios/Frameworks
 ```
 
-`fetch-xcframework` uses `gh release download`, so make sure `gh auth status` shows an active
-account with access to the `onramper/onramper-ios` repo. (CI uses a `RELEASE_REPO_TOKEN` instead.)
+`fetch-xcframework` downloads from the public `onramper/onramper-ios` GitHub release. No GitHub
+account or access token is required.
 
 ## Step 2 — Install this app's dependencies
 
