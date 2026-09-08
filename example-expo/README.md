@@ -73,7 +73,8 @@ Once the dev client is installed, iterate quickly by just starting Metro:
 npm start            # expo start --dev-client
 ```
 
-Then reload the app (press <kbd>R</kbd> in the Simulator) to pick up JS changes via Fast Refresh.
+Then use **Reload** from the installed dev client's developer menu on your real device to pick up JS changes via
+Fast Refresh.
 
 ## Using the app
 
