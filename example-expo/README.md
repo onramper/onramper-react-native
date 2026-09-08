@@ -61,10 +61,10 @@ export const ENV = {
 
 ## Step 4 — Build & run on iOS
 
-The first run does a native prebuild + `pod install`, so it takes a few minutes:
+The first run does a native prebuild + `pod install`, so it takes a few minutes; the CLI selects the connected registered device:
 
 ```sh
-npm run ios          # expo run:ios — prebuild, build, install & launch the dev client
+npm run ios -- --device # expo run:ios — prebuild, build, install & launch the dev client
 ```
 
 Once the dev client is installed, iterate quickly by just starting Metro:
@@ -93,7 +93,7 @@ A live log at the bottom shows SDK state transitions and any errors.
 
 - **`OnramperSDK.xcframework` not found / pod install fails** — rerun Step 1; the xcframework must
   exist at the repo root `ios/Frameworks/` before building.
-- **Stale native build after dependency changes** — `rm -rf ios && npm run ios` to regenerate the
+- **Stale native build after dependency changes** — `rm -rf ios && npm run ios -- --device` to regenerate the
   prebuild, or `cd ios && pod install` if only pods changed.
 - **`env.local.ts` missing** — the app imports `ENV` from it; complete Step 3.
 - General Expo issues: [Expo docs](https://docs.expo.dev). General RN issues:

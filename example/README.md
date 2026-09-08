@@ -38,10 +38,10 @@ pod install
 
 ## Run on iOS
 
-From `example/`, with a real registered device connected, run:
+From `example/`, with a real registered device connected, run; the CLI selects the connected registered device:
 
 ```bash
-npm run ios
+npm run ios -- --device
 ```
 
 ## What to verify
