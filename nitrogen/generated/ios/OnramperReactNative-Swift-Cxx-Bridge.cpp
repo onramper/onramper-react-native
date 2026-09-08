@@ -63,6 +63,14 @@ namespace margelo::nitro::onramper::bridge::swift {
     };
   }
   
+  // pragma MARK: std::function<void(const std::optional<std::string>& /* transactionId */)>
+  Func_void_std__optional_std__string_ create_Func_void_std__optional_std__string_(void* NON_NULL swiftClosureWrapper) noexcept {
+    auto swiftClosure = OnramperReactNative::Func_void_std__optional_std__string_::fromUnsafe(swiftClosureWrapper);
+    return [swiftClosure = std::move(swiftClosure)](const std::optional<std::string>& transactionId) mutable -> void {
+      swiftClosure.call(transactionId);
+    };
+  }
+  
   // pragma MARK: std::function<void(const NitroSessionCredentials& /* result */)>
   Func_void_NitroSessionCredentials create_Func_void_NitroSessionCredentials(void* NON_NULL swiftClosureWrapper) noexcept {
     auto swiftClosure = OnramperReactNative::Func_void_NitroSessionCredentials::fromUnsafe(swiftClosureWrapper);

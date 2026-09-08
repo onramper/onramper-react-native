@@ -22,6 +22,7 @@ namespace margelo::nitro::onramper {
       prototype.registerHybridMethod("cancelPreparedIntent", &HybridOnramperNitroSpec::cancelPreparedIntent);
       prototype.registerHybridMethod("setStateListener", &HybridOnramperNitroSpec::setStateListener);
       prototype.registerHybridMethod("setEventListener", &HybridOnramperNitroSpec::setEventListener);
+      prototype.registerHybridMethod("setTransactionIdListener", &HybridOnramperNitroSpec::setTransactionIdListener);
       prototype.registerHybridMethod("setSessionExpirationHandler", &HybridOnramperNitroSpec::setSessionExpirationHandler);
     });
   }

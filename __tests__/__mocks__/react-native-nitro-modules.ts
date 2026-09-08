@@ -10,6 +10,7 @@ export interface MockNative {
   signOut: jest.Mock;
   setStateListener: jest.Mock;
   setEventListener: jest.Mock;
+  setTransactionIdListener: jest.Mock;
   setSessionExpirationHandler: jest.Mock;
   getCheckoutRequirements: jest.Mock;
   cancelPreparedIntent: jest.Mock;
@@ -17,6 +18,7 @@ export interface MockNative {
   // Captured callbacks (set by the corresponding setters):
   __stateListener?: (json: string) => void;
   __eventListener?: (json: string) => void;
+  __transactionIdListener?: (transactionId: string | undefined) => void;
   __sessionHandler?: () => Promise<{ sessionId: string; sessionToken: string }>;
 }
 
@@ -31,6 +33,9 @@ function makeNative(): MockNative {
     }),
     setEventListener: jest.fn((fn: (json: string) => void) => {
       native.__eventListener = fn;
+    }),
+    setTransactionIdListener: jest.fn((fn: (transactionId: string | undefined) => void) => {
+      native.__transactionIdListener = fn;
     }),
     setSessionExpirationHandler: jest.fn((fn: () => Promise<{ sessionId: string; sessionToken: string }>) => {
       native.__sessionHandler = fn;

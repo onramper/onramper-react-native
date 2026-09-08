@@ -25,6 +25,7 @@ namespace margelo::nitro::onramper { struct NitroSessionCredentials; }
 #include <string>
 #include "PreparedIntentResult.hpp"
 #include <functional>
+#include <optional>
 #include "NitroSessionCredentials.hpp"
 
 namespace margelo::nitro::onramper {
@@ -66,6 +67,7 @@ namespace margelo::nitro::onramper {
       virtual std::shared_ptr<Promise<void>> cancelPreparedIntent(const std::string& intentHandle) = 0;
       virtual void setStateListener(const std::function<void(const std::string& /* stateJson */)>& onState) = 0;
       virtual void setEventListener(const std::function<void(const std::string& /* eventJson */)>& onEvent) = 0;
+      virtual void setTransactionIdListener(const std::function<void(const std::optional<std::string>& /* transactionId */)>& onTransactionId) = 0;
       virtual void setSessionExpirationHandler(const std::function<std::shared_ptr<Promise<std::shared_ptr<Promise<NitroSessionCredentials>>>>()>& handler) = 0;
 
     protected:

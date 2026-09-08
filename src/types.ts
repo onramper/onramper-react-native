@@ -115,6 +115,8 @@ export interface HeadlessCheckoutData {
 
 export interface CheckoutFinalizeResponse {
   headlessCheckoutId: string;
+  /** Durable Onramper transaction identifier for support, reconciliation, and status lookups. */
+  onramperTransactionId: string;
   headlessCheckoutData: HeadlessCheckoutData;
 }
 

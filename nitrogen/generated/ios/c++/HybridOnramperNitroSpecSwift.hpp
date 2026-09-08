@@ -24,6 +24,7 @@ namespace margelo::nitro::onramper { struct NitroSessionCredentials; }
 #include <string>
 #include "PreparedIntentResult.hpp"
 #include <functional>
+#include <optional>
 #include "NitroSessionCredentials.hpp"
 
 #include "OnramperReactNative-Swift-Cxx-Umbrella.hpp"
@@ -132,6 +133,12 @@ namespace margelo::nitro::onramper {
     }
     inline void setEventListener(const std::function<void(const std::string& /* eventJson */)>& onEvent) override {
       auto __result = _swiftPart.setEventListener(onEvent);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline void setTransactionIdListener(const std::function<void(const std::optional<std::string>& /* transactionId */)>& onTransactionId) override {
+      auto __result = _swiftPart.setTransactionIdListener(onTransactionId);
       if (__result.hasError()) [[unlikely]] {
         std::rethrow_exception(__result.error());
       }

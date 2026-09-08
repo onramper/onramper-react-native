@@ -1,5 +1,6 @@
 import { isValidElement } from 'react';
 import { OnramperClient } from '../src/OnramperClient';
+import type { CheckoutEvent } from '../src/events';
 import type { CheckoutRequest } from '../src/types';
 import { __lastNative } from './__mocks__/react-native-nitro-modules';
 
@@ -200,6 +201,26 @@ describe('OnramperClient', () => {
     expect(stateFn).toHaveBeenCalledWith({ kind: 'ready' });
   });
 
+  it('mirrors native transaction ID updates, including reset to null', () => {
+    const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
+    const native = __lastNative();
+    const listener = jest.fn();
+    const unsubscribe = client.addTransactionIdListener(listener);
+
+    expect(client.currentTransactionId).toBeNull();
+    native.__transactionIdListener?.('txn_123');
+    expect(client.currentTransactionId).toBe('txn_123');
+    expect(listener).toHaveBeenLastCalledWith('txn_123');
+
+    native.__transactionIdListener?.(undefined);
+    expect(client.currentTransactionId).toBeNull();
+    expect(listener).toHaveBeenLastCalledWith(null);
+
+    unsubscribe();
+    native.__transactionIdListener?.('txn_456');
+    expect(listener).toHaveBeenCalledTimes(2);
+  });
+
   it('addEventListener fires only for the matching event type', () => {
     const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
     const native = __lastNative();
@@ -211,14 +232,43 @@ describe('OnramperClient', () => {
     expect(completedFn).toHaveBeenCalledWith({ type: 'completed', checkoutId: 'abc' });
   });
 
+  it('delivers the durable Onramper transaction ID in checkoutFinalized', () => {
+    const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
+    const native = __lastNative();
+    const listener = jest.fn();
+    client.addEventListener('checkoutFinalized', listener);
+
+    const event: Extract<CheckoutEvent, { type: 'checkoutFinalized' }> = {
+      type: 'checkoutFinalized',
+      response: {
+        headlessCheckoutId: 'checkout_123',
+        onramperTransactionId: 'txn_123',
+        headlessCheckoutData: {
+          checkoutPaymentType: 'applepay',
+          url: 'https://pay.example/checkout_123',
+          renderType: 'webview',
+        },
+      },
+    };
+
+    native.__eventListener?.(JSON.stringify(event));
+    expect(listener).toHaveBeenCalledWith(event);
+  });
+
   it('destroy() clears listeners and disposes the native instance', () => {
     const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
     const native = __lastNative();
     const stateFn = jest.fn();
+    const transactionIdFn = jest.fn();
     client.addStateListener(stateFn);
+    client.addTransactionIdListener(transactionIdFn);
+
     client.destroy();
+
     expect(native.dispose).toHaveBeenCalledTimes(1);
     native.__stateListener?.(JSON.stringify({ kind: 'ready' }));
+    native.__transactionIdListener?.('txn_after_destroy');
     expect(stateFn).not.toHaveBeenCalled();
+    expect(transactionIdFn).not.toHaveBeenCalled();
   });
 });

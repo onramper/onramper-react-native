@@ -30,12 +30,14 @@ export interface GetCheckoutRequirementsResult {
 export class OnramperClient {
   state: OnramperState = { kind: 'idle' };
   lastError: OnramperError | null = null;
+  currentTransactionId: string | null = null;
 
   // Each client owns its own native instance (and thus its own SDK client).
   private readonly native = createOnramperNative();
 
   private readonly stateListeners = new Set<(state: OnramperState) => void>();
   private readonly eventListeners = new Set<(event: CheckoutEvent) => void>();
+  private readonly transactionIdListeners = new Set<(transactionId: string | null) => void>();
 
   // Resolved when the constructor-issued configure() completes. Public methods
   // that need the native client await this first.
@@ -54,6 +56,12 @@ export class OnramperClient {
     this.native.setEventListener((json) => {
       const e = JSON.parse(json) as CheckoutEvent;
       for (const fn of this.eventListeners) fn(e);
+    });
+
+    this.native.setTransactionIdListener((transactionId) => {
+      const next = transactionId ?? null;
+      this.currentTransactionId = next;
+      for (const fn of this.transactionIdListeners) fn(next);
     });
 
     // The SDK calls this when its session expires; return fresh credentials.
@@ -166,6 +174,14 @@ export class OnramperClient {
     };
   }
 
+  /** Subscribe to the durable Onramper transaction ID. Native reset/signOut publish null. */
+  addTransactionIdListener(fn: (transactionId: string | null) => void): () => void {
+    this.transactionIdListeners.add(fn);
+    return () => {
+      this.transactionIdListeners.delete(fn);
+    };
+  }
+
   /** Subscribe to a specific checkout event. Returns an unsubscribe function. */
   addEventListener<K extends EventName>(name: K, fn: (e: EventPayload<K>) => void): () => void {
     const wrapper = (e: CheckoutEvent) => {
@@ -181,6 +197,7 @@ export class OnramperClient {
   destroy(): void {
     this.stateListeners.clear();
     this.eventListeners.clear();
+    this.transactionIdListeners.clear();
     this.native.dispose();
   }
 }
