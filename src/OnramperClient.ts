@@ -97,7 +97,13 @@ export class OnramperClient {
     if (next === this.currentTransactionId) return;
 
     this.currentTransactionId = next;
-    for (const fn of this.transactionIdListeners) fn(next);
+    for (const fn of [...this.transactionIdListeners]) {
+      try {
+        fn(next);
+      } catch (error: unknown) {
+        console.error('Onramper transaction ID listener threw:', error);
+      }
+    }
   }
 
   async initialize(creds: SessionCredentials): Promise<void> {

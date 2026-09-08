@@ -297,11 +297,13 @@ describe('OnramperClient', () => {
     expect(completedFn).toHaveBeenCalledWith({ type: 'completed', checkoutId: 'abc' });
   });
 
-  it('updates the transaction ID mirror before delivering checkoutFinalized', () => {
+  it('updates transaction ID subscribers before delivering checkoutFinalized', () => {
     const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
     const native = __lastNative();
-    const transactionIdListener = jest.fn();
+    const order: string[] = [];
+    const transactionIdListener = jest.fn(() => order.push('transactionId'));
     const listener = jest.fn(() => {
+      order.push('checkoutFinalized');
       expect(client.currentTransactionId).toBe('txn_123');
     });
     client.addTransactionIdListener(transactionIdListener);
@@ -311,20 +313,76 @@ describe('OnramperClient', () => {
     expect(client.currentTransactionId).toBe('txn_123');
     expect(transactionIdListener).toHaveBeenCalledWith('txn_123');
     expect(listener).toHaveBeenCalledWith(checkoutFinalizedEvent);
+    expect(order).toEqual(['transactionId', 'checkoutFinalized']);
   });
 
-  it('does not republish the same transaction ID from both native sources', () => {
+  it.each(['publisher-first', 'event-first'] as const)(
+    'does not republish the same transaction ID when sources arrive %s',
+    (sourceOrder) => {
+      const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
+      const native = __lastNative();
+      const listener = jest.fn();
+      client.addTransactionIdListener(listener);
+
+      if (sourceOrder === 'publisher-first') {
+        native.__transactionIdListener?.('txn_123');
+        native.__eventListener?.(JSON.stringify(checkoutFinalizedEvent));
+      } else {
+        native.__eventListener?.(JSON.stringify(checkoutFinalizedEvent));
+        native.__transactionIdListener?.('txn_123');
+      }
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(client.currentTransactionId).toBe('txn_123');
+    },
+  );
+
+  it('isolates transaction ID subscriber errors from checkoutFinalized fan-out', () => {
     const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
     const native = __lastNative();
-    const listener = jest.fn();
-    client.addTransactionIdListener(listener);
+    const subscriberError = new Error('subscriber failed');
+    const survivingTransactionListener = jest.fn();
+    const checkoutListener = jest.fn();
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
 
-    native.__transactionIdListener?.('txn_123');
-    native.__eventListener?.(JSON.stringify(checkoutFinalizedEvent));
+    try {
+      client.addTransactionIdListener(() => {
+        throw subscriberError;
+      });
+      client.addTransactionIdListener(survivingTransactionListener);
+      client.addEventListener('checkoutFinalized', checkoutListener);
 
-    expect(listener).toHaveBeenCalledTimes(1);
-    expect(client.currentTransactionId).toBe('txn_123');
+      expect(() => native.__eventListener?.(JSON.stringify(checkoutFinalizedEvent))).not.toThrow();
+      expect(survivingTransactionListener).toHaveBeenCalledWith('txn_123');
+      expect(checkoutListener).toHaveBeenCalledWith(checkoutFinalizedEvent);
+      expect(consoleError).toHaveBeenCalledWith('Onramper transaction ID listener threw:', subscriberError);
+    } finally {
+      consoleError.mockRestore();
+    }
   });
+
+  it.each(['reset', 'signOut'] as const)(
+    '%s remains successful when a transaction ID subscriber throws',
+    async (method) => {
+      const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
+      const native = __lastNative();
+      const subscriberError = new Error('subscriber failed');
+      const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+      try {
+        native.__eventListener?.(JSON.stringify(checkoutFinalizedEvent));
+        client.addTransactionIdListener(() => {
+          throw subscriberError;
+        });
+
+        await expect(client[method]()).resolves.toBeUndefined();
+        expect(client.currentTransactionId).toBeNull();
+        expect(consoleError).toHaveBeenCalledWith('Onramper transaction ID listener threw:', subscriberError);
+      } finally {
+        consoleError.mockRestore();
+      }
+    },
+  );
 
   it('destroy() clears listeners and disposes the native instance', () => {
     const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
