@@ -453,9 +453,9 @@ Values you pass as `prefill` are never logged at any level.
 
 #### `client.currentTransactionId`
 
-`string | null` mirror of the durable Onramper transaction ID published at
-`checkoutFinalized`. Read or persist it before `reset()` or `signOut()`, which clear it and
-publish `null` to `addTransactionIdListener` subscribers.
+`string | null` mirror of the durable Onramper transaction ID. It is `null` before successful
+finalization, then is published at `checkoutFinalized`. Read or persist it before `reset()` or
+`signOut()`, which clear it and publish `null` to `addTransactionIdListener` subscribers.
 
 #### `CheckoutEvent` cases (delivered to `addEventListener`)
 
