@@ -11,8 +11,13 @@ The **Expo** demo for [`@onramper/onramper-react-native`](../). It exercises `On
 ## Prerequisites
 
 - **Node** ≥ 22.11.0
-- **Xcode** + an iOS Simulator (or a provisioned device)
-- **CocoaPods** + Ruby bundler (`bundle install` on first clone)
+- **Xcode** with an iOS 16.4+ target and a registered real device. The Onramper checkout flow does not support
+  Simulator testing.
+- The **App Attest** entitlement enabled for the app target. Follow the [iOS build setup](../docs/IOS_BUILD_SETUP.md)
+  for this capability and first-build guidance.
+- **CocoaPods** for the generated iOS project. For a manual Pod lockfile regeneration, use standalone CocoaPods
+  **1.16.2** (`pod install`), not `bundle exec pod install`: the current Gemfile lock intentionally pins 1.15.2
+  and is out of scope.
 - The library is consumed as `@onramper/onramper-react-native: file:..`, so the **parent package must be built**
   and its native **xcframework fetched** before this app can build (see Step 1).
 
@@ -75,6 +80,13 @@ Then reload the app (press <kbd>R</kbd> in the Simulator) to pick up JS changes 
 The screen is a small harness: edit the transaction fields (source/destination/amount, payment
 method, wallet) and use the buttons to create a client, fetch a quote, and present the widget.
 A live log at the bottom shows SDK state transitions and any errors.
+
+## What to verify
+
+1. The Onramper transaction ID is `—` before finalization.
+2. `checkoutFinalized` logs a non-empty `transactionId` before `renderingStarted`.
+3. The visible value equals `response.onramperTransactionId`.
+4. `reset()` and `signOut()` return the visible value to `—`.
 
 ## Troubleshooting
 

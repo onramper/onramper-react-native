@@ -68,6 +68,7 @@ export default function App() {
   const [client, setClient] = useState<OnramperClient | null>(null);
   const [state, setState] = useState<OnramperState>({ kind: 'idle' });
   const [quote, setQuote] = useState<QuoteResponse | null>(null);
+  const [transactionId, setTransactionId] = useState<string | null>(null);
   const [button, setButton] = useState<React.ReactElement | null>(null);
 
   const scrollRef = useRef<ScrollView>(null);
@@ -81,6 +82,7 @@ export default function App() {
   const fail = (line: string) => append({ level: 'error', line });
 
   const setupClient = (c: OnramperClient) => {
+    c.addTransactionIdListener(setTransactionId);
     c.addStateListener((s) => {
       setState(s);
       event(`state → ${s.kind}${s.kind === 'failed' ? `: ${s.error.code}` : ''}`);
@@ -89,7 +91,9 @@ export default function App() {
     c.addEventListener('loginRequired', () => event('login required'));
     c.addEventListener('readyToCheckout', () => event('ready to checkout'));
     c.addEventListener('requirementSatisfied', (e) => event(`requirement satisfied: ${e.requirementType}`));
-    c.addEventListener('checkoutFinalized', () => event('checkout finalized'));
+    c.addEventListener('checkoutFinalized', (e) =>
+      event(`checkout finalized: transactionId=${e.response.onramperTransactionId}`),
+    );
     c.addEventListener('renderingStarted', (e) => event(`rendering: ${e.renderType} ${e.url}`));
     c.addEventListener('completed', (e) => event(`COMPLETED checkoutId=${e.checkoutId}`));
     c.addEventListener('failed', (e) => event(`FAILED: ${e.error.code} ${e.error.message}`));
@@ -100,6 +104,7 @@ export default function App() {
     // before we create a new one. Otherwise every retry doubles the handlers.
     client?.destroy();
     setQuote(null);
+    setTransactionId(null);
     setButton(null);
 
     let inflight: OnramperClient | null = null;
@@ -333,6 +338,9 @@ export default function App() {
 
           <View style={styles.divider} />
           <Text style={styles.section}>State: {state.kind}</Text>
+          <Text selectable style={styles.kv}>
+            Onramper transaction ID: {transactionId ?? '—'}
+          </Text>
 
           <View style={styles.divider} />
           <Text style={styles.section}>Log</Text>
