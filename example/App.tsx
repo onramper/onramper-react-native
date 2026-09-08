@@ -72,6 +72,7 @@ function AppContent() {
   const [client, setClient] = useState<OnramperClient | null>(null);
   const [stateKind, setStateKind] = useState<OnramperState['kind']>('idle');
   const [quote, setQuote] = useState<QuoteResponse | null>(null);
+  const [transactionId, setTransactionId] = useState<string | null>(null);
   const [button, setButton] = useState<ReactElement | null>(null);
   const [sendPrefill, setSendPrefill] = useState(true);
   const [prefillEmail, setPrefillEmail] = useState(PREFILL_DEFAULTS.email);
@@ -91,6 +92,7 @@ function AppContent() {
   const onConfigureInitialize = async () => {
     client?.destroy();
     setQuote(null);
+    setTransactionId(null);
     setButton(null);
     let inflight: OnramperClient | null = null;
     try {
@@ -109,6 +111,11 @@ function AppContent() {
           return createDemoSession(ENV.demoToken);
         },
       });
+      inflight.addTransactionIdListener(setTransactionId);
+      inflight.addEventListener('checkoutFinalized', (e) =>
+        event(`FINALIZED transactionId=${e.response.onramperTransactionId}`),
+      );
+      inflight.addEventListener('renderingStarted', () => event('RENDERING_STARTED'));
       inflight.addStateListener((s) => {
         setStateKind(s.kind);
         event(`state → ${s.kind}${s.kind === 'failed' ? `: ${s.error.code}` : ''}`);
@@ -285,6 +292,9 @@ function AppContent() {
       )}
 
       <Text style={[styles.section, { color: fg }]}>State: {stateKind}</Text>
+      <Text selectable style={[styles.kv, { color: muted }]}>
+        Onramper transaction ID: {transactionId ?? '—'}
+      </Text>
 
       <Text style={[styles.section, { color: fg }]}>Log:</Text>
       {log.length === 0 ? (
