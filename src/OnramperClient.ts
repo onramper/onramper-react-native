@@ -63,7 +63,10 @@ export class OnramperClient {
     });
 
     this.native.setTransactionIdListener((transactionId) => {
-      this.updateCurrentTransactionId(transactionId);
+      // The SDK transiently publishes nil while re-preparing after the payment
+      // sheet is dismissed. The finalized transaction ID remains durable across
+      // that attempt change; only explicit reset()/signOut() clear the JS mirror.
+      if (transactionId !== undefined) this.updateCurrentTransactionId(transactionId);
     });
 
     // The SDK calls this when its session expires; return fresh credentials.
@@ -92,8 +95,7 @@ export class OnramperClient {
     this.configured.catch(() => undefined);
   }
 
-  private updateCurrentTransactionId(transactionId: string | null | undefined): void {
-    const next = transactionId ?? null;
+  private updateCurrentTransactionId(next: string | null): void {
     if (next === this.currentTransactionId) return;
 
     this.currentTransactionId = next;

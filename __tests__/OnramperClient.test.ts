@@ -266,24 +266,26 @@ describe('OnramperClient', () => {
     expect(stateFn).toHaveBeenCalledWith({ kind: 'ready' });
   });
 
-  it('mirrors native transaction ID updates, including reset to null', () => {
+  it('retains the transaction ID when native publishes nil during checkout re-preparation', () => {
     const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
     const native = __lastNative();
     const listener = jest.fn();
     const unsubscribe = client.addTransactionIdListener(listener);
 
     expect(client.currentTransactionId).toBeNull();
-    native.__transactionIdListener?.('txn_123');
+    native.__eventListener?.(JSON.stringify(checkoutFinalizedEvent));
     expect(client.currentTransactionId).toBe('txn_123');
     expect(listener).toHaveBeenLastCalledWith('txn_123');
+    listener.mockClear();
 
     native.__transactionIdListener?.(undefined);
-    expect(client.currentTransactionId).toBeNull();
-    expect(listener).toHaveBeenLastCalledWith(null);
+    expect(client.currentTransactionId).toBe('txn_123');
+    expect(listener).not.toHaveBeenCalled();
 
     unsubscribe();
     native.__transactionIdListener?.('txn_456');
-    expect(listener).toHaveBeenCalledTimes(2);
+    expect(client.currentTransactionId).toBe('txn_456');
+    expect(listener).not.toHaveBeenCalled();
   });
 
   it('addEventListener fires only for the matching event type', () => {
