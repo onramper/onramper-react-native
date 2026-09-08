@@ -19,6 +19,19 @@ const checkoutRequest: CheckoutRequest = {
   wallet: { network: 'ethereum', address: '0xabc' },
 };
 
+const checkoutFinalizedEvent: Extract<CheckoutEvent, { type: 'checkoutFinalized' }> = {
+  type: 'checkoutFinalized',
+  response: {
+    headlessCheckoutId: 'checkout_123',
+    onramperTransactionId: 'txn_123',
+    headlessCheckoutData: {
+      checkoutPaymentType: 'applepay',
+      url: 'https://pay.example/checkout_123',
+      renderType: 'webview',
+    },
+  },
+};
+
 const tick = () => new Promise<void>((r) => setImmediate(r));
 
 describe('OnramperClient', () => {
@@ -72,6 +85,58 @@ describe('OnramperClient', () => {
     await client.signOut();
     expect(native.configure).toHaveBeenCalled();
     expect(native.signOut).toHaveBeenCalledTimes(1);
+  });
+
+  it('reset() clears the transaction ID after native reset succeeds', async () => {
+    const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
+    const native = __lastNative();
+    const listener = jest.fn();
+    client.addTransactionIdListener(listener);
+    native.__eventListener?.(JSON.stringify(checkoutFinalizedEvent));
+    listener.mockClear();
+
+    await client.reset();
+
+    expect(native.reset).toHaveBeenCalledTimes(1);
+    expect(client.currentTransactionId).toBeNull();
+    expect(listener).toHaveBeenCalledWith(null);
+  });
+
+  it('reset() preserves the transaction ID when native reset fails', async () => {
+    const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
+    const native = __lastNative();
+    native.__eventListener?.(JSON.stringify(checkoutFinalizedEvent));
+    native.reset.mockRejectedValueOnce(new Error('reset failed'));
+
+    await expect(client.reset()).rejects.toBeInstanceOf(Error);
+
+    expect(client.currentTransactionId).toBe('txn_123');
+  });
+
+  it('signOut() clears the transaction ID after native sign-out succeeds', async () => {
+    const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
+    const native = __lastNative();
+    const listener = jest.fn();
+    client.addTransactionIdListener(listener);
+    native.__transactionIdListener?.('txn_123');
+    listener.mockClear();
+
+    await client.signOut();
+
+    expect(native.signOut).toHaveBeenCalledTimes(1);
+    expect(client.currentTransactionId).toBeNull();
+    expect(listener).toHaveBeenCalledWith(null);
+  });
+
+  it('signOut() preserves the transaction ID when native sign-out fails', async () => {
+    const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
+    const native = __lastNative();
+    native.__transactionIdListener?.('txn_123');
+    native.signOut.mockRejectedValueOnce(new Error('sign-out failed'));
+
+    await expect(client.signOut()).rejects.toBeInstanceOf(Error);
+
+    expect(client.currentTransactionId).toBe('txn_123');
   });
 
   it('getCheckoutRequirements serializes request/style and parses the quote', async () => {
@@ -232,27 +297,33 @@ describe('OnramperClient', () => {
     expect(completedFn).toHaveBeenCalledWith({ type: 'completed', checkoutId: 'abc' });
   });
 
-  it('delivers the durable Onramper transaction ID in checkoutFinalized', () => {
+  it('updates the transaction ID mirror before delivering checkoutFinalized', () => {
+    const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
+    const native = __lastNative();
+    const transactionIdListener = jest.fn();
+    const listener = jest.fn(() => {
+      expect(client.currentTransactionId).toBe('txn_123');
+    });
+    client.addTransactionIdListener(transactionIdListener);
+    client.addEventListener('checkoutFinalized', listener);
+
+    native.__eventListener?.(JSON.stringify(checkoutFinalizedEvent));
+    expect(client.currentTransactionId).toBe('txn_123');
+    expect(transactionIdListener).toHaveBeenCalledWith('txn_123');
+    expect(listener).toHaveBeenCalledWith(checkoutFinalizedEvent);
+  });
+
+  it('does not republish the same transaction ID from both native sources', () => {
     const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
     const native = __lastNative();
     const listener = jest.fn();
-    client.addEventListener('checkoutFinalized', listener);
+    client.addTransactionIdListener(listener);
 
-    const event: Extract<CheckoutEvent, { type: 'checkoutFinalized' }> = {
-      type: 'checkoutFinalized',
-      response: {
-        headlessCheckoutId: 'checkout_123',
-        onramperTransactionId: 'txn_123',
-        headlessCheckoutData: {
-          checkoutPaymentType: 'applepay',
-          url: 'https://pay.example/checkout_123',
-          renderType: 'webview',
-        },
-      },
-    };
+    native.__transactionIdListener?.('txn_123');
+    native.__eventListener?.(JSON.stringify(checkoutFinalizedEvent));
 
-    native.__eventListener?.(JSON.stringify(event));
-    expect(listener).toHaveBeenCalledWith(event);
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(client.currentTransactionId).toBe('txn_123');
   });
 
   it('destroy() clears listeners and disposes the native instance', () => {

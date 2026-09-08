@@ -52,16 +52,18 @@ export class OnramperClient {
       for (const fn of this.stateListeners) fn(s);
     });
 
-    // Single native checkout-event callback → fan out to listeners.
+    // Single native checkout-event callback → keep the transaction ID mirror
+    // synchronized at finalization, then fan out to checkout listeners.
     this.native.setEventListener((json) => {
       const e = JSON.parse(json) as CheckoutEvent;
+      if (e.type === 'checkoutFinalized') {
+        this.updateCurrentTransactionId(e.response.onramperTransactionId);
+      }
       for (const fn of this.eventListeners) fn(e);
     });
 
     this.native.setTransactionIdListener((transactionId) => {
-      const next = transactionId ?? null;
-      this.currentTransactionId = next;
-      for (const fn of this.transactionIdListeners) fn(next);
+      this.updateCurrentTransactionId(transactionId);
     });
 
     // The SDK calls this when its session expires; return fresh credentials.
@@ -90,6 +92,14 @@ export class OnramperClient {
     this.configured.catch(() => undefined);
   }
 
+  private updateCurrentTransactionId(transactionId: string | null | undefined): void {
+    const next = transactionId ?? null;
+    if (next === this.currentTransactionId) return;
+
+    this.currentTransactionId = next;
+    for (const fn of this.transactionIdListeners) fn(next);
+  }
+
   async initialize(creds: SessionCredentials): Promise<void> {
     try {
       await this.configured;
@@ -103,6 +113,7 @@ export class OnramperClient {
     try {
       await this.configured;
       await this.native.reset();
+      this.updateCurrentTransactionId(null);
     } catch (e: unknown) {
       throw OnramperError.from(e);
     }
@@ -118,6 +129,7 @@ export class OnramperClient {
     try {
       await this.configured;
       await this.native.signOut();
+      this.updateCurrentTransactionId(null);
     } catch (e: unknown) {
       throw OnramperError.from(e);
     }
@@ -174,7 +186,7 @@ export class OnramperClient {
     };
   }
 
-  /** Subscribe to the durable Onramper transaction ID. Native reset/signOut publish null. */
+  /** Subscribe to the durable Onramper transaction ID. Successful reset/signOut publish null. */
   addTransactionIdListener(fn: (transactionId: string | null) => void): () => void {
     this.transactionIdListeners.add(fn);
     return () => {
