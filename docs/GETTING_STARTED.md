@@ -272,7 +272,25 @@ const offState = client.addStateListener((state) => {
 // to drop all listeners and release the native client.
 ```
 
-### 3.6 Re-requesting on input changes
+### 3.6 Store the Onramper transaction ID
+
+When `checkoutFinalized` fires, persist `response.onramperTransactionId`. It is the durable
+Onramper transaction ID for support, reconciliation, and status lookup, and it is available
+before the payment surface renders:
+
+```ts
+const onFinalized = client.addEventListener('checkoutFinalized', ({ response }) => {
+  persistTransactionId(response.onramperTransactionId);
+});
+```
+
+`client.currentTransactionId` mirrors the same value, and
+`addTransactionIdListener((id) => { ... })` lets UI react to changes. Read or persist the ID
+before `reset()` or `signOut()`: native publishes `null` when either clears it. Dismissing or
+re-preparing the payment surface can change attempt IDs without changing the durable transaction
+ID.
+
+### 3.7 Re-requesting on input changes
 
 If the user changes amount, payment method, or country, call `getCheckoutRequirements()` again with the updated request. The Headless Wrapper resets internally and returns a fresh button — no need to call `reset()` first.
 
@@ -293,7 +311,7 @@ The native side single-flights this: any prior in-flight call is invalidated whe
 
 After a `completed` or `failed` outcome, call `await client.reset()` to return to `ready`. The Headless Wrapper session and OnramperID login both remain valid; you don't need to re-`initialize()` unless the Headless Wrapper itself surfaces an unrecoverable failure.
 
-### 3.7 Signing the OnramperID user out
+### 3.8 Signing the OnramperID user out
 
 `reset()` keeps the user's OnramperID login active so the next checkout skips the login sheet. Call `await client.signOut()` when you want to clear the stored OIDC tokens — useful for a "Sign out" menu item, a "Switch account" flow, or for ending a session when your app's own user logs out.
 
@@ -306,7 +324,7 @@ await client.signOut();
 // session itself has expired.
 ```
 
-### 3.8 Customizing the Buy button
+### 3.9 Customizing the Buy button
 
 `CheckoutButtonStyle` exposes three fields. Style is **per-checkout** (not global) — pass the same value on every `getCheckoutRequirements()` call if you want a consistent look.
 
@@ -320,7 +338,7 @@ interface CheckoutButtonStyle {
 
 Only those three fields are styleable. The button label ("Buy"), height, internal padding, font, ToS sentence rendering, and the login / payment sheets are Headless Wrapper-owned in this release — partners cannot override them. If your design needs more, raise it with the Headless Wrapper team rather than wrapping the button in a custom container (the underlying SwiftUI view is opaque and may relayout).
 
-### 3.9 Error handling
+### 3.10 Error handling
 
 Every native error surfaces as `OnramperError` (a real JS `Error` subclass) with a typed `code`. The taxonomy is small, stable, and actionable — internal plumbing (token refresh, DPoP, re-bootstrap) is handled silently, so you only see what you can act on.
 
@@ -388,7 +406,7 @@ The Headless Wrapper absorbs these signals internally — they never surface to 
 
 Many errors carry an `info` payload (e.g., `{ debugInfo: 'OnramperBackend-40005: ...' }`). Treat it as opaque support-ticket fodder: **log it, but don't switch on its contents.** The format is non-localized and may change without notice.
 
-### 3.10 Logging
+### 3.11 Logging
 
 Pass `logLevel: 'info'` while integrating to see HTTP method, URL path, and status for every Onramper-backend + security call in the device console. Levels:
 
@@ -401,7 +419,7 @@ Pass `logLevel: 'info'` while integrating to see HTTP method, URL path, and stat
 
 Values you pass as `prefill` are never logged at any level.
 
-### 3.11 Reference: state, events, methods
+### 3.12 Reference: state, events, methods
 
 #### Methods on `OnramperClient`
 
@@ -413,6 +431,7 @@ Values you pass as `prefill` are never logged at any level.
 | `signOut()` | `Promise<void>` | Clears stored OIDC tokens (access + refresh) and calls `reset()`. Next checkout re-presents the OnramperID login sheet. Does not invalidate the partner Headless Wrapper session. |
 | `cancelPreparedIntent(intentHandle)` | `Promise<void>` | Drops a prepared-intent handle on the native side. Rarely needed — `getCheckoutRequirements()` invalidates the prior intent automatically. |
 | `addStateListener(fn)` | `() => void` | Returns an unsubscribe. `fn` receives every `OnramperState` transition. |
+| `addTransactionIdListener(fn)` | `() => void` | Returns an unsubscribe. `fn` receives the current durable Onramper transaction ID as `string | null`; reset/sign-out publish `null`. |
 | `addEventListener(name, fn)` | `() => void` | Returns an unsubscribe. `fn` receives only events whose `type` matches `name`. |
 | `destroy()` | `void` | Removes all listeners (host + internal). Call on unmount. |
 
@@ -432,6 +451,12 @@ Values you pass as `prefill` are never logged at any level.
 | `'completed'` | Terminal success. |
 | `'failed'` | Terminal failure. Carries `error: OnramperErrorPayload`. |
 
+#### `client.currentTransactionId`
+
+`string | null` mirror of the durable Onramper transaction ID. It is `null` before successful
+finalization, then is published at `checkoutFinalized`. Read or persist it before `reset()` or
+`signOut()`, which clear it and publish `null` to `addTransactionIdListener` subscribers.
+
 #### `CheckoutEvent` cases (delivered to `addEventListener`)
 
 | `type` | Fires when |
@@ -441,7 +466,7 @@ Values you pass as `prefill` are never logged at any level.
 | `'loginRequired'` | The current intent requires `user_info` or phone `reverification`. Carries `requirements`. |
 | `'readyToCheckout'` | All requirements satisfied. |
 | `'requirementSatisfied'` | A requirement (`tos`, `amount_limit`, `user_info`, `reverification`) just passed. The OnramperID flow emits one per type it resolves. |
-| `'checkoutFinalized'` | Backend finalized; payment surface is about to render. |
+| `'checkoutFinalized'` | Backend finalized; carries `response.onramperTransactionId` before the payment surface renders. |
 | `'renderingStarted'` | The payment view is on screen. Carries `url`, `renderType`. |
 | `'completed'` | Terminal success. Carries `checkoutId`. |
 | `'failed'` | Terminal failure. Carries `error`. |

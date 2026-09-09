@@ -11,8 +11,13 @@ The **Expo** demo for [`@onramper/onramper-react-native`](../). It exercises `On
 ## Prerequisites
 
 - **Node** ≥ 22.11.0
-- **Xcode** + an iOS Simulator (or a provisioned device)
-- **CocoaPods** + Ruby bundler (`bundle install` on first clone)
+- **Xcode** with an iOS 16.4+ target and a registered real device. The Onramper checkout flow does not support
+  Simulator testing.
+- The **App Attest** entitlement enabled for the app target. Follow the [iOS build setup](../docs/IOS_BUILD_SETUP.md)
+  for this capability and first-build guidance.
+- **CocoaPods** for the generated iOS project. For a manual Pod lockfile regeneration, use standalone CocoaPods
+  **1.16.2** (`pod install`), not `bundle exec pod install`: the current Gemfile lock intentionally pins 1.15.2
+  and is out of scope.
 - The library is consumed as `@onramper/onramper-react-native: file:..`, so the **parent package must be built**
   and its native **xcframework fetched** before this app can build (see Step 1).
 
@@ -24,8 +29,8 @@ npm install                  # install + build the library (bob)
 npm run fetch-xcframework    # download OnramperSDK.xcframework into ios/Frameworks
 ```
 
-`fetch-xcframework` uses `gh release download`, so make sure `gh auth status` shows an active
-account with access to the `onramper/onramper-ios` repo. (CI uses a `RELEASE_REPO_TOKEN` instead.)
+`fetch-xcframework` downloads from the public `onramper/onramper-ios` GitHub release. No GitHub
+account or access token is required.
 
 ## Step 2 — Install this app's dependencies
 
@@ -56,10 +61,10 @@ export const ENV = {
 
 ## Step 4 — Build & run on iOS
 
-The first run does a native prebuild + `pod install`, so it takes a few minutes:
+The first run does a native prebuild + `pod install`, so it takes a few minutes; the CLI selects the connected registered device:
 
 ```sh
-npm run ios          # expo run:ios — prebuild, build, install & launch the dev client
+npm run ios -- --device # expo run:ios — prebuild, build, install & launch the dev client
 ```
 
 Once the dev client is installed, iterate quickly by just starting Metro:
@@ -68,7 +73,8 @@ Once the dev client is installed, iterate quickly by just starting Metro:
 npm start            # expo start --dev-client
 ```
 
-Then reload the app (press <kbd>R</kbd> in the Simulator) to pick up JS changes via Fast Refresh.
+Then use **Reload** from the installed dev client's developer menu on your real device to pick up JS changes via
+Fast Refresh.
 
 ## Using the app
 
@@ -80,7 +86,7 @@ A live log at the bottom shows SDK state transitions and any errors.
 
 - **`OnramperSDK.xcframework` not found / pod install fails** — rerun Step 1; the xcframework must
   exist at the repo root `ios/Frameworks/` before building.
-- **Stale native build after dependency changes** — `rm -rf ios && npm run ios` to regenerate the
+- **Stale native build after dependency changes** — `rm -rf ios && npm run ios -- --device` to regenerate the
   prebuild, or `cd ios && pod install` if only pods changed.
 - **`env.local.ts` missing** — the app imports `ENV` from it; complete Step 3.
 - General Expo issues: [Expo docs](https://docs.expo.dev). General RN issues:

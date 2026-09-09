@@ -52,6 +52,8 @@ export interface OnramperNitro extends HybridObject<{ ios: 'swift' }> {
   // Single native callback per stream; the JS wrapper fans out to multiple listeners.
   setStateListener(onState: (stateJson: string) => void): void;
   setEventListener(onEvent: (eventJson: string) => void): void;
+  // Mirrors OnramperSDK.$currentTransactionId. `undefined` represents native nil.
+  setTransactionIdListener(onTransactionId: (transactionId: string | undefined) => void): void;
 
   // The SDK's sessionExpirationHandler, as a stored async callback that returns
   // fresh credentials. Replaces the Expo-era onSessionExpired/provide/fail dance.

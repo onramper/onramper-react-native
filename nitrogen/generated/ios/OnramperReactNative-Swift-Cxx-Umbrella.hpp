@@ -30,6 +30,7 @@ namespace margelo::nitro::onramper { struct PreparedIntentResult; }
 #include <exception>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 
 // C++ helpers for Swift

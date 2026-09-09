@@ -271,6 +271,28 @@ open class HybridOnramperNitroSpec_cxx {
   }
   
   @inline(__always)
+  public final func setTransactionIdListener(onTransactionId: bridge.Func_void_std__optional_std__string_) -> bridge.Result_void_ {
+    do {
+      try self.__implementation.setTransactionIdListener(onTransactionId: { () -> (String?) -> Void in
+        let __wrappedFunction = bridge.wrap_Func_void_std__optional_std__string_(onTransactionId)
+        return { (__transactionId: String?) -> Void in
+          __wrappedFunction.call({ () -> bridge.std__optional_std__string_ in
+            if let __unwrappedValue = __transactionId {
+              return bridge.create_std__optional_std__string_(std.string(__unwrappedValue))
+            } else {
+              return .init()
+            }
+          }())
+        }
+      }())
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
   public final func setSessionExpirationHandler(handler: bridge.Func_std__shared_ptr_Promise_std__shared_ptr_Promise_NitroSessionCredentials____) -> bridge.Result_void_ {
     do {
       try self.__implementation.setSessionExpirationHandler(handler: { () -> () -> Promise<Promise<NitroSessionCredentials>> in

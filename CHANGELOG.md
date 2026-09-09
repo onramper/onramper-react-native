@@ -2,6 +2,24 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.2.1]
+
+Bundles `OnramperSDK@1.2.1`.
+
+### Added
+
+- Durable Onramper transaction IDs. `checkoutFinalized.response` now includes the required
+  `onramperTransactionId`, and `OnramperClient.currentTransactionId` mirrors the native
+  published value. Subscribe with `addTransactionIdListener` when UI must react to it.
+- Both example apps display and log the transaction ID at finalization.
+
+### Changed
+
+- No migration is required. The release is additive. Persist `onramperTransactionId` for
+  support, reconciliation, and status lookup instead of per-attempt checkout/intent IDs.
+  Read it before `reset()` or `signOut()`, which clear the current value. TypeScript tests
+  that manually construct a `CheckoutFinalizeResponse` fixture must add the required field.
+
 ## [1.2.0]
 
 Bundles `OnramperSDK@1.2.0`.

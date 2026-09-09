@@ -65,6 +65,11 @@ Already know the user? Pass a third `prefill` argument (`email`, `firstName`, `l
 The SwiftUI `OnramperCheckoutButton` does not expose external callback hooks; checkout outcomes flow via the module-level event stream:
 
 ```ts
+const onFinalized = client.addEventListener('checkoutFinalized', ({ response }) => {
+  // Durable transaction identifier: store this for support/reconciliation.
+  persistTransactionId(response.onramperTransactionId);
+});
+
 const unsub = client.addEventListener('completed', (e) => {
   console.log('done:', e.checkoutId);
 });
@@ -73,6 +78,10 @@ const onFailed = client.addEventListener('failed', (e) => {
   console.log('failed:', e.error.code, e.error.message);
 });
 ```
+
+`checkoutStarted.intentId` and `completed.checkoutId` identify an attempt, while
+`onramperTransactionId` identifies the transaction and is available before payment rendering.
+`client.currentTransactionId` mirrors the same value; `reset()` clears it.
 
 ## Error handling
 

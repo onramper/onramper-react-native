@@ -30,12 +30,14 @@ export interface GetCheckoutRequirementsResult {
 export class OnramperClient {
   state: OnramperState = { kind: 'idle' };
   lastError: OnramperError | null = null;
+  currentTransactionId: string | null = null;
 
   // Each client owns its own native instance (and thus its own SDK client).
   private readonly native = createOnramperNative();
 
   private readonly stateListeners = new Set<(state: OnramperState) => void>();
   private readonly eventListeners = new Set<(event: CheckoutEvent) => void>();
+  private readonly transactionIdListeners = new Set<(transactionId: string | null) => void>();
 
   // Resolved when the constructor-issued configure() completes. Public methods
   // that need the native client await this first.
@@ -50,10 +52,21 @@ export class OnramperClient {
       for (const fn of this.stateListeners) fn(s);
     });
 
-    // Single native checkout-event callback → fan out to listeners.
+    // Single native checkout-event callback → keep the transaction ID mirror
+    // synchronized at finalization, then fan out to checkout listeners.
     this.native.setEventListener((json) => {
       const e = JSON.parse(json) as CheckoutEvent;
+      if (e.type === 'checkoutFinalized') {
+        this.updateCurrentTransactionId(e.response.onramperTransactionId);
+      }
       for (const fn of this.eventListeners) fn(e);
+    });
+
+    this.native.setTransactionIdListener((transactionId) => {
+      // The SDK transiently publishes nil while re-preparing after the payment
+      // sheet is dismissed. The finalized transaction ID remains durable across
+      // that attempt change; only explicit reset()/signOut() clear the JS mirror.
+      if (transactionId !== undefined) this.updateCurrentTransactionId(transactionId);
     });
 
     // The SDK calls this when its session expires; return fresh credentials.
@@ -82,6 +95,19 @@ export class OnramperClient {
     this.configured.catch(() => undefined);
   }
 
+  private updateCurrentTransactionId(next: string | null): void {
+    if (next === this.currentTransactionId) return;
+
+    this.currentTransactionId = next;
+    for (const fn of [...this.transactionIdListeners]) {
+      try {
+        fn(next);
+      } catch (error: unknown) {
+        console.error('Onramper transaction ID listener threw:', error);
+      }
+    }
+  }
+
   async initialize(creds: SessionCredentials): Promise<void> {
     try {
       await this.configured;
@@ -95,6 +121,7 @@ export class OnramperClient {
     try {
       await this.configured;
       await this.native.reset();
+      this.updateCurrentTransactionId(null);
     } catch (e: unknown) {
       throw OnramperError.from(e);
     }
@@ -110,6 +137,7 @@ export class OnramperClient {
     try {
       await this.configured;
       await this.native.signOut();
+      this.updateCurrentTransactionId(null);
     } catch (e: unknown) {
       throw OnramperError.from(e);
     }
@@ -166,6 +194,14 @@ export class OnramperClient {
     };
   }
 
+  /** Subscribe to the durable Onramper transaction ID. Successful reset/signOut publish null. */
+  addTransactionIdListener(fn: (transactionId: string | null) => void): () => void {
+    this.transactionIdListeners.add(fn);
+    return () => {
+      this.transactionIdListeners.delete(fn);
+    };
+  }
+
   /** Subscribe to a specific checkout event. Returns an unsubscribe function. */
   addEventListener<K extends EventName>(name: K, fn: (e: EventPayload<K>) => void): () => void {
     const wrapper = (e: CheckoutEvent) => {
@@ -181,6 +217,7 @@ export class OnramperClient {
   destroy(): void {
     this.stateListeners.clear();
     this.eventListeners.clear();
+    this.transactionIdListeners.clear();
     this.native.dispose();
   }
 }

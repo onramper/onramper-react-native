@@ -11,10 +11,12 @@ import SwiftUI
 final class HybridOnramperNitro: HybridOnramperNitroSpec {
   private var client: OnramperClient?
   private var stateObservation: AnyCancellable?
+  private var transactionIdObservation: AnyCancellable?
   private var eventTask: Task<Void, Never>?
 
   private var onState: ((String) -> Void)?
   private var onEvent: ((String) -> Void)?
+  private var onTransactionId: ((String?) -> Void)?
   // Nitro wraps a callback's return value in a Promise; our callback already
   // returns Promise<NitroSessionCredentials>, hence the doubly-nested Promise.
   private var sessionHandler: (() -> Promise<Promise<NitroSessionCredentials>>)?
@@ -31,6 +33,10 @@ final class HybridOnramperNitro: HybridOnramperNitroSpec {
 
   func setEventListener(onEvent: @escaping (String) -> Void) {
     self.onEvent = onEvent
+  }
+
+  func setTransactionIdListener(onTransactionId: @escaping (String?) -> Void) {
+    self.onTransactionId = onTransactionId
   }
 
   func setSessionExpirationHandler(handler: @escaping () -> Promise<Promise<NitroSessionCredentials>>) {
@@ -95,6 +101,9 @@ final class HybridOnramperNitro: HybridOnramperNitroSpec {
   private func attachObservers(to client: OnramperClient) {
     stateObservation = client.$state.sink { [weak self] state in
       self?.onState?(jsonString(state.toJSDict()))
+    }
+    transactionIdObservation = client.$currentTransactionId.sink { [weak self] transactionId in
+      self?.onTransactionId?(transactionId)
     }
     // `events` is a computed AsyncStream that captures a single continuation, so
     // access it exactly once here. CheckoutEvent is Sendable → safe to iterate
@@ -199,10 +208,13 @@ final class HybridOnramperNitro: HybridOnramperNitroSpec {
   func dispose() {
     stateObservation?.cancel()
     stateObservation = nil
+    transactionIdObservation?.cancel()
+    transactionIdObservation = nil
     eventTask?.cancel()
     eventTask = nil
     onState = nil
     onEvent = nil
+    onTransactionId = nil
     sessionHandler = nil
     lastPreparedHandle = nil
     client = nil

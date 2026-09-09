@@ -161,11 +161,22 @@ Carried by the `checkoutFinalized` event.
 
 | Type | Field | Type | Description |
 |---|---|---|---|
-| `CheckoutFinalizeResponse` | `headlessCheckoutId` | `string` | Finalized checkout id. |
+| `CheckoutFinalizeResponse` | `headlessCheckoutId` | `string` | Finalized checkout-attempt id. |
+| | `onramperTransactionId` | `string` | Durable Onramper transaction id for support, reconciliation, and status lookup. Persist this one. |
 | | `headlessCheckoutData` | `HeadlessCheckoutData` | Payment surface info. |
 | `HeadlessCheckoutData` | `checkoutPaymentType` | `CheckoutPaymentType` | `'applepay'` \| `'revolutpay'`. |
 | | `url` | `string` | Payment surface URL. |
 | | `renderType` | `RenderType` | `'webview'` \| `'deeplink'`. |
+
+---
+
+## OnramperClient transaction ID
+
+`OnramperClient.currentTransactionId: string | null` is `null` before successful finalization,
+then mirrors the durable Onramper transaction ID published with `checkoutFinalized`. Subscribe with
+`addTransactionIdListener((id) => void): () => void`; `id` is `string | null` and native
+publishes `null` when `reset()` or `signOut()` clears the current value. Persist the ID before
+either operation.
 
 ---
 
