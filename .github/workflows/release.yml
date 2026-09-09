@@ -60,11 +60,29 @@ jobs:
             echo "Version ${VERSION} already on npm."; exit 1
           fi
 
-      - name: Bump package.json
+      - name: Validate SDK pin + bump package.json
         env:
           VERSION: ${{ steps.ver.outputs.version }}
+          IOS_VERSION: ${{ github.event.inputs.ios-version }}
         run: |
-          node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json'));p.version=process.env.VERSION;p.onramperSDK={checksum:'PENDING_FETCH'};fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n');"
+          node <<'NODE'
+          const fs = require('node:fs');
+          const p = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          const baseVersion = typeof p.version === 'string' ? p.version.split('-')[0] : '';
+          const checksum = p.onramperSDK?.checksum;
+
+          if (baseVersion !== process.env.IOS_VERSION) {
+            console.error(`package.json base version ${baseVersion || '(missing)'} does not match iOS version ${process.env.IOS_VERSION}.`);
+            process.exit(1);
+          }
+          if (typeof checksum !== 'string' || !/^[0-9a-f]{64}$/.test(checksum)) {
+            console.error('package.json onramperSDK.checksum must be exactly 64 lowercase hexadecimal characters.');
+            process.exit(1);
+          }
+
+          p.version = process.env.VERSION;
+          fs.writeFileSync('package.json', `${JSON.stringify(p, null, 2)}\n`);
+          NODE
 
       - name: Fetch xcframework + checksum
         run: npm ci && npm run fetch-xcframework
