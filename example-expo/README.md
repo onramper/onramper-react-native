@@ -82,13 +82,6 @@ The screen is a small harness: edit the transaction fields (source/destination/a
 method, wallet) and use the buttons to create a client, fetch a quote, and present the widget.
 A live log at the bottom shows SDK state transitions and any errors.
 
-## What to verify
-
-1. The Onramper transaction ID is `—` before finalization.
-2. `checkoutFinalized` logs a non-empty `transactionId` before `renderingStarted`.
-3. The visible value equals `response.onramperTransactionId`.
-4. `reset()` and `signOut()` return the visible value to `—`.
-
 ## Troubleshooting
 
 - **`OnramperSDK.xcframework` not found / pod install fails** — rerun Step 1; the xcframework must

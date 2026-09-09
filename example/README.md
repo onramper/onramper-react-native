@@ -43,10 +43,3 @@ From `example/`, with a real registered device connected, run; the CLI selects t
 ```bash
 npm run ios -- --device
 ```
-
-## What to verify
-
-1. The Onramper transaction ID is `—` before finalization.
-2. `checkoutFinalized` logs a non-empty `transactionId` before `renderingStarted`.
-3. The visible value equals `response.onramperTransactionId`.
-4. `reset()` and `signOut()` return the visible value to `—`.
