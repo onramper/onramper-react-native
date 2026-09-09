@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.2.2]
+
+Bundles `OnramperSDK@1.2.2`.
+
+### Fixed
+
+- Fixed authentication handling during SDK session initialization and refresh.
+
+### Changed
+
+- No public React Native API changes or migration are required.
+
 ## [1.2.1]
 
 Bundles `OnramperSDK@1.2.1`.
