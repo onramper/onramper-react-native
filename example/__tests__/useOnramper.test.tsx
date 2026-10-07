@@ -31,8 +31,12 @@ const mintMock = createDemoSession as jest.Mock;
 let clients: FakeClient[] = [];
 let latest!: OnramperHandle;
 
+// Every render's (props, handle) pair, for asserting what a given render exposed.
+let renders: { props: UseOnramperOptions; handle: OnramperHandle }[] = [];
+
 function Harness(props: UseOnramperOptions) {
   latest = useOnramper(props);
+  renders.push({ props, handle: latest });
   return null;
 }
 
@@ -68,11 +72,26 @@ beforeEach(() => {
   mintMock.mockResolvedValue(session('s1'));
 });
 
+// Every renderer is unmounted after its test: a still-mounted hook can have a
+// mint or initialize in flight, and its late callbacks would otherwise land on
+// the next test's shared mocks (seen as "mint called twice" under CPU load).
+const mounted = new Set<ReactTestRenderer.ReactTestRenderer>();
+
+afterEach(async () => {
+  await act(async () => {
+    for (const renderer of mounted) {
+      renderer.unmount();
+    }
+  });
+  mounted.clear();
+});
+
 async function render(props: UseOnramperOptions) {
   let renderer!: ReactTestRenderer.ReactTestRenderer;
   await act(async () => {
     renderer = ReactTestRenderer.create(<Harness {...props} />);
   });
+  mounted.add(renderer);
   return renderer;
 }
 
@@ -139,6 +158,7 @@ test('unmount destroys the client', async () => {
   await act(async () => {
     renderer.unmount();
   });
+  mounted.delete(renderer);
   expect(clients[0].destroy).toHaveBeenCalled();
 });
 
@@ -171,4 +191,22 @@ test('clearOutcome nulls the completed checkout and the last failure', async () 
   await act(async () => latest.clearOutcome());
   expect(latest.completedCheckoutId).toBeNull();
   expect(latest.lastFailure).toBeNull();
+});
+
+test('never exposes a client in the render that retires it', async () => {
+  // Effects of children (e.g. useCheckout) run in the same commit as this
+  // hook's cleanup, so a client returned during that render gets called after
+  // it was disposed ("NativeState is null").
+  const renderer = await render(DEV);
+  expect(latest.client).toBe(clients[0]);
+  renders = [];
+
+  await act(async () => {
+    renderer.update(<Harness {...DEV} theme="light" />);
+  });
+
+  expect(clients[0].destroy).toHaveBeenCalled();
+  expect(renders[0].props.theme).toBe('light');
+  expect(renders.filter(r => (r.handle.client as unknown) === clients[0])).toEqual([]);
+  expect(latest.client).toBe(clients[1]);
 });

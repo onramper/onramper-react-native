@@ -47,7 +47,14 @@ const MAX_LOG_ENTRIES = 300;
  * never publishes its client, and anything it created is destroyed.
  */
 export function useOnramper({ environment, theme, generation }: UseOnramperOptions): OnramperHandle {
-  const [client, setClient] = useState<OnramperClient | null>(null);
+  // The client is stored with the run that created it. When props move to a
+  // new run, the render that sees the new props must stop exposing the old
+  // client: this hook's effect cleanup destroys it in the same commit, after
+  // which child effects (e.g. useCheckout) would call a disposed native object.
+  const [ready, setReady] = useState<{ client: OnramperClient; runKey: string } | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const runKey = `${environment}|${theme}|${generation}|${attempt}`;
+  const client = ready?.runKey === runKey ? ready.client : null;
   const [status, setStatus] = useState<InitStatus>('initializing');
   const [initError, setInitError] = useState<string | null>(null);
   const [sdkState, setSdkState] = useState<OnramperState['kind']>('idle');
@@ -55,7 +62,6 @@ export function useOnramper({ environment, theme, generation }: UseOnramperOptio
   const [completedCheckoutId, setCompletedCheckoutId] = useState<string | null>(null);
   const [lastFailure, setLastFailure] = useState<string | null>(null);
   const [log, setLog] = useState<LogEntry[]>([]);
-  const [attempt, setAttempt] = useState(0);
   const nextLogId = useRef(0);
 
   const appendLog = useCallback((level: LogLevel, line: string) => {
@@ -77,7 +83,7 @@ export function useOnramper({ environment, theme, generation }: UseOnramperOptio
   useEffect(() => {
     let cancelled = false;
     let created: OnramperClient | null = null;
-    setClient(null);
+    setReady(null);
     setStatus('initializing');
     setInitError(null);
     setSdkState('idle');
@@ -132,7 +138,7 @@ export function useOnramper({ environment, theme, generation }: UseOnramperOptio
       if (cancelled) {
         return;
       }
-      setClient(c);
+      setReady({ client: c, runKey });
       setStatus('ready');
       appendLog('info', `[${environment}] SDK initialized`);
     };
@@ -151,11 +157,12 @@ export function useOnramper({ environment, theme, generation }: UseOnramperOptio
       cancelled = true;
       created?.destroy();
     };
-  }, [environment, theme, generation, attempt, appendLog]);
+  }, [environment, theme, generation, attempt, runKey, appendLog]);
 
   return {
     client,
-    status,
+    // Same reasoning as `client`: a stale 'ready' would advertise the retired client.
+    status: client === null && status === 'ready' ? 'initializing' : status,
     initError,
     sdkState,
     transactionId,
