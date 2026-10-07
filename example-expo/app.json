@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "OnramperReactNativeExample",
+    "name": "OnramperExpoDemo",
     "slug": "onramper-react-native-example",
     "version": "1.0.0",
     "platforms": [
@@ -17,6 +17,7 @@
         "com.apple.developer.devicecheck.appattest-environment": "development"
       },
       "infoPlist": {
+        "CFBundleDisplayName": "Onramper Expo",
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": false,
           "NSAllowsLocalNetworking": true
