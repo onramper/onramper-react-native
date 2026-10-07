@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented in this file.
 
-## [Unreleased]
+## [1.2.2-1]
 
 Wrapper-only change; still bundles `OnramperSDK@1.2.2`.
 
