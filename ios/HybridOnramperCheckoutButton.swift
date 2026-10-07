@@ -56,9 +56,9 @@ final class HybridOnramperCheckoutButton: HybridOnramperCheckoutButtonSpec {
 
   @MainActor
   private func reportContentHeight(_ height: CGFloat) {
-    guard height > 0, abs(height - lastReportedHeight) > 0.5 else { return }
+    guard height > 0, abs(height - lastReportedHeight) > 0.5, let onContentHeightChange else { return }
     lastReportedHeight = height
-    onContentHeightChange?(Double(height))
+    onContentHeightChange(Double(height))
   }
 }
 
