@@ -100,6 +100,7 @@ export function BuyCryptoScreen({
     setActionError(null);
     try {
       await action(c);
+      onramper.clearOutcome();
       onramper.appendLog('info', `${label} OK`);
       checkout.refresh();
     } catch (e: unknown) {

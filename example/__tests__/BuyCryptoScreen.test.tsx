@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { Switch, TextInput } from 'react-native';
+import { Switch, Text, TextInput } from 'react-native';
 import ReactTestRenderer, { act } from 'react-test-renderer';
 import type { OnramperClient } from '@onramper/onramper-react-native';
 
@@ -39,6 +39,7 @@ function setup() {
     log: [],
     appendLog: jest.fn(),
     clearLog: jest.fn(),
+    clearOutcome: jest.fn(),
     retry: jest.fn(),
   } as unknown as OnramperHandle;
   return { client, onramper };
@@ -93,4 +94,30 @@ test('editing a prefill text field re-quotes only after the typing debounce', as
   });
   expect(client.getCheckoutRequirements.mock.calls.length).toBe(before + 1);
   expect(lastPrefill(client)).toEqual({ firstName: 'Grace', lastName: 'Lovelace' });
+});
+
+test('Reset clears the outcome after a successful action', async () => {
+  const { client, onramper } = setup();
+  const reset = jest.fn(() => Promise.resolve());
+  Object.assign(client, { reset });
+  const handle = { ...onramper, completedCheckoutId: 'co_1' } as OnramperHandle;
+  (handle.clearOutcome as jest.Mock).mockImplementation(() => {
+    rerender({ ...handle, completedCheckoutId: null } as OnramperHandle);
+  });
+  const r = await render(handle);
+  const rerender = (next: OnramperHandle) =>
+    r.update(
+      <ThemeContext.Provider value={PALETTES.dark}>
+        <BuyCryptoScreen onramper={next} environment="development" onOpenSettings={() => {}} />
+      </ThemeContext.Provider>,
+    );
+  const has = () => r.root.findAll(n => n.props.title === 'Transaction complete').length > 0;
+  expect(has()).toBe(true);
+
+  const resetButton = r.root.find(n => n.props.accessibilityRole === 'button' && n.findAllByType(Text).some(x => x.props.children === 'Reset'));
+  await act(async () => resetButton.props.onPress());
+
+  expect(reset).toHaveBeenCalled();
+  expect(handle.clearOutcome).toHaveBeenCalled();
+  expect(has()).toBe(false);
 });

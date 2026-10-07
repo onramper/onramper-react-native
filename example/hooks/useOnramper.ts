@@ -33,6 +33,8 @@ export interface OnramperHandle {
   log: LogEntry[];
   appendLog: (level: LogLevel, line: string) => void;
   clearLog: () => void;
+  /** Clears the last completed / failed checkout outcome (not the SDK-driven state). */
+  clearOutcome: () => void;
   retry: () => void;
 }
 
@@ -66,6 +68,10 @@ export function useOnramper({ environment, theme, generation }: UseOnramperOptio
     setLog(prev => [...prev.slice(-(MAX_LOG_ENTRIES - 1)), entry]);
   }, []);
   const clearLog = useCallback(() => setLog([]), []);
+  const clearOutcome = useCallback(() => {
+    setCompletedCheckoutId(null);
+    setLastFailure(null);
+  }, []);
   const retry = useCallback(() => setAttempt(a => a + 1), []);
 
   useEffect(() => {
@@ -116,6 +122,7 @@ export function useOnramper({ environment, theme, generation }: UseOnramperOptio
         appendLog('event', `completed ${e.checkoutId}`);
       });
       c.addEventListener('failed', e => {
+        setCompletedCheckoutId(null);
         setLastFailure(`${e.error.code} — ${e.error.message}`);
         appendLog('error', `failed ${e.error.code} — ${e.error.message}`);
       });
@@ -157,6 +164,7 @@ export function useOnramper({ environment, theme, generation }: UseOnramperOptio
     log,
     appendLog,
     clearLog,
+    clearOutcome,
     retry,
   };
 }

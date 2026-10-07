@@ -141,3 +141,34 @@ test('unmount destroys the client', async () => {
   });
   expect(clients[0].destroy).toHaveBeenCalled();
 });
+
+function fire(name: string, payload: unknown) {
+  const calls = clients[0].addEventListener.mock.calls as unknown as [string, (e: unknown) => void][];
+  for (const [n, fn] of calls) {
+    if (n === name) {
+      fn(payload);
+    }
+  }
+}
+
+test('a failed event after a completed event leaves no completed outcome', async () => {
+  await render(DEV);
+  await act(async () => fire('completed', { checkoutId: 'co_1' }));
+  expect(latest.completedCheckoutId).toBe('co_1');
+  await act(async () => fire('failed', { error: { code: 'payment_failed', message: 'nope' } }));
+  expect(latest.completedCheckoutId).toBeNull();
+  expect(latest.lastFailure).toBe('payment_failed — nope');
+});
+
+test('clearOutcome nulls the completed checkout and the last failure', async () => {
+  await render(DEV);
+  await act(async () => fire('completed', { checkoutId: 'co_1' }));
+  await act(async () => fire('failed', { error: { code: 'x', message: 'y' } }));
+  await act(async () => fire('completed', { checkoutId: 'co_2' }));
+  expect(latest.completedCheckoutId).toBe('co_2');
+  await act(async () => fire('failed', { error: { code: 'x', message: 'y' } }));
+  await act(async () => fire('completed', { checkoutId: 'co_3' }));
+  await act(async () => latest.clearOutcome());
+  expect(latest.completedCheckoutId).toBeNull();
+  expect(latest.lastFailure).toBeNull();
+});
