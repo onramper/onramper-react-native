@@ -1,4 +1,5 @@
 import { isValidElement } from 'react';
+import { CheckoutButton } from '../src/CheckoutButton';
 import { OnramperClient } from '../src/OnramperClient';
 import type { CheckoutEvent } from '../src/events';
 import type { CheckoutRequest } from '../src/types';
@@ -171,6 +172,8 @@ describe('OnramperClient', () => {
     expect(result.quote).toEqual(quote);
     // A native checkout button element is returned for rendering.
     expect(isValidElement(result.button)).toBe(true);
+    expect(result.button.type).toBe(CheckoutButton);
+    expect((result.button.props as { intentHandle: string }).intentHandle).toBe('intent-1');
   });
 
   it('getCheckoutRequirements defaults buttonStyle to {} when omitted', async () => {

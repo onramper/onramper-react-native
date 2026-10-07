@@ -15,6 +15,14 @@
 
 namespace margelo::nitro::onramper::bridge::swift {
 
+  // pragma MARK: std::function<void(double /* height */)>
+  Func_void_double create_Func_void_double(void* NON_NULL swiftClosureWrapper) noexcept {
+    auto swiftClosure = OnramperReactNative::Func_void_double::fromUnsafe(swiftClosureWrapper);
+    return [swiftClosure = std::move(swiftClosure)](double height) mutable -> void {
+      swiftClosure.call(height);
+    };
+  }
+  
   // pragma MARK: std::shared_ptr<HybridOnramperCheckoutButtonSpec>
   std::shared_ptr<HybridOnramperCheckoutButtonSpec> create_std__shared_ptr_HybridOnramperCheckoutButtonSpec_(void* NON_NULL swiftUnsafePointer) noexcept {
     OnramperReactNative::HybridOnramperCheckoutButtonSpec_cxx swiftPart = OnramperReactNative::HybridOnramperCheckoutButtonSpec_cxx::fromUnsafe(swiftUnsafePointer);

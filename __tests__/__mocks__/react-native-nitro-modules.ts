@@ -65,3 +65,6 @@ export function __lastNative(): MockNative {
 // View host factory. Tests don't render the native button, so a dummy component
 // that ignores its props is sufficient.
 export const getHostComponent = jest.fn(() => () => null);
+
+// Mirrors nitro's `callback()` for view function props: wraps functions as `{ f }`.
+export const callback = (func: unknown) => (typeof func === 'function' ? { f: func } : func);

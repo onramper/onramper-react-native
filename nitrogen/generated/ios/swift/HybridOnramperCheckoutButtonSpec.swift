@@ -11,6 +11,7 @@ import NitroModules
 public protocol HybridOnramperCheckoutButtonSpec_protocol: HybridObject, HybridView {
   // Properties
   var intentHandle: String { get set }
+  var onContentHeightChange: ((_ height: Double) -> Void)? { get set }
 
   // Methods
   

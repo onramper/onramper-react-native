@@ -1,6 +1,6 @@
 import { type ReactElement, createElement } from 'react';
 
-import { OnramperCheckoutButtonView } from './OnramperCheckoutButtonView';
+import { CheckoutButton } from './CheckoutButton';
 import { createOnramperNative } from './OnramperNative';
 import { OnramperError } from './errors';
 import type { CheckoutEvent, EventName, EventPayload } from './events';
@@ -171,10 +171,7 @@ export class OnramperClient {
         JSON.stringify(buttonStyle),
       );
       const quote = JSON.parse(result.quoteJson) as QuoteResponse;
-      const button = createElement(OnramperCheckoutButtonView, {
-        intentHandle: result.intentHandle,
-        style: { width: '100%', minHeight: 56 },
-      });
+      const button = createElement(CheckoutButton, { intentHandle: result.intentHandle });
       return { button, quote };
     } catch (e: unknown) {
       throw OnramperError.from(e);

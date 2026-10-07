@@ -17,10 +17,10 @@
 #include <react/renderer/components/view/ViewProps.h>
 
 #include <string>
-#include <memory>
-#include "HybridOnramperCheckoutButtonSpec.hpp"
 #include <functional>
 #include <optional>
+#include <memory>
+#include "HybridOnramperCheckoutButtonSpec.hpp"
 
 namespace margelo::nitro::onramper::views {
 
@@ -43,6 +43,7 @@ namespace margelo::nitro::onramper::views {
 
   public:
     CachedProp<std::string> intentHandle;
+    CachedProp<std::optional<std::function<void(double /* height */)>>> onContentHeightChange;
     CachedProp<std::optional<std::function<void(const std::shared_ptr<HybridOnramperCheckoutButtonSpec>& /* ref */)>>> hybridRef;
 
   private:

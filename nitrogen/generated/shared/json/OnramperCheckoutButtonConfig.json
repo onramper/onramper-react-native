@@ -5,6 +5,7 @@
   "directEventTypes": {},
   "validAttributes": {
     "intentHandle": true,
+    "onContentHeightChange": true,
     "hybridRef": true
   }
 }

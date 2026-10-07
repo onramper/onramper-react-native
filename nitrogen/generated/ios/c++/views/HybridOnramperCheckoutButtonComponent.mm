@@ -84,6 +84,11 @@ using namespace margelo::nitro::onramper::views;
     swiftPart.setIntentHandle(newViewProps.intentHandle.value);
     newViewProps.intentHandle.isDirty = false;
   }
+  // onContentHeightChange: optional
+  if (newViewProps.onContentHeightChange.isDirty) {
+    swiftPart.setOnContentHeightChange(newViewProps.onContentHeightChange.value);
+    newViewProps.onContentHeightChange.isDirty = false;
+  }
 
   swiftPart.afterUpdate();
 

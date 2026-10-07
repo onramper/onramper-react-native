@@ -36,6 +36,16 @@ namespace margelo::nitro::onramper::views {
         throw std::runtime_error(std::string("OnramperCheckoutButton.intentHandle: ") + exc.what());
       }
     }()),
+    onContentHeightChange([&]() -> CachedProp<std::optional<std::function<void(double /* height */)>>> {
+      try {
+        const react::RawValue* rawValue = rawProps.at("onContentHeightChange", nullptr, nullptr);
+        if (rawValue == nullptr) return sourceProps.onContentHeightChange;
+        const auto& [runtime, value] = (std::pair<jsi::Runtime*, jsi::Value>)*rawValue;
+        return CachedProp<std::optional<std::function<void(double /* height */)>>>::fromRawValue(*runtime, value.asObject(*runtime).getProperty(*runtime, PropNameIDCache::get(*runtime, "f")), sourceProps.onContentHeightChange);
+      } catch (const std::exception& exc) {
+        throw std::runtime_error(std::string("OnramperCheckoutButton.onContentHeightChange: ") + exc.what());
+      }
+    }()),
     hybridRef([&]() -> CachedProp<std::optional<std::function<void(const std::shared_ptr<HybridOnramperCheckoutButtonSpec>& /* ref */)>>> {
       try {
         const react::RawValue* rawValue = rawProps.at("hybridRef", nullptr, nullptr);
@@ -50,6 +60,7 @@ namespace margelo::nitro::onramper::views {
   bool HybridOnramperCheckoutButtonProps::filterObjectKeys(const std::string& propName) {
     switch (hashString(propName)) {
       case hashString("intentHandle"): return true;
+      case hashString("onContentHeightChange"): return true;
       case hashString("hybridRef"): return true;
       default: return false;
     }
