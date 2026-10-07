@@ -1,5 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Card } from '../components/Card';
 import { EventLog } from '../components/EventLog';
@@ -11,7 +18,11 @@ import { Segmented } from '../components/Segmented';
 import { StatusBox } from '../components/StatusBox';
 import { SwitchRow } from '../components/SwitchRow';
 import { Tile, TileRow } from '../components/Tile';
-import { DEFAULT_PREFILL, buildPrefill, type PrefillForm } from '../checkout/prefill';
+import {
+  DEFAULT_PREFILL,
+  buildPrefill,
+  type PrefillForm,
+} from '../checkout/prefill';
 import {
   DEFAULT_BUY_FORM,
   buildCheckoutRequest,
@@ -37,10 +48,23 @@ import { TYPING_DEBOUNCE_MS, useDebouncedField } from '../hooks/useDebounce';
 import type { OnramperHandle } from '../hooks/useOnramper';
 import { RADIUS, useTheme, withAlpha } from '../theme';
 import { describeError } from '../utils/format';
+import { Dropdown } from '../components/Dropdown';
 
 const FIAT_OPTIONS = FIATS.map(f => ({ value: f, label: f.toUpperCase() }));
-const COUNTRY_OPTIONS = COUNTRIES.map(c => ({ value: c.id, label: `${c.flag} ${c.label}` }));
-const STATE_OPTIONS = US_STATES.map(s => ({ value: s.code, label: `${s.name} (${s.code})` }));
+// ONRAMPS uses `null` for "no filter"; the dropdown needs a string value.
+const ANY_ONRAMP = 'any';
+const ONRAMP_OPTIONS = ONRAMPS.map(o => ({
+  value: o.value ?? ANY_ONRAMP,
+  label: o.label,
+}));
+const COUNTRY_OPTIONS = COUNTRIES.map(c => ({
+  value: c.id,
+  label: `${c.flag} ${c.label}`,
+}));
+const STATE_OPTIONS = US_STATES.map(s => ({
+  value: s.code,
+  label: `${s.name} (${s.code})`,
+}));
 
 export function BuyCryptoScreen({
   onramper,
@@ -58,17 +82,28 @@ export function BuyCryptoScreen({
   const [stateSheetOpen, setStateSheetOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const [amountDraft, setAmountDraft] = useDebouncedField(form.amount, v => setForm(f => ({ ...f, amount: v })));
-  const [walletDraft, setWalletDraft] = useDebouncedField(form.wallet, v => setForm(f => ({ ...f, wallet: v })));
+  const [amountDraft, setAmountDraft] = useDebouncedField(form.amount, v =>
+    setForm(f => ({ ...f, amount: v })),
+  );
+  const [walletDraft, setWalletDraft] = useDebouncedField(form.wallet, v =>
+    setForm(f => ({ ...f, wallet: v })),
+  );
   // Text edits settle after the typing debounce; the two switches settle immediately.
-  const [settledPrefill, setSettledPrefill] = useState<PrefillForm>(prefillForm);
+  const [settledPrefill, setSettledPrefill] =
+    useState<PrefillForm>(prefillForm);
   useEffect(() => {
-    const id = setTimeout(() => setSettledPrefill(prefillForm), TYPING_DEBOUNCE_MS);
+    const id = setTimeout(
+      () => setSettledPrefill(prefillForm),
+      TYPING_DEBOUNCE_MS,
+    );
     return () => clearTimeout(id);
   }, [prefillForm]);
   const changePrefill = (next: PrefillForm) => {
     setPrefillForm(next);
-    if (next.enabled !== prefillForm.enabled || next.sendEmail !== prefillForm.sendEmail) {
+    if (
+      next.enabled !== prefillForm.enabled ||
+      next.sendEmail !== prefillForm.sendEmail
+    ) {
       setSettledPrefill(next);
     }
   };
@@ -76,7 +111,11 @@ export function BuyCryptoScreen({
   const request = useMemo(() => buildCheckoutRequest(form), [form]);
   const prefill = useMemo(() => buildPrefill(settledPrefill), [settledPrefill]);
   const buttonStyle = useMemo(
-    () => ({ backgroundColor: t.accent, foregroundColor: t.onAccent, borderRadius: RADIUS.button }),
+    () => ({
+      backgroundColor: t.accent,
+      foregroundColor: t.onAccent,
+      borderRadius: RADIUS.button,
+    }),
     [t],
   );
   const checkout = useCheckout({
@@ -89,10 +128,16 @@ export function BuyCryptoScreen({
 
   const crypto = findCrypto(form.cryptoId);
   const amountHint =
-    parseAmount(amountDraft) === null ? 'Enter an amount greater than 0' : checkout.amountHint ?? undefined;
-  const update = (patch: Partial<BuyForm>) => setForm(f => ({ ...f, ...patch }));
+    parseAmount(amountDraft) === null
+      ? 'Enter an amount greater than 0'
+      : checkout.amountHint ?? undefined;
+  const update = (patch: Partial<BuyForm>) =>
+    setForm(f => ({ ...f, ...patch }));
 
-  const runAction = async (label: string, action: (c: NonNullable<OnramperHandle['client']>) => Promise<void>) => {
+  const runAction = async (
+    label: string,
+    action: (c: NonNullable<OnramperHandle['client']>) => Promise<void>,
+  ) => {
     const c = onramper.client;
     if (!c) {
       return;
@@ -110,11 +155,22 @@ export function BuyCryptoScreen({
     }
   };
 
-  const completed = onramper.sdkState === 'completed' || onramper.completedCheckoutId !== null;
+  const completed =
+    onramper.sdkState === 'completed' || onramper.completedCheckoutId !== null;
   const errorBox = onramper.initError
-    ? { title: 'SDK initialization failed', body: onramper.initError, actionLabel: 'Retry', onAction: onramper.retry }
+    ? {
+        title: 'SDK initialization failed',
+        body: onramper.initError,
+        actionLabel: 'Retry',
+        onAction: onramper.retry,
+      }
     : checkout.error
-    ? { title: 'Quote failed', body: checkout.error, actionLabel: 'Retry', onAction: checkout.refresh }
+    ? {
+        title: 'Quote failed',
+        body: checkout.error,
+        actionLabel: 'Retry',
+        onAction: checkout.refresh,
+      }
     : actionError
     ? { title: 'Action failed', body: actionError }
     : onramper.lastFailure
@@ -123,22 +179,43 @@ export function BuyCryptoScreen({
 
   return (
     <View style={[styles.screen, { backgroundColor: t.contentBg }]}>
-      <View style={[styles.header, { backgroundColor: t.headerBg, paddingTop: insets.top + 8 }]}>
+      <View
+        style={[
+          styles.header,
+          { backgroundColor: t.headerBg, paddingTop: insets.top + 8 },
+        ]}
+      >
         <Text style={[styles.title, { color: t.text }]}>Buy Crypto</Text>
         <View style={styles.headerRight}>
-          {onramper.status === 'initializing' ? <ActivityIndicator color={t.accent} /> : null}
-          <Text style={[styles.envBadge, { color: t.onAccent, backgroundColor: t.accent }]}>
+          {onramper.status === 'initializing' ? (
+            <ActivityIndicator color={t.accent} />
+          ) : null}
+          <Text
+            style={[
+              styles.envBadge,
+              { color: t.onAccent, backgroundColor: t.accent },
+            ]}
+          >
             {environmentLabel(environment)}
           </Text>
-          <Pressable accessibilityRole="button" accessibilityLabel="Settings" onPress={onOpenSettings} hitSlop={12}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Settings"
+            onPress={onOpenSettings}
+            hitSlop={12}
+          >
             <Text style={[styles.gear, { color: t.text }]}>⚙︎</Text>
           </Pressable>
         </View>
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}
-        keyboardShouldPersistTaps="handled">
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: insets.bottom + 32 },
+        ]}
+        keyboardShouldPersistTaps="handled"
+      >
         <Card>
           <SwitchRow
             label="Override country and state"
@@ -154,7 +231,10 @@ export function BuyCryptoScreen({
           ) : null}
           {form.countryOverride && form.country === 'us' ? (
             <Tile
-              label={US_STATES.find(s => s.code === form.usState)?.name ?? form.usState}
+              label={
+                US_STATES.find(s => s.code === form.usState)?.name ??
+                form.usState
+              }
               sublabel="US state — tap to change"
               selected={false}
               onPress={() => setStateSheetOpen(true)}
@@ -171,26 +251,44 @@ export function BuyCryptoScreen({
                 sublabel={c.name}
                 selected={c.id === form.cryptoId}
                 onPress={() => setForm(f => selectCrypto(f, c.id))}
-                leading={<View style={[styles.coin, { backgroundColor: c.color }]} />}
+                leading={
+                  <View style={[styles.coin, { backgroundColor: c.color }]} />
+                }
               />
             ))}
           </TileRow>
         </Card>
 
         <Card title={`Wallet address (${crypto.network})`}>
-          <Field mono value={walletDraft} onChangeText={setWalletDraft} placeholder="Wallet address" />
+          <Field
+            mono
+            value={walletDraft}
+            onChangeText={setWalletDraft}
+            placeholder="Wallet address"
+          />
         </Card>
 
         <Card title="Amount">
           <View style={styles.amountRow}>
             <View style={styles.amountInput}>
-              <Field mono value={amountDraft} onChangeText={setAmountDraft} keyboardType="decimal-pad" />
+              <Field
+                mono
+                value={amountDraft}
+                onChangeText={setAmountDraft}
+                keyboardType="decimal-pad"
+              />
             </View>
             <View style={styles.fiatPicker}>
-              <Segmented options={FIAT_OPTIONS} value={form.fiat} onChange={(f: Fiat) => update({ fiat: f })} />
+              <Segmented
+                options={FIAT_OPTIONS}
+                value={form.fiat}
+                onChange={(f: Fiat) => update({ fiat: f })}
+              />
             </View>
           </View>
-          {amountHint ? <Text style={{ color: t.danger }}>{amountHint}</Text> : null}
+          {amountHint ? (
+            <Text style={{ color: t.danger }}>{amountHint}</Text>
+          ) : null}
         </Card>
 
         <Card title="Payment method">
@@ -207,32 +305,42 @@ export function BuyCryptoScreen({
         </Card>
 
         <Card title="Onramp">
-          <TileRow>
-            {ONRAMPS.map(o => (
-              <Tile
-                key={o.label}
-                label={o.label}
-                selected={o.value === form.onramp}
-                onPress={() => update({ onramp: o.value })}
-              />
-            ))}
-          </TileRow>
+          <Dropdown
+            label="Onramp"
+            options={ONRAMP_OPTIONS}
+            value={form.onramp ?? ANY_ONRAMP}
+            onChange={v => update({ onramp: v === ANY_ONRAMP ? null : v })}
+          />
         </Card>
 
         <PrefillCard value={prefillForm} onChange={changePrefill} />
 
         {checkout.result && request ? (
           <>
-            <QuoteCard quote={checkout.result.quote} amount={request.amount} fiat={form.fiat} cryptoSymbol={crypto.symbol} />
+            <QuoteCard
+              quote={checkout.result.quote}
+              amount={request.amount}
+              fiat={form.fiat}
+              cryptoSymbol={crypto.symbol}
+            />
             {checkout.result.button}
           </>
-        ) : checkout.loading || (request && onramper.status === 'initializing') ? (
+        ) : checkout.loading ||
+          (request && onramper.status === 'initializing') ? (
           <View style={styles.placeholder}>
             <ActivityIndicator color={t.accent} />
           </View>
         ) : (
-          <View style={[styles.placeholder, styles.disabledBuy, { backgroundColor: t.border }]}>
-            <Text style={[styles.disabledBuyLabel, { color: t.textSecondary }]}>Buy</Text>
+          <View
+            style={[
+              styles.placeholder,
+              styles.disabledBuy,
+              { backgroundColor: t.border },
+            ]}
+          >
+            <Text style={[styles.disabledBuyLabel, { color: t.textSecondary }]}>
+              Buy
+            </Text>
           </View>
         )}
 
@@ -241,31 +349,51 @@ export function BuyCryptoScreen({
             accessibilityRole="button"
             disabled={!onramper.client}
             onPress={() => runAction('reset', c => c.reset())}
-            style={[styles.action, { backgroundColor: withAlpha(t.danger, 0.15) }]}>
+            style={[
+              styles.action,
+              { backgroundColor: withAlpha(t.danger, 0.15) },
+            ]}
+          >
             <Text style={[styles.actionLabel, { color: t.danger }]}>Reset</Text>
           </Pressable>
           <Pressable
             accessibilityRole="button"
             disabled={!onramper.client}
             onPress={() => runAction('sign out', c => c.signOut())}
-            style={[styles.action, { backgroundColor: withAlpha(t.warning, 0.15) }]}>
-            <Text style={[styles.actionLabel, { color: t.warning }]}>Log out</Text>
+            style={[
+              styles.action,
+              { backgroundColor: withAlpha(t.warning, 0.15) },
+            ]}
+          >
+            <Text style={[styles.actionLabel, { color: t.warning }]}>
+              Log out
+            </Text>
           </Pressable>
         </View>
 
         <Text style={[styles.status, { color: t.textSecondary }]}>
-          SDK: {onramper.status === 'ready' ? onramper.sdkState : onramper.status}
+          SDK:{' '}
+          {onramper.status === 'ready' ? onramper.sdkState : onramper.status}
         </Text>
         {completed ? (
           <StatusBox
             tone="success"
             title="Transaction complete"
-            body={onramper.transactionId ?? onramper.completedCheckoutId ?? undefined}
+            body={
+              onramper.transactionId ??
+              onramper.completedCheckoutId ??
+              undefined
+            }
             selectableBody
           />
         ) : null}
         {!completed && onramper.transactionId ? (
-          <StatusBox tone="success" title="Onramper transaction ID" body={onramper.transactionId} selectableBody />
+          <StatusBox
+            tone="success"
+            title="Onramper transaction ID"
+            body={onramper.transactionId}
+            selectableBody
+          />
         ) : null}
         {errorBox ? <StatusBox tone="error" {...errorBox} /> : null}
 
@@ -313,7 +441,12 @@ const styles = StyleSheet.create({
   disabledBuy: { borderRadius: RADIUS.button },
   disabledBuyLabel: { fontSize: 17, fontWeight: '600' },
   actions: { flexDirection: 'row', gap: 8 },
-  action: { flex: 1, borderRadius: RADIUS.button, paddingVertical: 12, alignItems: 'center' },
+  action: {
+    flex: 1,
+    borderRadius: RADIUS.button,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
   actionLabel: { fontSize: 15, fontWeight: '600' },
   status: { fontSize: 12, fontFamily: 'Menlo' },
 });

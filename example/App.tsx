@@ -8,7 +8,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { StatusBar } from 'react-native';
+import { Appearance, StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DEFAULT_ENVIRONMENT, type AppEnvironment } from './config/environments';
 import { useOnramper } from './hooks/useOnramper';
@@ -25,6 +25,13 @@ function App() {
   const [switching, setSwitching] = useState(false);
   const palette = PALETTES[isDark ? 'dark' : 'light'];
   const onramper = useOnramper({ environment, theme: palette.name, generation });
+
+  // Native views follow the iOS appearance, not this in-app toggle: without
+  // this, SwiftUI content such as the SDK button's ToS text (`.secondary`)
+  // renders light-on-white when the phone is in dark mode and the app isn't.
+  useEffect(() => {
+    Appearance.setColorScheme(palette.name);
+  }, [palette.name]);
 
   // A switch finishes when the new environment's init settles (ready or error).
   useEffect(() => {

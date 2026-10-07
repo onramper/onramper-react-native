@@ -1,6 +1,7 @@
 import React from 'react';
 import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../theme';
+import { SheetHeader } from './SheetHeader';
 
 export function OptionSheet({
   visible,
@@ -21,12 +22,7 @@ export function OptionSheet({
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <View style={[styles.sheet, { backgroundColor: t.contentBg }]}>
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: t.text }]}>{title}</Text>
-          <Pressable accessibilityRole="button" onPress={onClose} hitSlop={12}>
-            <Text style={[styles.done, { color: t.accent }]}>Done</Text>
-          </Pressable>
-        </View>
+        <SheetHeader title={title} onClose={onClose} />
         <FlatList
           data={options}
           keyExtractor={item => item.value}
@@ -51,9 +47,6 @@ export function OptionSheet({
 
 const styles = StyleSheet.create({
   sheet: { flex: 1 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16 },
-  title: { fontSize: 17, fontWeight: '600' },
-  done: { fontSize: 17, fontWeight: '600' },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',

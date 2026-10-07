@@ -15,7 +15,7 @@ export interface PrefillForm {
 }
 
 export const DEFAULT_PREFILL: PrefillForm = {
-  enabled: true,
+  enabled: false,
   firstName: 'Ada',
   lastName: 'Lovelace',
   phoneNumber: '',

@@ -1,8 +1,14 @@
 import { DEFAULT_PREFILL, buildPrefill, prefillSummary } from '../checkout/prefill';
 
+const ENABLED = { ...DEFAULT_PREFILL, enabled: true };
+
 describe('buildPrefill', () => {
+  it('is off by default', () => {
+    expect(buildPrefill(DEFAULT_PREFILL)).toEqual({});
+  });
+
   it('sends only non-blank fields, trimmed', () => {
-    expect(buildPrefill({ ...DEFAULT_PREFILL, firstName: ' Ada ', phoneNumber: '  ' })).toEqual({
+    expect(buildPrefill({ ...ENABLED, firstName: ' Ada ', phoneNumber: '  ' })).toEqual({
       firstName: 'Ada',
       lastName: 'Lovelace',
     });
@@ -13,8 +19,8 @@ describe('buildPrefill', () => {
   });
 
   it('sends email only when "Send email" is on', () => {
-    expect(buildPrefill({ ...DEFAULT_PREFILL, email: 'a@b.co' })).not.toHaveProperty('email');
-    expect(buildPrefill({ ...DEFAULT_PREFILL, email: 'a@b.co', sendEmail: true }).email).toBe('a@b.co');
+    expect(buildPrefill({ ...ENABLED, email: 'a@b.co' })).not.toHaveProperty('email');
+    expect(buildPrefill({ ...ENABLED, email: 'a@b.co', sendEmail: true }).email).toBe('a@b.co');
   });
 });
 

@@ -9,6 +9,7 @@ import { BUNDLED_SDK_VERSION, LIBRARY_VERSION } from '../config/versions';
 import type { LogEntry } from '../hooks/useOnramper';
 import { RADIUS, useTheme, withAlpha } from '../theme';
 import { describeError } from '../utils/format';
+import { SheetHeader } from '../components/SheetHeader';
 
 export interface SettingsSheetProps {
   visible: boolean;
@@ -47,12 +48,7 @@ export function SettingsSheet(props: SettingsSheetProps) {
   return (
     <Modal visible={props.visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={props.onClose}>
       <View style={[styles.sheet, { backgroundColor: t.contentBg }]}>
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: t.text }]}>Settings</Text>
-          <Pressable accessibilityRole="button" accessibilityLabel="Done" onPress={props.onClose} hitSlop={12}>
-            <Text style={[styles.done, { color: t.accent }]}>Done</Text>
-          </Pressable>
-        </View>
+        <SheetHeader title="Settings" onClose={props.onClose} />
         <ScrollView contentContainerStyle={styles.content}>
           <Card
             title="Environment"
@@ -115,9 +111,6 @@ export function SettingsSheet(props: SettingsSheetProps) {
 
 const styles = StyleSheet.create({
   sheet: { flex: 1 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16 },
-  title: { fontSize: 17, fontWeight: '600' },
-  done: { fontSize: 17, fontWeight: '600' },
   content: { padding: 16, gap: 16, paddingBottom: 48 },
   inline: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   destructive: { borderRadius: RADIUS.button, paddingVertical: 14, alignItems: 'center' },

@@ -30,18 +30,18 @@ test('QuoteCard formats amounts like the iOS demo', () => {
   expect(out).toContain('MOONPAY');
 });
 
-test('PrefillCard shows the field-name summary and toggles enabled', () => {
+test('PrefillCard is off by default and can be turned on', () => {
   const onChange = jest.fn();
   let r!: ReactTestRenderer.ReactTestRenderer;
   act(() => {
     r = ReactTestRenderer.create(<PrefillCard value={DEFAULT_PREFILL} onChange={onChange} />);
   });
-  expect(text(r)).toContain('Sends: firstName, lastName');
+  expect(text(r)).toContain('Sends: nothing');
   const header = r.root.findByProps({ accessibilityLabel: 'Prefill' });
   act(() => header.props.onPress());
   const enable = r.root.findByProps({ accessibilityLabel: 'Send prefill' });
-  act(() => enable.props.onValueChange(false));
-  expect(onChange).toHaveBeenCalledWith({ ...DEFAULT_PREFILL, enabled: false });
+  act(() => enable.props.onValueChange(true));
+  expect(onChange).toHaveBeenCalledWith({ ...DEFAULT_PREFILL, enabled: true });
 });
 
 test('EventLog lists entries once expanded', () => {
