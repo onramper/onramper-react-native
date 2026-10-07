@@ -56,7 +56,7 @@ return (
 );
 ```
 
-The button renders natively and presents login + payment sheets internally. ToS is rendered inside the button view.
+The button renders natively and presents login + payment sheets internally. ToS is rendered inside the button view, and the button sizes its own height to fit it — don't give its container a fixed height.
 
 Already know the user? Pass a third `prefill` argument (`email`, `firstName`, `lastName`, `phoneNumber` — all optional) to have the OnramperID screens arrive pre-populated. It's best-effort and never blocks sign-in. See [prefilling known user values](docs/GETTING_STARTED.md#prefilling-known-user-values) — note the caveat on `email` before supplying it.
 

@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented in this file.
 
+## [Unreleased]
+
+Wrapper-only change; still bundles `OnramperSDK@1.2.2`.
+
+### Fixed
+
+- The native checkout button no longer draws over neighbouring views. It reports its content height
+  (for example when ToS text appears under the Buy button) and sizes itself to match, and clips any
+  overflow as a backstop.
+
+### Changed
+
+- No public React Native API changes. Containers around `button` no longer need a `minHeight`.
+- The bare example app is now a demo app: environment switching, automatic SDK initialization,
+  currency / payment / country selection, and a settings sheet.
+
 ## [1.2.2]
 
 Bundles `OnramperSDK@1.2.2`.
