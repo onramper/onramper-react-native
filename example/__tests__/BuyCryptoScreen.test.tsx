@@ -178,3 +178,12 @@ test('the onramp dropdown filters quotes by provider', async () => {
     0,
   );
 });
+
+test('the amount input is named for VoiceOver with the selected fiat', async () => {
+  const { onramper } = setup();
+  const r = await render(onramper);
+  const labels = r.root
+    .findAllByType(TextInput)
+    .map(i => i.props.accessibilityLabel);
+  expect(labels).toContain('Amount in USD');
+});

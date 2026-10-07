@@ -11,6 +11,9 @@ export function Field({ label, mono, style, ...input }: TextInputProps & { label
         placeholderTextColor={t.textSecondary}
         autoCapitalize="none"
         autoCorrect={false}
+        // The visible label is a sibling Text, so name the input itself for
+        // VoiceOver; callers can still override it.
+        accessibilityLabel={label}
         {...input}
         style={[
           styles.input,

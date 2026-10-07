@@ -30,6 +30,7 @@ export function OptionSheet({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={item.label}
+              accessibilityState={{ selected: item.value === selected }}
               onPress={() => {
                 onSelect(item.value);
                 onClose();

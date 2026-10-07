@@ -273,6 +273,7 @@ export function BuyCryptoScreen({
             <View style={styles.amountInput}>
               <Field
                 mono
+                accessibilityLabel={`Amount in ${form.fiat.toUpperCase()}`}
                 value={amountDraft}
                 onChangeText={setAmountDraft}
                 keyboardType="decimal-pad"

@@ -5,6 +5,9 @@ import { PrefillCard } from '../components/PrefillCard';
 import { EventLog } from '../components/EventLog';
 import { Segmented } from '../components/Segmented';
 import { DEFAULT_PREFILL } from '../checkout/prefill';
+import { TextInput } from 'react-native';
+import { Field } from '../components/Field';
+import { OptionSheet } from '../components/OptionSheet';
 
 function text(renderer: ReactTestRenderer.ReactTestRenderer): string {
   return JSON.stringify(renderer.toJSON());
@@ -15,7 +18,15 @@ test('QuoteCard formats amounts like the iOS demo', () => {
   act(() => {
     r = ReactTestRenderer.create(
       <QuoteCard
-        quote={{ quoteId: 'q', ramp: 'moonpay', rate: 152.3456, payout: 0.6543219, paymentMethod: 'applepay', networkFee: 0.012, transactionFee: 3.5 }}
+        quote={{
+          quoteId: 'q',
+          ramp: 'moonpay',
+          rate: 152.3456,
+          payout: 0.6543219,
+          paymentMethod: 'applepay',
+          networkFee: 0.012,
+          transactionFee: 3.5,
+        }}
         amount={100}
         fiat="usd"
         cryptoSymbol="SOL"
@@ -73,4 +84,40 @@ test('Segmented reports the tapped value', () => {
   });
   act(() => r.root.findByProps({ accessibilityLabel: 'EUR' }).props.onPress());
   expect(onChange).toHaveBeenCalledWith('eur');
+});
+
+test('Field names its input with the visible label, overridable by callers', () => {
+  let r!: ReactTestRenderer.ReactTestRenderer;
+  act(() => {
+    r = ReactTestRenderer.create(
+      <>
+        <Field label="First name" value="" />
+        <Field label="Email" accessibilityLabel="Account email" value="" />
+      </>,
+    );
+  });
+  const labels = r.root.findAllByType(TextInput).map(i => i.props.accessibilityLabel);
+  expect(labels).toEqual(['First name', 'Account email']);
+});
+
+test('OptionSheet exposes the selected option to VoiceOver', () => {
+  let r!: ReactTestRenderer.ReactTestRenderer;
+  act(() => {
+    r = ReactTestRenderer.create(
+      <OptionSheet
+        visible
+        title="US state"
+        options={[
+          { value: 'CA', label: 'California' },
+          { value: 'NY', label: 'New York' },
+        ]}
+        selected="NY"
+        onSelect={() => {}}
+        onClose={() => {}}
+      />,
+    );
+  });
+  const state = (label: string) => r.root.findByProps({ accessibilityLabel: label }).props.accessibilityState;
+  expect(state('New York')).toEqual({ selected: true });
+  expect(state('California')).toEqual({ selected: false });
 });
