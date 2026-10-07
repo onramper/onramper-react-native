@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Card } from '../components/Card';
@@ -33,7 +33,7 @@ import {
 } from '../config/catalog';
 import { environmentLabel, type AppEnvironment } from '../config/environments';
 import { useCheckout } from '../hooks/useCheckout';
-import { TYPING_DEBOUNCE_MS, useDebouncedField, useDebouncedValue } from '../hooks/useDebounce';
+import { TYPING_DEBOUNCE_MS, useDebouncedField } from '../hooks/useDebounce';
 import type { OnramperHandle } from '../hooks/useOnramper';
 import { RADIUS, useTheme, withAlpha } from '../theme';
 import { describeError } from '../utils/format';
@@ -60,10 +60,21 @@ export function BuyCryptoScreen({
 
   const [amountDraft, setAmountDraft] = useDebouncedField(form.amount, v => setForm(f => ({ ...f, amount: v })));
   const [walletDraft, setWalletDraft] = useDebouncedField(form.wallet, v => setForm(f => ({ ...f, wallet: v })));
-  const debouncedPrefill = useDebouncedValue(prefillForm, TYPING_DEBOUNCE_MS);
+  // Text edits settle after the typing debounce; the two switches settle immediately.
+  const [settledPrefill, setSettledPrefill] = useState<PrefillForm>(prefillForm);
+  useEffect(() => {
+    const id = setTimeout(() => setSettledPrefill(prefillForm), TYPING_DEBOUNCE_MS);
+    return () => clearTimeout(id);
+  }, [prefillForm]);
+  const changePrefill = (next: PrefillForm) => {
+    setPrefillForm(next);
+    if (next.enabled !== prefillForm.enabled || next.sendEmail !== prefillForm.sendEmail) {
+      setSettledPrefill(next);
+    }
+  };
 
   const request = useMemo(() => buildCheckoutRequest(form), [form]);
-  const prefill = useMemo(() => buildPrefill(debouncedPrefill), [debouncedPrefill]);
+  const prefill = useMemo(() => buildPrefill(settledPrefill), [settledPrefill]);
   const buttonStyle = useMemo(
     () => ({ backgroundColor: t.accent, foregroundColor: t.onAccent, borderRadius: RADIUS.button }),
     [t],
@@ -207,7 +218,7 @@ export function BuyCryptoScreen({
           </TileRow>
         </Card>
 
-        <PrefillCard value={prefillForm} onChange={setPrefillForm} />
+        <PrefillCard value={prefillForm} onChange={changePrefill} />
 
         {checkout.result && request ? (
           <>
