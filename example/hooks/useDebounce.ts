@@ -3,15 +3,6 @@ import { useEffect, useRef, useState } from 'react';
 /** Typing pause before a text field re-quotes. Taps act immediately. */
 export const TYPING_DEBOUNCE_MS = 400;
 
-export function useDebouncedValue<T>(value: T, delayMs: number = TYPING_DEBOUNCE_MS): T {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const timer = setTimeout(() => setDebounced(value), delayMs);
-    return () => clearTimeout(timer);
-  }, [value, delayMs]);
-  return debounced;
-}
-
 /**
  * A text input's draft that commits `delayMs` after typing stops. When the
  * committed value changes from elsewhere (e.g. picking a currency resets the

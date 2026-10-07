@@ -38,7 +38,11 @@ export interface CheckoutHandle {
  * older input — or for a client that has since been replaced — is dropped.
  */
 export function useCheckout({ client, request, prefill, buttonStyle, onLog }: UseCheckoutOptions): CheckoutHandle {
-  const [result, setResult] = useState<CheckoutResult | null>(null);
+  // Stored with the client that produced it: when the client is replaced, the
+  // render that sees the new client must stop returning the old quote and
+  // button, which belong to a client that is being destroyed.
+  const [owned, setOwned] = useState<{ result: CheckoutResult; client: OnramperClient } | null>(null);
+  const result = owned !== null && owned.client === client ? owned.result : null;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [amountHint, setAmountHint] = useState<string | null>(null);
@@ -51,12 +55,12 @@ export function useCheckout({ client, request, prefill, buttonStyle, onLog }: Us
   inputs.current = { request, prefill, buttonStyle, onLog };
 
   useEffect(() => {
-    setResult(null);
+    setOwned(null);
     setError(null);
+    setAmountHint(null);
     const { request: req, prefill: pf, buttonStyle: style, onLog: log } = inputs.current;
     if (!client || key === null || req === null) {
       setLoading(false);
-      setAmountHint(null);
       return;
     }
     let active = true;
@@ -71,8 +75,7 @@ export function useCheckout({ client, request, prefill, buttonStyle, onLog }: Us
         if (!active) {
           return;
         }
-        setResult(r);
-        setAmountHint(null);
+        setOwned({ result: r, client });
         setLoading(false);
         log('info', `quote ok: ${r.quote.ramp} rate=${r.quote.rate} payout=${r.quote.payout}`);
       },
@@ -85,7 +88,6 @@ export function useCheckout({ client, request, prefill, buttonStyle, onLog }: Us
         if (code === 'amountOutOfRange') {
           setAmountHint(message);
         } else {
-          setAmountHint(null);
           setError(`${code} — ${message}`);
         }
         log('error', `quote failed: ${code} — ${message}`);

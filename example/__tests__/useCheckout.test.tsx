@@ -38,8 +38,11 @@ function fakeClient() {
 }
 
 let latest!: CheckoutHandle;
+// Every render's (props, handle), for asserting what a given render exposed.
+let renders: { props: UseCheckoutOptions; handle: CheckoutHandle }[] = [];
 function Harness(props: UseCheckoutOptions) {
   latest = useCheckout(props);
+  renders.push({ props, handle: latest });
   return null;
 }
 
@@ -151,4 +154,36 @@ test('refresh re-requests the same input', async () => {
     latest.refresh();
   });
   expect(client.getCheckoutRequirements).toHaveBeenCalledTimes(2);
+});
+
+test('never exposes a result in the render where its client is replaced', async () => {
+  const client = fakeClient();
+  client.getCheckoutRequirements.mockResolvedValue(result(1));
+  const renderer = await render(options(client));
+  expect(latest.result?.quote.payout).toBe(1);
+  renders = [];
+
+  await act(async () => {
+    renderer.update(<Harness {...options(null)} />);
+  });
+
+  expect(renders[0].props.client).toBeNull();
+  expect(renders.filter(r => r.handle.result !== null)).toEqual([]);
+});
+
+test('clears a stale amount hint as soon as the next request starts', async () => {
+  const client = fakeClient();
+  const next = deferred<ReturnType<typeof result>>();
+  client.getCheckoutRequirements
+    .mockRejectedValueOnce({ code: 'amountOutOfRange', message: 'Min 20 USD' })
+    .mockReturnValueOnce(next.promise);
+  const renderer = await render(options(client, { request: { ...request, amount: 5 } }));
+  expect(latest.amountHint).toBe('Min 20 USD');
+
+  await act(async () => {
+    renderer.update(<Harness {...options(client)} />);
+  });
+
+  expect(latest.loading).toBe(true);
+  expect(latest.amountHint).toBeNull();
 });
