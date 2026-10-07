@@ -45,7 +45,13 @@ final class HybridOnramperCheckoutButton: HybridOnramperCheckoutButtonSpec {
           .frame(maxWidth: .infinity, alignment: .leading)
           .fixedSize(horizontal: false, vertical: true)
           .background(GeometryReader { proxy in
-            Color.clear.preference(key: CheckoutContentHeightKey.self, value: proxy.size.height)
+            // SwiftUI's first pass can run before the hosting view has a width,
+            // where wrapped text measures as one word per line (~1000pt tall).
+            // Report nothing for that pass; the real width follows immediately.
+            Color.clear.preference(
+              key: CheckoutContentHeightKey.self,
+              value: proxy.size.width > 0 ? proxy.size.height : 0
+            )
           })
           .onPreferenceChange(CheckoutContentHeightKey.self) { [weak self] height in
             self?.reportContentHeight(height)
