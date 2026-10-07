@@ -13,8 +13,13 @@ final class HybridOnramperCheckoutButton: HybridOnramperCheckoutButtonSpec {
   private let container = CheckoutContainerView()
   private var mountedHandle: String?
   private var lastReportedHeight: CGFloat = 0
+  /// Latest height SwiftUI measured, kept so a callback attached after the
+  /// measurement (or replaced later) still receives it.
+  private var measuredHeight: CGFloat = 0
 
-  var onContentHeightChange: ((_ height: Double) -> Void)?
+  var onContentHeightChange: ((_ height: Double) -> Void)? {
+    didSet { flushContentHeight() }
+  }
 
   var intentHandle: String = "" {
     didSet {
@@ -28,10 +33,16 @@ final class HybridOnramperCheckoutButton: HybridOnramperCheckoutButtonSpec {
   private func mount(handle: String) {
     mountedHandle = handle
     lastReportedHeight = 0
+    measuredHeight = 0
     Task { @MainActor [weak self] in
       guard let self else { return }
-      guard let entry = await PreparedIntentRegistry.shared.consume(handle) else {
-        // Handle was invalidated or already consumed — leave the view empty.
+      let entry = await PreparedIntentRegistry.shared.consume(handle)
+      // A newer handle arrived while this one was being consumed; it owns the view.
+      guard self.mountedHandle == handle else { return }
+      guard let entry else {
+        // Handle was invalidated or already consumed. Remove whatever an earlier
+        // handle hosted, so a stale Buy button can't stay on screen.
+        self.container.clear()
         return
       }
       // Pin the SwiftUI content to the container's width so long ToS text wraps
@@ -60,11 +71,17 @@ final class HybridOnramperCheckoutButton: HybridOnramperCheckoutButtonSpec {
     }
   }
 
-  @MainActor
+  // Main thread only: called from SwiftUI preference changes and Nitro prop setters.
   private func reportContentHeight(_ height: CGFloat) {
-    guard height > 0, abs(height - lastReportedHeight) > 0.5, let onContentHeightChange else { return }
-    lastReportedHeight = height
-    onContentHeightChange(Double(height))
+    guard height > 0 else { return }
+    measuredHeight = height
+    flushContentHeight()
+  }
+
+  private func flushContentHeight() {
+    guard measuredHeight > 0, abs(measuredHeight - lastReportedHeight) > 0.5, let onContentHeightChange else { return }
+    lastReportedHeight = measuredHeight
+    onContentHeightChange(Double(measuredHeight))
   }
 }
 
@@ -116,6 +133,12 @@ final class CheckoutContainerView: UIView {
       controller.view.bottomAnchor.constraint(equalTo: bottomAnchor),
     ])
     attachChildIfPossible()
+  }
+
+  /// Removes the hosted content, leaving the view empty.
+  @MainActor
+  func clear() {
+    detachHosted()
   }
 
   override func didMoveToWindow() {

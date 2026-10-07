@@ -11,10 +11,15 @@ Wrapper-only change; still bundles `OnramperSDK@1.2.2`.
 - The native checkout button no longer draws over neighbouring views. It reports its content height
   (for example when ToS text appears under the Buy button) and sizes itself to match, and clips any
   overflow as a backstop.
+- A checkout button given an intent that has expired or was already used now shows nothing, instead of
+  keeping the previous quote's button on screen.
 
 ### Changed
 
-- No public React Native API changes. Containers around `button` no longer need a `minHeight`.
+- No public TypeScript type changes. Containers around `button` no longer need a `minHeight`.
+- `button` is now an element of a small sizing wrapper rather than the native view itself, and it
+  manages its own `style`. Style passed with `cloneElement(button, { style })` is no longer applied;
+  style the containing `View` instead.
 - The bare example app is now a demo app: environment switching, automatic SDK initialization,
   currency / payment / country selection, and a settings sheet.
 
