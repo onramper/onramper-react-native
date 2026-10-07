@@ -30,6 +30,12 @@ export interface OnramperHandle {
   transactionId: string | null;
   completedCheckoutId: string | null;
   lastFailure: string | null;
+  /**
+   * Environment of the last init run that finished (ready or error). Unlike
+   * `status`, it changes even when a failed run is followed by another failed
+   * run, so callers can tell when a specific switch has settled.
+   */
+  settledEnvironment: AppEnvironment | null;
   log: LogEntry[];
   appendLog: (level: LogLevel, line: string) => void;
   clearLog: () => void;
@@ -61,6 +67,7 @@ export function useOnramper({ environment, theme, generation }: UseOnramperOptio
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [completedCheckoutId, setCompletedCheckoutId] = useState<string | null>(null);
   const [lastFailure, setLastFailure] = useState<string | null>(null);
+  const [settledEnvironment, setSettledEnvironment] = useState<AppEnvironment | null>(null);
   const [log, setLog] = useState<LogEntry[]>([]);
   const nextLogId = useRef(0);
 
@@ -140,6 +147,7 @@ export function useOnramper({ environment, theme, generation }: UseOnramperOptio
       }
       setReady({ client: c, runKey });
       setStatus('ready');
+      setSettledEnvironment(environment);
       appendLog('info', `[${environment}] SDK initialized`);
     };
 
@@ -149,6 +157,7 @@ export function useOnramper({ environment, theme, generation }: UseOnramperOptio
       }
       const { code, message } = describeError(e);
       setStatus('error');
+      setSettledEnvironment(environment);
       setInitError(`${code} — ${message}`);
       appendLog('error', `init failed: ${code} — ${message}`);
     });
@@ -168,6 +177,7 @@ export function useOnramper({ environment, theme, generation }: UseOnramperOptio
     transactionId,
     completedCheckoutId,
     lastFailure,
+    settledEnvironment,
     log,
     appendLog,
     clearLog,

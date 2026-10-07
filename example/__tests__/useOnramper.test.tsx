@@ -210,3 +210,17 @@ test('never exposes a client in the render that retires it', async () => {
   expect(renders.filter(r => (r.handle.client as unknown) === clients[0])).toEqual([]);
   expect(latest.client).toBe(clients[1]);
 });
+
+test('settledEnvironment follows each finished run, failed or not', async () => {
+  mintMock.mockRejectedValueOnce(new Error('create-session 401: nope'));
+  const renderer = await render(DEV);
+  expect(latest.status).toBe('error');
+  expect(latest.settledEnvironment).toBe('development');
+
+  mintMock.mockRejectedValueOnce(new Error('create-session 401: nope'));
+  await act(async () => {
+    renderer.update(<Harness {...DEV} environment="production" />);
+  });
+  expect(latest.status).toBe('error');
+  expect(latest.settledEnvironment).toBe('production');
+});

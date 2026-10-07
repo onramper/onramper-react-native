@@ -22,7 +22,10 @@ function App() {
   const [environment, setEnvironment] = useState<AppEnvironment>(DEFAULT_ENVIRONMENT);
   const [generation, setGeneration] = useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [switching, setSwitching] = useState(false);
+  // Target of an in-flight environment switch; the picker is locked until that
+  // environment's init run settles (ready or error).
+  const [switchTarget, setSwitchTarget] = useState<AppEnvironment | null>(null);
+  const switching = switchTarget !== null;
   const palette = PALETTES[isDark ? 'dark' : 'light'];
   const onramper = useOnramper({ environment, theme: palette.name, generation });
 
@@ -33,18 +36,20 @@ function App() {
     Appearance.setColorScheme(palette.name);
   }, [palette.name]);
 
-  // A switch finishes when the new environment's init settles (ready or error).
+  // Watch the settled environment rather than `status`: a failed run followed
+  // by another failed run leaves `status` at 'error' throughout, which would
+  // never unlock the picker.
   useEffect(() => {
-    if (onramper.status !== 'initializing') {
-      setSwitching(false);
+    if (switchTarget !== null && environment === switchTarget && onramper.settledEnvironment === switchTarget) {
+      setSwitchTarget(null);
     }
-  }, [onramper.status]);
+  }, [switchTarget, environment, onramper.settledEnvironment]);
 
   const changeEnvironment = async (next: AppEnvironment) => {
     if (next === environment || switching) {
       return;
     }
-    setSwitching(true);
+    setSwitchTarget(next);
     try {
       await onramper.client?.signOut();
     } catch (e: unknown) {
@@ -56,10 +61,13 @@ function App() {
 
   const clearSessions = async () => {
     const c = onramper.client;
-    if (c) {
-      await c.signOut();
-      await c.reset();
+    if (!c) {
+      // Stored OnramperID tokens can only be cleared through an initialized
+      // client; re-minting a demo session alone would leave them in place.
+      throw new Error("The SDK isn't initialized, so there are no sessions to clear. Use Retry on the Buy screen.");
     }
+    await c.signOut();
+    await c.reset();
     onramper.appendLog('info', 'local sessions cleared — re-initializing');
     setGeneration(g => g + 1);
   };
