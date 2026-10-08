@@ -1,6 +1,6 @@
 {
   "name": "@onramper/onramper-react-native",
-  "version": "1.2.2",
+  "version": "1.2.2-1",
   "description": "React Native wrapper for the Onramper iOS SDK",
   "main": "./lib/commonjs/index.js",
   "module": "./lib/module/index.js",
