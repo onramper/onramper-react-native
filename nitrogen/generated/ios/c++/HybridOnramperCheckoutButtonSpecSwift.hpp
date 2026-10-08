@@ -15,6 +15,8 @@ namespace OnramperReactNative { class HybridOnramperCheckoutButtonSpec_cxx; }
 
 
 #include <string>
+#include <functional>
+#include <optional>
 
 #include "OnramperReactNative-Swift-Cxx-Umbrella.hpp"
 
@@ -68,6 +70,13 @@ namespace margelo::nitro::onramper {
     }
     inline void setIntentHandle(const std::string& intentHandle) noexcept override {
       _swiftPart.setIntentHandle(intentHandle);
+    }
+    inline std::optional<std::function<void(double /* height */)>> getOnContentHeightChange() noexcept override {
+      auto __result = _swiftPart.getOnContentHeightChange();
+      return __result;
+    }
+    inline void setOnContentHeightChange(const std::optional<std::function<void(double /* height */)>>& onContentHeightChange) noexcept override {
+      _swiftPart.setOnContentHeightChange(onContentHeightChange);
     }
 
   public:

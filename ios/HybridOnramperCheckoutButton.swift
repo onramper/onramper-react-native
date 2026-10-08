@@ -12,6 +12,14 @@ import UIKit
 final class HybridOnramperCheckoutButton: HybridOnramperCheckoutButtonSpec {
   private let container = CheckoutContainerView()
   private var mountedHandle: String?
+  private var lastReportedHeight: CGFloat = 0
+  /// Latest height SwiftUI measured, kept so a callback attached after the
+  /// measurement (or replaced later) still receives it.
+  private var measuredHeight: CGFloat = 0
+
+  var onContentHeightChange: ((_ height: Double) -> Void)? {
+    didSet { flushContentHeight() }
+  }
 
   var intentHandle: String = "" {
     didSet {
@@ -24,21 +32,64 @@ final class HybridOnramperCheckoutButton: HybridOnramperCheckoutButtonSpec {
 
   private func mount(handle: String) {
     mountedHandle = handle
+    lastReportedHeight = 0
+    measuredHeight = 0
     Task { @MainActor [weak self] in
       guard let self else { return }
-      guard let entry = await PreparedIntentRegistry.shared.consume(handle) else {
-        // Handle was invalidated or already consumed — leave the view empty.
+      let entry = await PreparedIntentRegistry.shared.consume(handle)
+      // A newer handle arrived while this one was being consumed; it owns the view.
+      guard self.mountedHandle == handle else { return }
+      guard let entry else {
+        // Handle was invalidated or already consumed. Remove whatever an earlier
+        // handle hosted, so a stale Buy button can't stay on screen.
+        self.container.clear()
         return
       }
       // Pin the SwiftUI content to the container's width so long ToS text wraps
       // instead of laying out at its intrinsic (single-line) width and spilling
-      // past the right edge. `.fixedSize(vertical:)` lets it grow downward.
+      // past the right edge. `.fixedSize(vertical:)` lets it take its ideal
+      // height, which is measured and reported to JS so React Native can size
+      // the view (ToS text below the Buy button makes it taller than 56pt, and
+      // can appear or disappear after mount).
       self.container.host(AnyView(
         entry.button
           .frame(maxWidth: .infinity, alignment: .leading)
           .fixedSize(horizontal: false, vertical: true)
+          .background(GeometryReader { proxy in
+            // SwiftUI's first pass can run before the hosting view has a width,
+            // where wrapped text measures as one word per line (~1000pt tall).
+            // Report nothing for that pass; the real width follows immediately.
+            Color.clear.preference(
+              key: CheckoutContentHeightKey.self,
+              value: proxy.size.width > 0 ? proxy.size.height : 0
+            )
+          })
+          .onPreferenceChange(CheckoutContentHeightKey.self) { [weak self] height in
+            self?.reportContentHeight(height)
+          }
       ))
     }
+  }
+
+  // Main thread only: called from SwiftUI preference changes and Nitro prop setters.
+  private func reportContentHeight(_ height: CGFloat) {
+    guard height > 0 else { return }
+    measuredHeight = height
+    flushContentHeight()
+  }
+
+  private func flushContentHeight() {
+    guard measuredHeight > 0, abs(measuredHeight - lastReportedHeight) > 0.5, let onContentHeightChange else { return }
+    lastReportedHeight = measuredHeight
+    onContentHeightChange(Double(measuredHeight))
+  }
+}
+
+/// Carries the hosted content's laid-out height out of SwiftUI.
+private struct CheckoutContentHeightKey: PreferenceKey {
+  static let defaultValue: CGFloat = 0
+  static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+    value = max(value, nextValue())
   }
 }
 
@@ -46,6 +97,18 @@ final class HybridOnramperCheckoutButton: HybridOnramperCheckoutButtonSpec {
 /// controller to the React view-controller hierarchy when it enters a window.
 final class CheckoutContainerView: UIView {
   private var hostingController: UIHostingController<AnyView>?
+
+  override init(frame: CGRect) {
+    super.init(frame: frame)
+    // Backstop: never draw over neighbouring React Native views, even for the
+    // frame between a content-size change and JS applying the new height.
+    clipsToBounds = true
+  }
+
+  required init?(coder: NSCoder) {
+    super.init(coder: coder)
+    clipsToBounds = true
+  }
 
   @MainActor
   func host(_ rootView: AnyView) {
@@ -55,6 +118,11 @@ final class CheckoutContainerView: UIView {
     detachHosted()
     let controller = UIHostingController(rootView: rootView)
     controller.view.backgroundColor = .clear
+    // Inside a ScrollView near the notch/home indicator the hosting controller
+    // would otherwise inject safe-area padding that shifts the content as it scrolls.
+    if #available(iOS 16.4, *) {
+      controller.safeAreaRegions = []
+    }
     controller.view.translatesAutoresizingMaskIntoConstraints = false
     hostingController = controller
     addSubview(controller.view)
@@ -65,6 +133,12 @@ final class CheckoutContainerView: UIView {
       controller.view.bottomAnchor.constraint(equalTo: bottomAnchor),
     ])
     attachChildIfPossible()
+  }
+
+  /// Removes the hosted content, leaving the view empty.
+  @MainActor
+  func clear() {
+    detachHosted()
   }
 
   override func didMoveToWindow() {

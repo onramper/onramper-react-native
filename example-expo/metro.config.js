@@ -33,19 +33,23 @@ const SINGLETONS = [
   'expo-modules-core',
 ];
 
+// The wrapper's package.json has an `exports` map, which Metro honours. Its
+// `import`/`require` conditions point at the built `lib/`, so without this the
+// example silently runs whatever `lib/` was last built — not the code being
+// edited. Ask for the `source` condition (→ src/index.ts) for the wrapper only.
+const WRAPPER_PACKAGE = '@onramper/onramper-react-native';
+
 config.resolver.nodeModulesPaths = [appNodeModules];
 config.resolver.resolveRequest = (context, moduleName, platform) => {
-  const isSingleton = SINGLETONS.some(
-    (name) => moduleName === name || moduleName.startsWith(`${name}/`),
-  );
-
-  return context.resolveRequest(
-    isSingleton
-      ? { ...context, nodeModulesPaths: [appNodeModules], disableHierarchicalLookup: true }
-      : context,
-    moduleName,
-    platform,
-  );
+  const matches = (name) => moduleName === name || moduleName.startsWith(`${name}/`);
+  let next = context;
+  if (SINGLETONS.some(matches)) {
+    next = { ...next, nodeModulesPaths: [appNodeModules], disableHierarchicalLookup: true };
+  }
+  if (matches(WRAPPER_PACKAGE)) {
+    next = { ...next, unstable_conditionNames: ['source', ...next.unstable_conditionNames] };
+  }
+  return context.resolveRequest(next, moduleName, platform);
 };
 
 module.exports = config;

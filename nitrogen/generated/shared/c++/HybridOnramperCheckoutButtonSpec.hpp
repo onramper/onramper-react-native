@@ -16,6 +16,8 @@
 
 
 #include <string>
+#include <functional>
+#include <optional>
 
 namespace margelo::nitro::onramper {
 
@@ -46,6 +48,8 @@ namespace margelo::nitro::onramper {
       // Properties
       virtual std::string getIntentHandle() = 0;
       virtual void setIntentHandle(const std::string& intentHandle) = 0;
+      virtual std::optional<std::function<void(double /* height */)>> getOnContentHeightChange() = 0;
+      virtual void setOnContentHeightChange(const std::optional<std::function<void(double /* height */)>>& onContentHeightChange) = 0;
 
     public:
       // Methods

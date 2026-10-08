@@ -131,6 +131,38 @@ open class HybridOnramperCheckoutButtonSpec_cxx {
       self.__implementation.intentHandle = String(newValue)
     }
   }
+  
+  public final var onContentHeightChange: bridge.std__optional_std__function_void_double____height______ {
+    @inline(__always)
+    get {
+      return { () -> bridge.std__optional_std__function_void_double____height______ in
+        if let __unwrappedValue = self.__implementation.onContentHeightChange {
+          return bridge.create_std__optional_std__function_void_double____height______({ () -> bridge.Func_void_double in
+            let __closureWrapper = Func_void_double(__unwrappedValue)
+            return bridge.create_Func_void_double(__closureWrapper.toUnsafe())
+          }())
+        } else {
+          return .init()
+        }
+      }()
+    }
+    @inline(__always)
+    set {
+      self.__implementation.onContentHeightChange = { () -> ((_ height: Double) -> Void)? in
+        if bridge.has_value_std__optional_std__function_void_double____height______(newValue) {
+          let __unwrapped = bridge.get_std__optional_std__function_void_double____height______(newValue)
+          return { () -> (Double) -> Void in
+            let __wrappedFunction = bridge.wrap_Func_void_double(__unwrapped)
+            return { (__height: Double) -> Void in
+              __wrappedFunction.call(__height)
+            }
+          }()
+        } else {
+          return nil
+        }
+      }()
+    }
+  }
 
   // Methods
   public final func getView() -> UnsafeMutableRawPointer {

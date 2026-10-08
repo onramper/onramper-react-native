@@ -16,6 +16,8 @@ namespace margelo::nitro::onramper {
     registerHybrids(this, [](Prototype& prototype) {
       prototype.registerHybridGetter("intentHandle", &HybridOnramperCheckoutButtonSpec::getIntentHandle);
       prototype.registerHybridSetter("intentHandle", &HybridOnramperCheckoutButtonSpec::setIntentHandle);
+      prototype.registerHybridGetter("onContentHeightChange", &HybridOnramperCheckoutButtonSpec::getOnContentHeightChange);
+      prototype.registerHybridSetter("onContentHeightChange", &HybridOnramperCheckoutButtonSpec::setOnContentHeightChange);
     });
   }
 

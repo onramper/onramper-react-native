@@ -1,8 +1,11 @@
 # Onramper React Native bare example
 
-This app demonstrates the Nitro-based Onramper React Native SDK, including
-configuration, checkout requirements, optional user prefill, and the durable
-Onramper transaction ID.
+This app demonstrates the Nitro-based Onramper React Native SDK as a small demo
+app modelled on the iOS demo: the SDK initializes automatically, a Buy Crypto
+screen picks currency, wallet, amount, payment method, country/state and onramp
+and renders the native checkout button, and a Settings sheet (gear icon)
+switches between Development and Production, toggles dark mode, clears local
+sessions and shows the SDK event log.
 
 ## Prerequisites
 
@@ -15,9 +18,13 @@ Onramper transaction ID.
 
 ## Environment-file setup
 
-Copy `env.local.example.ts` to `env.local.ts` and replace the placeholder
-values with your development API key, client ID, and demo token. The local file
-is ignored by Git so credentials stay out of the repository.
+Copy `env.local.example.ts` to `env.local.ts` and fill in the API key, client
+ID and demo token for **both** `development` and `production`. The local file is
+ignored by Git so credentials stay out of the repository. If an environment's
+values are missing, the app shows an initialization error naming them.
+
+The app starts on Development. Switching environments in Settings signs out and
+re-initializes the SDK; the choice is not persisted across launches.
 
 ## Install
 
