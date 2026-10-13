@@ -50,6 +50,10 @@ are capped at 5 MiB: older days are removed first; an oversized single day keeps
 its latest complete lines with a truncation notice. Export creates an independent
 snapshot with the dated filename, so ongoing writes or deletion cannot change it
 while the share sheet is open. Snapshot files are removed when sharing finishes.
+After an interrupted share, abandoned snapshots older than 24 hours are cleaned
+up when the native store initializes or another export starts. Current-process
+exports are protected from cleanup while sharing, including across bridge reloads.
+The 5 MiB cap applies to saved logs; temporary share snapshots are separate.
 
 Run `npm run test:logs` in `example/` on macOS for Foundation-only file-store tests.
 Records use the released SDK's sanitization, but provider messages may retain

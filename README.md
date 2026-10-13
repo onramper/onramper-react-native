@@ -65,6 +65,8 @@ Already know the user? Pass a third `prefill` argument (`email`, `firstName`, `l
 The SwiftUI `OnramperCheckoutButton` does not expose external callback hooks; checkout outcomes flow via the module-level event stream:
 
 ```ts
+import { OnramperError } from '@onramper/onramper-react-native';
+
 const onFinalized = client.addEventListener('checkoutFinalized', ({ response }) => {
   // Durable transaction identifier: store this for support/reconciliation.
   persistTransactionId(response.onramperTransactionId);
@@ -74,7 +76,6 @@ const unsub = client.addEventListener('completed', (e) => {
   console.log('done:', e.checkoutId);
 });
 
-// Import OnramperError from '@onramper/onramper-react-native'.
 const onFailed = client.addEventListener('failed', (e) => {
   const failure = OnramperError.from(e.error);
   showError(failure.userMessage, failure.supportCode);

@@ -2,9 +2,10 @@ import React from 'react';
 import { Alert } from 'react-native';
 import ReactTestRenderer, { act } from 'react-test-renderer';
 import { DiagnosticsCard } from '../components/DiagnosticsCard';
-import { diagnosticStore } from '../utils/diagnostics';
+import * as diagnostics from '../utils/diagnostics';
 
 jest.mock('../utils/diagnostics', () => ({
+  __esModule: true,
   diagnosticStore: {
     getEnabled: jest.fn(),
     setEnabled: jest.fn(),
@@ -15,7 +16,7 @@ jest.mock('../utils/diagnostics', () => ({
   },
 }));
 
-const store = diagnosticStore as jest.Mocked<NonNullable<typeof diagnosticStore>>;
+const store = diagnostics.diagnosticStore as jest.Mocked<NonNullable<typeof diagnostics.diagnosticStore>>;
 const file = { name: 'onramper-sdk-2026-10-13.log', sizeBytes: 2048, modifiedAt: 1791849600000 };
 
 beforeEach(() => {
@@ -49,6 +50,18 @@ test('loads default-on recording with dated files and sizes', async () => {
   await act(async () => r.root.findByProps({ accessibilityLabel: 'Save SDK logs' }).props.onValueChange(false));
   expect(store.setEnabled).toHaveBeenCalledWith(false);
   expect(r.root.findByProps({ accessibilityLabel: 'Save SDK logs' }).props.value).toBe(false);
+});
+
+test('an unavailable native store shows an explanation without spinning or enabling controls', async () => {
+  jest.replaceProperty(diagnostics, 'diagnosticStore', undefined);
+  const r = await render();
+  expect(JSON.stringify(r.toJSON())).toContain('Diagnostic logging requires the native demo build.');
+  expect(r.root.findAllByProps({ accessibilityLabel: 'Loading logs' })).toHaveLength(0);
+  expect(r.root.findByProps({ accessibilityLabel: 'Save SDK logs' }).props.disabled).toBe(true);
+  expect(r.root.findByProps({ accessibilityLabel: 'Refresh log files' }).props.disabled).toBe(true);
+  expect(store.getEnabled).not.toHaveBeenCalled();
+  expect(store.listFiles).not.toHaveBeenCalled();
+  await act(async () => r.unmount());
 });
 
 test('preserves a saved off preference and a failed enable', async () => {

@@ -36,6 +36,7 @@ export function DiagnosticsCard() {
     let active = true;
     if (!store) {
       setError('Diagnostic logging requires the native demo build.');
+      setBusy(false);
       return;
     }
     Promise.all([store.getEnabled(), store.listFiles()])
@@ -117,7 +118,7 @@ export function DiagnosticsCard() {
       <SwitchRow
         label="Save SDK logs"
         value={enabled}
-        disabled={busy}
+        disabled={busy || !store}
         onValueChange={value => {
           if (store) {
             run(async () => {
@@ -135,7 +136,7 @@ export function DiagnosticsCard() {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Refresh log files"
-          disabled={busy}
+          disabled={busy || !store}
           onPress={() => {
             if (store) {
               run(async () => setFiles(await store.listFiles()));

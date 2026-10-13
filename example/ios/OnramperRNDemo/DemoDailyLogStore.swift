@@ -4,12 +4,17 @@ import Foundation
 /// records arrive through the public logHandler; every disk operation is serialized.
 @objc(DemoDailyLogStore)
 final class DemoDailyLogStore: NSObject {
+  // Shared by all stores in this process, including React Native bridge reloads.
+  // A new process can scavenge old exports without touching a live share here.
+  private static let exportSession = UUID().uuidString
   private let queue = DispatchQueue(label: "com.onramper.rn.daily-logs")
   private let directory: URL
+  private let temporaryDirectory: URL
   private let metadata: [String: String]
   private let now: () -> Date
   private let maxTotalBytes: Int
   private let maxAge: TimeInterval = 7 * 24 * 60 * 60
+  private let maxExportAge: TimeInterval = 24 * 60 * 60
   private var wroteLaunchHeader = false
   private let formatter: ISO8601DateFormatter = {
     let formatter = ISO8601DateFormatter()
@@ -28,12 +33,15 @@ final class DemoDailyLogStore: NSObject {
   // Directory/clock/limit injection also lets the Foundation-only regression tests
   // exercise rollover, retention and export without a device or SDK credentials.
   init(directory: URL, metadata: [String: String], maxTotalBytes: Int = 5 * 1024 * 1024,
+       temporaryDirectory: URL = FileManager.default.temporaryDirectory,
        now: @escaping () -> Date = Date.init) {
     self.directory = directory
+    self.temporaryDirectory = temporaryDirectory
     self.metadata = metadata
     self.maxTotalBytes = maxTotalBytes
     self.now = now
     super.init()
+    queue.async { self.scavengeExportsLocked() }
   }
 
   @objc(appendRecord:)
@@ -89,9 +97,10 @@ final class DemoDailyLogStore: NSObject {
   @objc(snapshotForFile:error:)
   func snapshotForFile(_ name: String) throws -> URL {
     try queue.sync {
+      scavengeExportsLocked()
       try prepareLocked()
       let source = try existingFileLocked(name)
-      let folder = FileManager.default.temporaryDirectory.appendingPathComponent("onramper-export-\(UUID().uuidString)", isDirectory: true)
+      let folder = temporaryDirectory.appendingPathComponent("onramper-export-\(Self.exportSession)-\(UUID().uuidString)", isDirectory: true)
       do {
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let snapshot = folder.appendingPathComponent(name)
@@ -116,6 +125,32 @@ final class DemoDailyLogStore: NSObject {
     let url: URL
     let size: Int
     let modified: Date
+  }
+
+  /// Share completion normally removes snapshots. After a crash, remove exports
+  /// from earlier processes once they are a day old. Never touch this process's
+  /// exports, even if another store is created or a share stays open past a day.
+  private func scavengeExportsLocked() {
+    let prefix = "onramper-export-"
+    let keys: Set<URLResourceKey> = [.isDirectoryKey, .isSymbolicLinkKey, .contentModificationDateKey]
+    guard let folders = try? FileManager.default.contentsOfDirectory(at: temporaryDirectory,
+      includingPropertiesForKeys: Array(keys)) else { return }
+    let cutoff = now().addingTimeInterval(-maxExportAge)
+    for folder in folders {
+      let name = folder.lastPathComponent
+      guard name.hasPrefix(prefix), !name.hasPrefix("\(prefix)\(Self.exportSession)-") else { continue }
+      let suffix = String(name.dropFirst(prefix.count))
+      // Recognize both the original UUID-only names and process-scoped names.
+      let legacy = UUID(uuidString: suffix) != nil
+      let scoped = suffix.count == 73 && suffix.dropFirst(36).first == "-"
+        && UUID(uuidString: String(suffix.prefix(36))) != nil
+        && UUID(uuidString: String(suffix.suffix(36))) != nil
+      guard legacy || scoped,
+            let values = try? folder.resourceValues(forKeys: keys),
+            values.isDirectory == true, values.isSymbolicLink != true,
+            let modified = values.contentModificationDate, modified < cutoff else { continue }
+      try? FileManager.default.removeItem(at: folder)
+    }
   }
 
   private func validName(_ name: String) -> Bool {

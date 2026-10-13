@@ -97,7 +97,10 @@ export default function App() {
     );
     c.addEventListener('renderingStarted', (e) => event(`rendering: ${e.renderType}`));
     c.addEventListener('completed', (e) => event(`COMPLETED checkoutId=${e.checkoutId}`));
-    c.addEventListener('failed', (e) => event(`FAILED: ${e.error.supportCode ?? e.error.code} ${e.error.userMessage}`));
+    c.addEventListener('failed', (e) => {
+      const failure = OnramperError.from(e.error);
+      event(`FAILED: ${failure.supportCode} ${failure.userMessage}`);
+    });
     c.addEventListener('paymentPending', () => event('Payment processing — track the transaction before starting another payment.'));
     c.addEventListener('providerError', e => event(`provider error: ${e.reason}`));
     for (const name of ['providerReady', 'paymentAuthorized', 'paymentProcessing', 'paymentCancelled',
