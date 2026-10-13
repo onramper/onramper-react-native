@@ -169,6 +169,43 @@ struct PreparedIntentLifecycleTests {
         passed += 1
     }
 
+    static func invalidatedBeforeDelivery(destroy: Bool) async throws {
+        let owner = PreparedIntentLifetime(), other = PreparedIntentLifetime(), registry = PreparedIntentRegistry()
+        let ticket = try owner.begin()
+        let pending = try await registry.prepare(ticket: ticket) {
+            (.init(button: AnyView(Text("pending")), createdAt: Date()), "pending")
+        }
+        let unrelated = try await registry.prepare(ticket: other.begin()) {
+            (.init(button: AnyView(Text("unrelated")), createdAt: Date()), "unrelated")
+        }
+        // The view is stored, but the bridge hasn't returned the handle to JS.
+        // Invalidate during that handoff without running asynchronous cleanup.
+        if destroy { _ = owner.destroy() } else { _ = try owner.begin() }
+        expect(await registry.count == 2, "Fixture must retain the undelivered view before validation")
+        do {
+            try await registry.validateDelivery(of: pending.handle, ticket: ticket)
+            fatalError("An invalidated handle reached the caller")
+        } catch let error as BridgeLifecycleError {
+            expect(error == (destroy ? .clientDestroyed : .intentInvalidated), "Wrong delivery error")
+        }
+        expect(await registry.count == 1, "Rejected delivery left an unreachable view in the registry")
+        expect(await registry.consume(pending.handle) == nil, "Rejected handle remained usable")
+        expect(await registry.consume(unrelated.handle) != nil, "Delivery cleanup removed another client's view")
+        passed += 1
+    }
+
+    static func currentDelivery() async throws {
+        let owner = PreparedIntentLifetime(), registry = PreparedIntentRegistry()
+        let ticket = try owner.begin()
+        let result = try await registry.prepare(ticket: ticket) {
+            (.init(button: AnyView(Text("current")), createdAt: Date()), "current")
+        }
+        try await registry.validateDelivery(of: result.handle, ticket: ticket)
+        expect(await registry.count == 1, "Successful delivery discarded the button before mount")
+        expect(await registry.consume(result.handle) != nil, "Delivered handle was not usable")
+        passed += 1
+    }
+
     static func expiryAndCancellation() async throws {
         let owner = PreparedIntentLifetime(), registry = PreparedIntentRegistry()
         let old = try await registry.prepare(ticket: owner.begin()) {
@@ -199,6 +236,9 @@ struct PreparedIntentLifecycleTests {
         try await cleanupWithoutConsuming()
         try await skipsSupersededWork()
         try await invalidatedWhileMounting()
+        try await invalidatedBeforeDelivery(destroy: false)
+        try await invalidatedBeforeDelivery(destroy: true)
+        try await currentDelivery()
         try await expiryAndCancellation()
         print("Passed \(passed) native prepared-intent lifecycle scenarios")
     }

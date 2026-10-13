@@ -243,7 +243,7 @@ final class HybridOnramperNitro: HybridOnramperNitroSpec {
       let quoteDict = (codableToJSValue(result.quote) as? [String: Any]) ?? [:]
       return (entry, jsonString(quoteDict))
     }
-    try ticket.check()
+    try await PreparedIntentRegistry.shared.validateDelivery(of: prepared.handle, ticket: ticket)
     return PreparedIntentResult(intentHandle: prepared.handle, quoteJson: prepared.value)
   }
 

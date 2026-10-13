@@ -255,6 +255,8 @@ If the user's OnramperID session expires mid-checkout, the button automatically 
 The native button doesn't expose per-instance callbacks. Subscribe to the Headless Wrapper's event stream:
 
 ```ts
+import { OnramperError } from '@onramper/onramper-react-native';
+
 const offCompleted = client.addEventListener('completed', (e) => {
   console.log('checkout complete:', e.checkoutId);
 });

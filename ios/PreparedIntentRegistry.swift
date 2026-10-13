@@ -133,6 +133,19 @@ actor PreparedIntentRegistry {
         return entry.isValid ? entry : nil
     }
 
+    /// Validate after the registry-to-main-actor hop, immediately before the
+    /// bridge returns the handle. A rejected result never reaches JavaScript,
+    /// so it must release its stored view without waiting for another sweep.
+    @MainActor
+    func validateDelivery(of handle: String, ticket: PreparedIntentLifetime.Ticket) async throws {
+        do {
+            try ticket.check()
+        } catch {
+            await drop(handle, owner: ticket.owner)
+            throw error
+        }
+    }
+
     func drop(_ handle: String, owner: PreparedIntentLifetime? = nil) {
         if let owner, entries[handle]?.ticket?.owner !== owner { return }
         entries.removeValue(forKey: handle)
