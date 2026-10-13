@@ -97,10 +97,14 @@ Bundles `OnramperSDK@1.3.0` from its published, checksum-verified release.
 
 - The bare RN demo shows pending payments separately from completion, displays
   customer-friendly failure copy, and includes provider lifecycle events. Its
-  Settings sheet can enable diagnostic recording, share a `.log` file, and delete
-  saved logs. Demo recording is on by default and respects a saved off choice;
-  files are limited to 5 MiB and pruned after seven days on write or export. The event panel remains an
-  in-memory view. The Expo example demonstrates the new events and log callback.
+  Settings sheet lists daily UTC `.log` files with sizes, readable previews,
+  individual sharing, and confirmed deletion. Logs include a launch header with
+  app/build/iOS/device-model details. Demo recording is on by default and respects
+  a saved off choice; files are excluded from backups, limited to 5 MiB, and
+  pruned after seven days during use. Older days are removed first; if one day
+  fills the cap, its newest complete lines are kept with a truncation notice.
+  The event panel remains an in-memory view. The Expo example demonstrates the
+  new events and log callback.
 - This stable release includes the self-sizing checkout button and demo changes
   previously published in `1.2.2-1`. Continue styling the button's container;
   `cloneElement(button, { style })` does not style the native button.

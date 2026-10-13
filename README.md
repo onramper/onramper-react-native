@@ -121,7 +121,8 @@ Full code list in `src/errors.ts`.
 Pass `logLevel: 'info'` (or `'debug'`) and `logHandler: record => yourStore.append(record)`
 to receive structured `OnramperLogRecord`s in JavaScript. Native Console output is
 preserved. Logging defaults to off; storage and export are owned by your app.
-The bare demo provides Settings → Diagnostic logs → Save SDK logs / Share logs.
+The bare demo records by default: Settings → Diagnostic logs lists daily files
+with previews, individual sharing, and confirmed deletion.
 See [debugging](docs/DEBUGGING.md) for the record shape and retention guidance.
 
 For migration details, including new enum cases and one-time OnramperID sign-in,

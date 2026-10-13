@@ -33,12 +33,25 @@ and `message`. Logging defaults to `off`; callback exceptions are isolated from
 checkout, and records queued after `destroy()` are ignored.
 
 The bare demo records SDK logs by default from initialization, including in bundled
-Release builds. **Settings → Diagnostic logs** has a recording toggle, **Share logs**,
-and **Delete logs**. A saved off choice is respected across launches and upgrades;
-turn recording back on before reproducing an issue if you previously disabled it.
-It persists SDK records independently of the 300-entry on-screen event panel.
-Two rotating files cap storage at 5 MiB; files older than seven days are pruned
-on write/export. Sharing creates a snapshot and opens the iOS share sheet.
+Release builds. **Settings → Diagnostic logs** lists daily UTC files such as
+`onramper-sdk-2026-10-13.log`, newest first, with their sizes. Tap a file for a
+selectable text preview (the latest 200 KB), or **Share** to export that day's file.
+**Refresh** reloads the list; **Delete all logs** asks for confirmation.
+A saved off choice is respected across launches and upgrades; turn recording back
+on before reproducing an issue if you previously disabled it.
+
+Records are readable timestamped lines, stored in `Library/Application Support/Logs`
+and excluded from backups. Each launch adds app version, build, iOS version and
+hardware model (no device identifier). Disk I/O runs on a serial native queue after
+records reach the JavaScript callback. The on-screen event panel remains separate.
+
+Files older than seven days are pruned on append/list/read/export. Retained files
+are capped at 5 MiB: older days are removed first; an oversized single day keeps
+its latest complete lines with a truncation notice. Export creates an independent
+snapshot with the dated filename, so ongoing writes or deletion cannot change it
+while the share sheet is open. Snapshot files are removed when sharing finishes.
+
+Run `npm run test:logs` in `example/` on macOS for Foundation-only file-store tests.
 Records use the released SDK's sanitization, but provider messages may retain
 personal data after best-effort redaction. Review logs before sharing.
 

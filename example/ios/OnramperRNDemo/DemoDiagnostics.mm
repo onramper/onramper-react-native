@@ -1,11 +1,14 @@
 #import <React/RCTBridgeModule.h>
 #import <React/RCTUtils.h>
+#import <React-RCTAppDelegate/RCTDefaultReactNativeFactoryDelegate.h>
 #import <UIKit/UIKit.h>
+#import <sys/utsname.h>
+#import "OnramperRNDemo-Swift.h"
 
-// Demo-only file sink. The library exposes records; each integrating app owns
-// storage/export. Accept only SDK records here, never session credentials or
-// arbitrary request/response payloads. All file operations use one serial queue.
+// Demo-only adapter. The library exposes SDK records; the app owns retention,
+// browsing and export. Never send credentials or arbitrary API bodies here.
 @interface DemoDiagnostics : NSObject <RCTBridgeModule>
+@property(nonatomic, strong) DemoDailyLogStore *store;
 @end
 
 @implementation DemoDiagnostics
@@ -19,26 +22,21 @@ RCT_EXPORT_MODULE();
   return queue;
 }
 
-- (NSURL *)directory {
-  NSURL *base = [[NSFileManager defaultManager] URLsForDirectory:NSCachesDirectory inDomains:NSUserDomainMask].firstObject;
-  NSURL *dir = [base URLByAppendingPathComponent:@"OnramperDiagnostics" isDirectory:YES];
-  [[NSFileManager defaultManager] createDirectoryAtURL:dir withIntermediateDirectories:YES attributes:@{NSFileProtectionKey: NSFileProtectionCompleteUntilFirstUserAuthentication} error:nil];
-  return dir;
-}
-
-- (NSArray<NSURL *> *)logFiles {
-  NSURL *dir = [self directory];
-  return @[[dir URLByAppendingPathComponent:@"previous.log"], [dir URLByAppendingPathComponent:@"current.log"]];
-}
-
-- (void)prune {
-  for (NSURL *url in [self logFiles]) {
-    NSDictionary *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:url.path error:nil];
-    NSDate *created = attributes[NSFileCreationDate];
-    if (created && -created.timeIntervalSinceNow > 7 * 24 * 60 * 60) {
-      [[NSFileManager defaultManager] removeItemAtURL:url error:nil];
-    }
+- (instancetype)init {
+  if ((self = [super init])) {
+    NSDictionary *info = NSBundle.mainBundle.infoDictionary;
+    struct utsname model;
+    NSString *device = uname(&model) == 0 ? [NSString stringWithUTF8String:model.machine] : @"unknown";
+    NSOperatingSystemVersion version = NSProcessInfo.processInfo.operatingSystemVersion;
+    NSString *ios = [NSString stringWithFormat:@"%ld.%ld.%ld", (long)version.majorVersion, (long)version.minorVersion, (long)version.patchVersion];
+    _store = [[DemoDailyLogStore alloc] initWithMetadata:@{
+      @"appVersion": info[@"CFBundleShortVersionString"] ?: @"unknown",
+      @"build": info[@"CFBundleVersion"] ?: @"unknown",
+      @"ios": ios,
+      @"device": device ?: @"unknown"
+    }];
   }
+  return self;
 }
 
 RCT_EXPORT_METHOD(getEnabled:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
@@ -51,68 +49,39 @@ RCT_EXPORT_METHOD(setEnabled:(BOOL)enabled resolver:(RCTPromiseResolveBlock)reso
 }
 
 RCT_EXPORT_METHOD(appendRecord:(NSString *)json) {
-  if (![[NSUserDefaults standardUserDefaults] boolForKey:@"onramperDiagnosticLogging"]) return;
-  // The SDK bounds/sanitizes records. Bound again at the file boundary.
-  NSData *raw = [json dataUsingEncoding:NSUTF8StringEncoding];
-  if (!raw || raw.length > 64 * 1024) return;
-  NSDictionary *record = [NSJSONSerialization JSONObjectWithData:raw options:0 error:nil];
-  if (![record isKindOfClass:NSDictionary.class] || ![record[@"event"] isKindOfClass:NSString.class] || ![record[@"context"] isKindOfClass:NSDictionary.class]) return;
-  [self prune];
-  NSArray<NSURL *> *files = [self logFiles];
-  NSURL *current = files.lastObject;
-  NSFileManager *fm = [NSFileManager defaultManager];
-  unsigned long long size = [[fm attributesOfItemAtPath:current.path error:nil][NSFileSize] unsignedLongLongValue];
-  // Two files, each capped at 2.5 MiB (5 MiB total).
-  if (size + raw.length + 1 > 2621440) {
-    [fm removeItemAtURL:files.firstObject error:nil];
-    if (![fm moveItemAtURL:current toURL:files.firstObject error:nil]) return;
+  if ([[NSUserDefaults standardUserDefaults] boolForKey:@"onramperDiagnosticLogging"]) {
+    [self.store appendRecord:json];
   }
-  if (![fm fileExistsAtPath:current.path]) [fm createFileAtPath:current.path contents:nil attributes:@{NSFileProtectionKey: NSFileProtectionCompleteUntilFirstUserAuthentication}];
-  NSFileHandle *handle = [NSFileHandle fileHandleForWritingToURL:current error:nil];
-  if (!handle) return;
-  @try {
-    [handle seekToEndOfFile];
-    [handle writeData:raw];
-    [handle writeData:[@"\n" dataUsingEncoding:NSUTF8StringEncoding]];
-  } @catch (NSException *exception) {
-    // Diagnostics must not interrupt checkout, including when storage is full.
-  } @finally {
-    [handle closeFile];
-  }
+}
+
+RCT_EXPORT_METHOD(listFiles:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
+  resolve([self.store files]);
+}
+
+RCT_EXPORT_METHOD(readFile:(NSString *)name resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
+  NSError *error = nil;
+  NSString *text = [self.store readFile:name error:&error];
+  if (error) { reject(@"read_failed", @"Could not read this log file. Refresh the list and try again.", nil); }
+  else { resolve(text); }
 }
 
 RCT_EXPORT_METHOD(clearLogs:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
-  for (NSURL *url in [self logFiles]) {
-    NSError *error = nil;
-    if ([[NSFileManager defaultManager] fileExistsAtPath:url.path] && ![[NSFileManager defaultManager] removeItemAtURL:url error:&error]) {
-      reject(@"delete_failed", @"Could not delete diagnostic logs.", nil);
-      return;
-    }
-  }
-  resolve(nil);
+  NSError *error = nil;
+  if (![self.store clearLogsAndReturnError:&error]) { reject(@"delete_failed", @"Could not delete diagnostic logs.", nil); }
+  else { resolve(nil); }
 }
 
-RCT_EXPORT_METHOD(shareLogs:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
-  [self prune];
-  NSMutableData *data = [NSMutableData data];
-  for (NSURL *url in [self logFiles]) {
-    NSData *part = [NSData dataWithContentsOfURL:url];
-    if (part) [data appendData:part];
-  }
-  if (data.length == 0) {
-    reject(@"no_logs", @"Enable diagnostic logging and reproduce the issue first.", nil);
-    return;
-  }
-  NSString *name = [NSString stringWithFormat:@"onramper-rn-%@.log", NSUUID.UUID.UUIDString];
-  NSURL *snapshot = [[NSURL fileURLWithPath:NSTemporaryDirectory()] URLByAppendingPathComponent:name];
-  if (![data writeToURL:snapshot options:NSDataWritingAtomic | NSDataWritingFileProtectionCompleteUntilFirstUserAuthentication error:nil]) {
-    reject(@"export_failed", @"Could not prepare diagnostic logs.", nil);
+RCT_EXPORT_METHOD(shareFile:(NSString *)name resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
+  NSError *error = nil;
+  NSURL *snapshot = [self.store snapshotForFile:name error:&error];
+  if (!snapshot) {
+    reject(@"export_failed", @"Could not prepare this log file. Refresh the list and try again.", nil);
     return;
   }
   dispatch_async(dispatch_get_main_queue(), ^{
     UIViewController *presenter = RCTPresentedViewController();
     if (!presenter) {
-      [[NSFileManager defaultManager] removeItemAtURL:snapshot error:nil];
+      [[NSFileManager defaultManager] removeItemAtURL:snapshot.URLByDeletingLastPathComponent error:nil];
       reject(@"export_failed", @"Could not open the share sheet.", nil);
       return;
     }
@@ -120,8 +89,9 @@ RCT_EXPORT_METHOD(shareLogs:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromise
     share.popoverPresentationController.sourceView = presenter.view;
     share.popoverPresentationController.sourceRect = CGRectMake(CGRectGetMidX(presenter.view.bounds), CGRectGetMidY(presenter.view.bounds), 1, 1);
     share.completionWithItemsHandler = ^(UIActivityType type, BOOL completed, NSArray *items, NSError *error) {
-      [[NSFileManager defaultManager] removeItemAtURL:snapshot error:nil];
-      resolve(nil);
+      [[NSFileManager defaultManager] removeItemAtURL:snapshot.URLByDeletingLastPathComponent error:nil];
+      if (error) { reject(@"share_failed", @"Could not share this log file.", nil); }
+      else { resolve(nil); }
     };
     [presenter presentViewController:share animated:YES completion:nil];
   });

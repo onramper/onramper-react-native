@@ -1,12 +1,20 @@
 import { NativeModules } from 'react-native';
 import type { OnramperLogRecord } from '@onramper/onramper-react-native';
 
+export type DiagnosticLogFile = {
+  name: string;
+  sizeBytes: number;
+  modifiedAt: number;
+};
+
 type DiagnosticStore = {
   appendRecord: (json: string) => void;
   getEnabled: () => Promise<boolean>;
   setEnabled: (enabled: boolean) => Promise<void>;
   clearLogs: () => Promise<void>;
-  shareLogs: () => Promise<void>;
+  listFiles: () => Promise<DiagnosticLogFile[]>;
+  readFile: (name: string) => Promise<string>;
+  shareFile: (name: string) => Promise<void>;
 };
 
 export const diagnosticStore = NativeModules.DemoDiagnostics as
