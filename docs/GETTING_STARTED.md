@@ -319,7 +319,7 @@ try {
 
 The native side single-flights this: any prior in-flight call is invalidated when a new one starts. You can wire `getCheckoutRequirements` directly to a country/amount picker without debouncing or checking `client.state` first — just discard older rejections.
 
-After a `completed` or `failed` outcome, call `await client.reset()` to return to `ready`. The Headless Wrapper session and OnramperID login both remain valid; you don't need to re-`initialize()` unless the Headless Wrapper itself surfaces an unrecoverable failure.
+After a failure before finalization, show an explicit action to fetch a new quote using `getCheckoutRequirements()` and replace the old `{ button, quote }`. The previous Buy button is disabled in `failed`; `reset()` alone returns the client to `ready` but does not make that button actionable. Fetching requirements resets checkout state internally and preserves the session and OnramperID login. Do not retry payment automatically. After the provider flow has started, follow `userMessage` and confirm the transaction outcome before offering another payment; keep pending payments separate from failures.
 
 ### 3.8 Signing the OnramperID user out
 

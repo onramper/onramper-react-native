@@ -28,6 +28,8 @@ export interface OnramperHandle {
   status: InitStatus;
   initError: string | null;
   sdkState: OnramperState['kind'];
+  /** Current checkout reached finalization; independent of the retained transaction ID. */
+  hasFinalizedCheckout: boolean;
   transactionId: string | null;
   completedCheckoutId: string | null;
   lastFailure: string | null;
@@ -65,6 +67,7 @@ export function useOnramper({ environment, theme, generation }: UseOnramperOptio
   const [status, setStatus] = useState<InitStatus>('initializing');
   const [initError, setInitError] = useState<string | null>(null);
   const [sdkState, setSdkState] = useState<OnramperState['kind']>('idle');
+  const [hasFinalizedCheckout, setHasFinalizedCheckout] = useState(false);
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [completedCheckoutId, setCompletedCheckoutId] = useState<string | null>(null);
   const [lastFailure, setLastFailure] = useState<string | null>(null);
@@ -95,6 +98,7 @@ export function useOnramper({ environment, theme, generation }: UseOnramperOptio
     setStatus('initializing');
     setInitError(null);
     setSdkState('idle');
+    setHasFinalizedCheckout(false);
     setTransactionId(null);
     setCompletedCheckoutId(null);
     setLastFailure(null);
@@ -124,13 +128,17 @@ export function useOnramper({ environment, theme, generation }: UseOnramperOptio
       created = c;
       c.addStateListener(s => {
         setSdkState(s.kind);
+        if (s.kind === 'checkoutPreparing' || s.kind === 'ready') {
+          setHasFinalizedCheckout(false);
+        }
         appendLog(s.kind === 'failed' ? 'error' : 'event', `state → ${s.kind}${s.kind === 'failed' ? `: ${s.error.code}` : ''}`);
       });
       c.addTransactionIdListener(setTransactionId);
       c.addEventListener('renderingStarted', e => appendLog('event', `rendering started (${e.renderType})`));
-      c.addEventListener('checkoutFinalized', e =>
-        appendLog('event', `finalized — transaction ${e.response.onramperTransactionId}`),
-      );
+      c.addEventListener('checkoutFinalized', e => {
+        setHasFinalizedCheckout(true);
+        appendLog('event', `finalized — transaction ${e.response.onramperTransactionId}`);
+      });
       c.addEventListener('completed', e => {
         setCompletedCheckoutId(e.checkoutId);
         setLastFailure(null);
@@ -191,6 +199,7 @@ export function useOnramper({ environment, theme, generation }: UseOnramperOptio
     status: client === null && status === 'ready' ? 'initializing' : status,
     initError,
     sdkState,
+    hasFinalizedCheckout,
     transactionId,
     completedCheckoutId,
     lastFailure,

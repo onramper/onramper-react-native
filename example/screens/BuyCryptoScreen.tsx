@@ -158,6 +158,18 @@ export function BuyCryptoScreen({
   const pending = onramper.sdkState === 'paymentPending';
   const completed =
     onramper.sdkState === 'completed' || onramper.completedCheckoutId !== null;
+  // The native Buy button is disabled in `failed`. Before finalization there
+  // is no provider sheet to preserve, so replace it with explicit quote recovery.
+  // After finalization keep it mounted: it owns the provider/outcome sheet.
+  const needsCheckoutRecovery =
+    onramper.sdkState === 'failed' &&
+    !onramper.hasFinalizedCheckout &&
+    checkout.result !== null;
+  const recoverCheckout = () => {
+    setActionError(null);
+    onramper.clearOutcome();
+    checkout.refresh();
+  };
   const errorBox = onramper.initError
     ? {
         title: 'SDK initialization failed',
@@ -174,7 +186,7 @@ export function BuyCryptoScreen({
       }
     : actionError
     ? { title: 'Action failed', body: actionError }
-    : onramper.lastFailure
+    : onramper.lastFailure && !needsCheckoutRecovery
     ? { title: 'Checkout failed', body: onramper.lastFailure }
     : null;
 
@@ -325,7 +337,15 @@ export function BuyCryptoScreen({
               fiat={form.fiat}
               cryptoSymbol={crypto.symbol}
             />
-            {checkout.result.button}
+            {needsCheckoutRecovery ? (
+              <StatusBox
+                tone="error"
+                title="Couldn’t start checkout"
+                body={onramper.lastFailure ?? 'Fetch a fresh quote to try checkout again.'}
+                actionLabel="Get a new quote"
+                onAction={recoverCheckout}
+              />
+            ) : checkout.result.button}
           </>
         ) : checkout.loading ||
           (request && onramper.status === 'initializing') ? (

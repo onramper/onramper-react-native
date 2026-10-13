@@ -111,6 +111,10 @@ Bundles `OnramperSDK@1.3.0` from its published, checksum-verified release.
 
 ### Changed
 
+- The bare RN demo replaces the disabled Buy button after a failure before
+  finalization with **Get a new quote**. Recovery fetches fresh requirements and
+  replaces the button, preserving the login without automatically retrying
+  payment. Failures after finalization retain the native outcome sheet.
 - The bare RN demo shows pending payments separately from completion, displays
   customer-friendly failure copy, and includes provider lifecycle events. Its
   Settings sheet lists daily UTC `.log` files with sizes, readable previews,

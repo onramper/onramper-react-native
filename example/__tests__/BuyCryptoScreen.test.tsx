@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { Switch, Text, TextInput } from 'react-native';
+import { ActivityIndicator, Switch, Text, TextInput } from 'react-native';
 import ReactTestRenderer, { act } from 'react-test-renderer';
 import type { OnramperClient } from '@onramper/onramper-react-native';
 
@@ -15,6 +15,7 @@ jest.mock('react-native-safe-area-context', () => ({
 }));
 
 import { BuyCryptoScreen } from '../screens/BuyCryptoScreen';
+import { StatusBox } from '../components/StatusBox';
 import { PALETTES, ThemeContext } from '../theme';
 import type { OnramperHandle } from '../hooks/useOnramper';
 
@@ -31,7 +32,7 @@ const quote = {
 function setup() {
   const client = {
     getCheckoutRequirements: jest.fn(() =>
-      Promise.resolve({ quote, button: <></> }),
+      Promise.resolve({ quote, button: <Text testID="native-buy">Native Buy</Text> }),
     ),
   };
   const onramper = {
@@ -39,6 +40,7 @@ function setup() {
     status: 'ready',
     initError: null,
     sdkState: 'ready',
+    hasFinalizedCheckout: false,
     transactionId: null,
     completedCheckoutId: null,
     lastFailure: null,
@@ -51,18 +53,22 @@ function setup() {
   return { client, onramper };
 }
 
+function screen(onramper: OnramperHandle) {
+  return (
+    <ThemeContext.Provider value={PALETTES.dark}>
+      <BuyCryptoScreen
+        onramper={onramper}
+        environment="development"
+        onOpenSettings={() => {}}
+      />
+    </ThemeContext.Provider>
+  );
+}
+
 async function render(onramper: OnramperHandle) {
   let r!: ReactTestRenderer.ReactTestRenderer;
   await act(async () => {
-    r = ReactTestRenderer.create(
-      <ThemeContext.Provider value={PALETTES.dark}>
-        <BuyCryptoScreen
-          onramper={onramper}
-          environment="development"
-          onOpenSettings={() => {}}
-        />
-      </ThemeContext.Provider>,
-    );
+    r = ReactTestRenderer.create(screen(onramper));
   });
   await act(async () =>
     r.root.findByProps({ accessibilityLabel: 'Prefill' }).props.onPress(),
@@ -187,3 +193,83 @@ test('the amount input is named for VoiceOver with the selected fiat', async () 
     .map(i => i.props.accessibilityLabel);
   expect(labels).toContain('Amount in USD');
 });
+
+test('a backend failure replaces Buy with explicit recovery and mounts a fresh button', async () => {
+  const { client, onramper } = setup();
+  const r = await render(onramper);
+  expect(r.root.findAllByProps({ testID: 'native-buy' }).length).toBeGreaterThan(0);
+  const failed: OnramperHandle = {
+    ...onramper,
+    sdkState: 'failed',
+    lastFailure: 'temporaryFailure — Service unavailable',
+    // An earlier transaction is retained for support, but isn't this attempt.
+    transactionId: 'previous-transaction',
+  };
+  await act(async () => r.update(screen(failed)));
+  expect(r.root.findAllByProps({ testID: 'native-buy' })).toHaveLength(0);
+  expect(client.getCheckoutRequirements).toHaveBeenCalledTimes(1);
+  const recovery = r.root.findAllByType(StatusBox)
+    .find(n => n.props.title === 'Couldn’t start checkout')!;
+  expect(recovery.props.body).toBe(failed.lastFailure);
+  expect(recovery.props.actionLabel).toBe('Get a new quote');
+
+  let resolve!: (value: Awaited<ReturnType<typeof client.getCheckoutRequirements>>) => void;
+  client.getCheckoutRequirements.mockReturnValueOnce(new Promise(rslv => { resolve = rslv; }));
+  await act(async () => recovery.props.onAction());
+  expect(onramper.clearOutcome).toHaveBeenCalledTimes(1);
+  expect(client.getCheckoutRequirements).toHaveBeenCalledTimes(2);
+  expect(client.getCheckoutRequirements.mock.calls[1]).toEqual(client.getCheckoutRequirements.mock.calls[0]);
+  expect(r.root.findAllByProps({ testID: 'native-buy' })).toHaveLength(0);
+  expect(r.root.findAllByType(ActivityIndicator)).toHaveLength(1);
+  expect(r.root.findAllByType(StatusBox).some(n => n.props.actionLabel === 'Get a new quote')).toBe(false);
+
+  await act(async () => {
+    r.update(screen({ ...onramper, sdkState: 'readyToCheckout' }));
+    resolve({ quote, button: <Text testID="fresh-buy">Fresh Buy</Text> });
+  });
+  expect(r.root.findAllByProps({ testID: 'fresh-buy' }).length).toBeGreaterThan(0);
+  expect(r.root.findAllByType(ActivityIndicator)).toHaveLength(0);
+  expect(client.getCheckoutRequirements).toHaveBeenCalledTimes(2);
+});
+
+test('a failed recovery quote keeps a retry action available', async () => {
+  const { client, onramper } = setup();
+  const r = await render(onramper);
+  const failed: OnramperHandle = {
+    ...onramper,
+    sdkState: 'failed',
+    lastFailure: 'temporaryFailure — Service unavailable',
+  };
+  await act(async () => r.update(screen(failed)));
+  client.getCheckoutRequirements.mockRejectedValueOnce({ code: 'temporaryFailure', message: 'Still unavailable' });
+  await act(async () => r.root.findByType(StatusBox).props.onAction());
+  const quoteFailure = r.root.findByType(StatusBox);
+  expect(quoteFailure.props.title).toBe('Quote failed');
+  expect(quoteFailure.props.actionLabel).toBe('Retry');
+  expect(r.root.findAllByProps({ testID: 'native-buy' })).toHaveLength(0);
+  await act(async () => {
+    r.update(screen({ ...onramper, sdkState: 'readyToCheckout' }));
+    quoteFailure.props.onAction();
+  });
+  expect(client.getCheckoutRequirements).toHaveBeenCalledTimes(3);
+  expect(r.root.findAllByProps({ testID: 'native-buy' }).length).toBeGreaterThan(0);
+  expect(r.root.findAllByType(StatusBox)).toHaveLength(0);
+});
+
+test.each(['failed', 'paymentPending', 'completed'] as const)(
+  '%s after finalization preserves the native outcome surface without quote recovery',
+  async sdkState => {
+    const { client, onramper } = setup();
+    const r = await render(onramper);
+    await act(async () => r.update(screen({
+      ...onramper,
+      sdkState,
+      hasFinalizedCheckout: true,
+      transactionId: 'current-transaction',
+      lastFailure: sdkState === 'failed' ? 'providerFailed — Check your transaction' : null,
+    })));
+    expect(r.root.findAllByProps({ testID: 'native-buy' }).length).toBeGreaterThan(0);
+    expect(r.root.findAllByType(StatusBox).some(n => n.props.actionLabel === 'Get a new quote')).toBe(false);
+    expect(client.getCheckoutRequirements).toHaveBeenCalledTimes(1);
+  },
+);

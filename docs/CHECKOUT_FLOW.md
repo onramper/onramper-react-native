@@ -34,7 +34,7 @@ A typical checkout maps to these calls, in order:
 5. **User taps Buy.** The button records ToS consent, presents the OnramperID login sheet if the provider needs user identity, then finalizes the intent.
 6. **The transaction ID is published.** Successful finalization emits `checkoutFinalized` with `response.onramperTransactionId` before the payment surface renders. Persist this durable ID for support, reconciliation, and status lookup; a payment abandoned after finalization is still traceable by this ID.
 7. **The Headless Wrapper renders the payment surface.** Apple Pay, card webview, or other — chosen automatically from the provider's response. State transitions through `finalizing` → `rendering`.
-8. **Outcome.** `completed` (with checkout id) or `failed` (with `OnramperError`). Call `client.reset()` to return to `ready` for another checkout.
+8. **Outcome.** `completed` (with checkout id), `paymentPending`, or `failed` (with `OnramperError`). For a failure before finalization, offer a new quote via `getCheckoutRequirements()` and replace the old button. `reset()` alone does not reactivate it. After a provider flow starts, check the transaction outcome before starting another payment; pending is not failure.
 
 Token refresh — both Headless Wrapper session and OnramperID user token — is fully automatic. Your code only sees it if both refresh paths exhaust, in which case the Headless Wrapper calls your `onSessionExpired` handler for a fresh `{ sessionId, sessionToken }` pair.
 
