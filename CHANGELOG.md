@@ -88,6 +88,22 @@ Bundles `OnramperSDK@1.3.0` from its published, checksum-verified release.
 
 ### Fixed
 
+- **Overlapping quote preparations no longer retain abandoned buttons.** Each
+  client invalidates older unmounted handles when a newer request starts, even
+  if that newer request fails. Superseded in-flight calls reject with
+  `intentInvalidated`, which apps should ignore when waiting for the latest
+  quote. Reset, sign-out, and destruction also clear owned handles; other
+  clients are unaffected. Consuming a handle transfers the view out of the
+  registry, and expired handles cannot mount. This is local view cleanup, not
+  cancellation of a backend request or payment.
+
+- **Safe client destruction.** Repeated `destroy()` calls are harmless. Calls
+  and listener subscriptions after destruction now return the typed
+  `clientDestroyed` error instead of Nitro's `NativeState is null`. Operations
+  waiting for configuration do not start native work after destruction, and
+  late results, events, and logs cannot update the destroyed JS client. Unmount
+  the old button and create a new client to start another session.
+
 - Rejected native SDK calls now preserve the structured error code, customer
   message, support code, and associated information across Nitro, matching the
   error fields delivered by failed events. Previously Nitro reduced exceptions

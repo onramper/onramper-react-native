@@ -24,7 +24,7 @@ export interface MockNative {
   __sessionHandler?: () => Promise<{ sessionId: string; sessionToken: string }>;
 }
 
-function makeNative(): MockNative {
+export function makeNative(): MockNative {
   const native = {
     configure: jest.fn().mockResolvedValue(undefined),
     initialize: jest.fn().mockResolvedValue(undefined),

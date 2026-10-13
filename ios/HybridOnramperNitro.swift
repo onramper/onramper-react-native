@@ -10,21 +10,27 @@ import SwiftUI
 /// async JS callback. The public typed JS API lives in `OnramperClient.ts`.
 final class HybridOnramperNitro: HybridOnramperNitroSpec {
   private let logRelay = SDKLogRelay()
-  private var client: OnramperClient?
-  private var stateObservation: AnyCancellable?
-  private var transactionIdObservation: AnyCancellable?
-  private var eventTask: Task<Void, Never>?
+  @MainActor private var client: OnramperClient?
+  @MainActor private var stateObservation: AnyCancellable?
+  @MainActor private var transactionIdObservation: AnyCancellable?
+  @MainActor private var eventTask: Task<Void, Never>?
 
-  private var onState: ((String) -> Void)?
-  private var onEvent: ((String) -> Void)?
-  private var onTransactionId: ((String?) -> Void)?
-  // Nitro wraps a callback's return value in a Promise; our callback already
-  // returns Promise<NitroSessionCredentials>, hence the doubly-nested Promise.
-  private var sessionHandler: (() -> Promise<Promise<NitroSessionCredentials>>)?
+  private let lifetime = PreparedIntentLifetime()
+  private let callbackLock = NSLock()
+  private struct Callbacks {
+    var onState: ((String) -> Void)?
+    var onEvent: ((String) -> Void)?
+    var onTransactionId: ((String?) -> Void)?
+    // Nitro wraps the async JS callback's own returned Promise.
+    var sessionHandler: (() -> Promise<Promise<NitroSessionCredentials>>)?
+  }
+  private var callbacks = Callbacks()
 
-  // Handle of the most recent prepared intent owned by *this* client, used to
-  // enforce single-flight per client without touching other clients' intents.
-  private var lastPreparedHandle: String?
+  private func withCallbacks<Value>(_ body: (inout Callbacks) -> Value) -> Value {
+    callbackLock.lock()
+    defer { callbackLock.unlock() }
+    return body(&callbacks)
+  }
 
   // MARK: - Listener registration (synchronous)
 
@@ -33,27 +39,33 @@ final class HybridOnramperNitro: HybridOnramperNitroSpec {
   }
 
   func setStateListener(onState: @escaping (String) -> Void) {
-    self.onState = onState
+    withCallbacks { $0.onState = onState }
   }
 
   func setEventListener(onEvent: @escaping (String) -> Void) {
-    self.onEvent = onEvent
+    withCallbacks { $0.onEvent = onEvent }
   }
 
   func setTransactionIdListener(onTransactionId: @escaping (String?) -> Void) {
-    self.onTransactionId = onTransactionId
+    withCallbacks { $0.onTransactionId = onTransactionId }
   }
 
   func setSessionExpirationHandler(handler: @escaping () -> Promise<Promise<NitroSessionCredentials>>) {
-    self.sessionHandler = handler
+    withCallbacks { $0.sessionHandler = handler }
+  }
+
+  /// Also used by reset/signOut: invalidate synchronously before scheduling
+  /// asynchronous SDK work, so old results cannot become usable buttons.
+  private func beginPreparation() throws -> PreparedIntentLifetime.Ticket {
+    do { return try lifetime.begin() } catch { throw bridgeSDKError(error) }
   }
 
   // MARK: - Lifecycle
 
   func configure(config: OnramperNitroConfig) throws -> Promise<Void> {
     return Promise.async { [weak self] in
-      guard let self else { return }
       do {
+        guard let self else { throw BridgeLifecycleError.clientDestroyed }
         try await self.performConfigure(config)
       } catch {
         throw bridgeSDKError(error)
@@ -63,6 +75,7 @@ final class HybridOnramperNitro: HybridOnramperNitroSpec {
 
   @MainActor
   private func performConfigure(_ config: OnramperNitroConfig) async throws {
+    try lifetime.checkActive()
     // Idempotent: a second configure() with the SDK already built is a no-op.
     if client != nil { return }
 
@@ -98,17 +111,20 @@ final class HybridOnramperNitro: HybridOnramperNitroSpec {
       isEventLoggingEnabled: config.isEventLoggingEnabled,
       isEventConsoleLoggingEnabled: config.isEventConsoleLoggingEnabled,
       sessionExpirationHandler: { [weak self] in
-        guard let self, let handler = self.sessionHandler else {
+        guard let self, let handler = self.withCallbacks({ $0.sessionHandler }) else {
           throw OnramperError.userTokenRefreshFailed("no session expiration handler registered")
         }
         // Await twice: outer Promise = the callback invocation, inner Promise =
         // the JS async function's own returned Promise. Then map to the SDK type.
+        try self.lifetime.checkActive()
         let creds = try await handler().await().await()
+        try self.lifetime.checkActive()
         return SessionCredentials(sessionId: creds.sessionId, sessionToken: creds.sessionToken)
       }
     )
 
     let newClient = OnramperClient(configuration: swiftConfig)
+    try lifetime.checkActive()
     client = newClient
     attachObservers(to: newClient)
   }
@@ -116,10 +132,12 @@ final class HybridOnramperNitro: HybridOnramperNitroSpec {
   @MainActor
   private func attachObservers(to client: OnramperClient) {
     stateObservation = client.$state.sink { [weak self] state in
-      self?.onState?(jsonString(state.toJSDict()))
+      guard let self, (try? self.lifetime.checkActive()) != nil else { return }
+      self.withCallbacks { $0.onState }?(jsonString(state.toJSDict()))
     }
     transactionIdObservation = client.$currentTransactionId.sink { [weak self] transactionId in
-      self?.onTransactionId?(transactionId)
+      guard let self, (try? self.lifetime.checkActive()) != nil else { return }
+      self.withCallbacks { $0.onTransactionId }?(transactionId)
     }
     // `events` is a computed AsyncStream that captures a single continuation, so
     // access it exactly once here. CheckoutEvent is Sendable → safe to iterate
@@ -127,23 +145,26 @@ final class HybridOnramperNitro: HybridOnramperNitroSpec {
     let stream = client.events
     eventTask = Task { [weak self] in
       for await event in stream {
-        self?.onEvent?(jsonString(event.toJSDict()))
+        guard let self, !Task.isCancelled, (try? self.lifetime.checkActive()) != nil else { break }
+        self.withCallbacks { $0.onEvent }?(jsonString(event.toJSDict()))
       }
     }
   }
 
   @MainActor
   private func requireClient() throws -> OnramperClient {
+    try lifetime.checkActive()
     guard let client else { throw OnramperError.notInitialized }
     return client
   }
 
   func initialize(sessionId: String, sessionToken: String) throws -> Promise<Void> {
     return Promise.async { [weak self] in
-      guard let self else { return }
       do {
+        guard let self else { throw BridgeLifecycleError.clientDestroyed }
         let client = try await self.requireClient()
         try await client.initialize(sessionId: sessionId, sessionToken: sessionToken)
+        try self.lifetime.checkActive()
       } catch {
         throw bridgeSDKError(error)
       }
@@ -151,11 +172,14 @@ final class HybridOnramperNitro: HybridOnramperNitroSpec {
   }
 
   func reset() throws -> Promise<Void> {
+    _ = try beginPreparation()
     return Promise.async { [weak self] in
-      guard let self else { return }
       do {
+        guard let self else { throw BridgeLifecycleError.clientDestroyed }
         let client = try await self.requireClient()
+        await PreparedIntentRegistry.shared.dropInvalidated(for: self.lifetime)
         await client.reset()
+        try self.lifetime.checkActive()
       } catch {
         throw bridgeSDKError(error)
       }
@@ -163,11 +187,14 @@ final class HybridOnramperNitro: HybridOnramperNitroSpec {
   }
 
   func signOut() throws -> Promise<Void> {
+    _ = try beginPreparation()
     return Promise.async { [weak self] in
-      guard let self else { return }
       do {
+        guard let self else { throw BridgeLifecycleError.clientDestroyed }
         let client = try await self.requireClient()
+        await PreparedIntentRegistry.shared.dropInvalidated(for: self.lifetime)
         await client.signOut()
+        try self.lifetime.checkActive()
       } catch {
         throw bridgeSDKError(error)
       }
@@ -181,13 +208,15 @@ final class HybridOnramperNitro: HybridOnramperNitroSpec {
     prefillJson: String,
     styleJson: String
   ) throws -> Promise<PreparedIntentResult> {
+    let ticket = try beginPreparation()
     return Promise.async { [weak self] in
       do {
-        guard let self else { throw OnramperError.notInitialized }
+        guard let self else { throw BridgeLifecycleError.clientDestroyed }
         return try await self.performGetCheckoutRequirements(
           requestJson: requestJson,
           prefillJson: prefillJson,
-          styleJson: styleJson
+          styleJson: styleJson,
+          ticket: ticket
         )
       } catch {
         throw bridgeSDKError(error)
@@ -199,37 +228,35 @@ final class HybridOnramperNitro: HybridOnramperNitroSpec {
   private func performGetCheckoutRequirements(
     requestJson: String,
     prefillJson: String,
-    styleJson: String
+    styleJson: String,
+    ticket: PreparedIntentLifetime.Ticket
   ) async throws -> PreparedIntentResult {
-    let client = try requireClient()
-    let request = try decodeCheckoutRequest(requestJson)
-    // Best-effort: an unusable prefill payload decodes to nil and the checkout
-    // proceeds without it. Never logged — the values are user PII, and the SDK
-    // makes the same guarantee at every log level.
-    let prefill = decodeUserPrefill(prefillJson)
-    let style = decodeCheckoutButtonStyle(styleJson)
-
-    // Single-flight, scoped to this client: a new prepared intent supersedes
-    // this instance's prior unconsumed one, but leaves other clients' intents
-    // in the shared registry untouched.
-    if let prev = lastPreparedHandle {
-      await PreparedIntentRegistry.shared.drop(prev)
+    let prepared = try await PreparedIntentRegistry.shared.prepare(ticket: ticket) { [self] in
+      try ticket.check()
+      let client = try requireClient()
+      let request = try decodeCheckoutRequest(requestJson)
+      // Best-effort; prefill values are never logged.
+      let prefill = decodeUserPrefill(prefillJson)
+      let style = decodeCheckoutButtonStyle(styleJson)
+      let result = try await client.getCheckoutRequirements(request, prefill: prefill, buttonStyle: style)
+      let entry = PreparedIntentRegistry.PreparedIntent(button: AnyView(result.button), createdAt: Date())
+      let quoteDict = (codableToJSValue(result.quote) as? [String: Any]) ?? [:]
+      return (entry, jsonString(quoteDict))
     }
-
-    let result = try await client.getCheckoutRequirements(request, prefill: prefill, buttonStyle: style)
-    let entry = PreparedIntentRegistry.PreparedIntent(button: AnyView(result.button), createdAt: Date())
-    let handle = await PreparedIntentRegistry.shared.store(entry)
-    lastPreparedHandle = handle
-    let quoteDict = (codableToJSValue(result.quote) as? [String: Any]) ?? [:]
-    return PreparedIntentResult(intentHandle: handle, quoteJson: jsonString(quoteDict))
+    try ticket.check()
+    return PreparedIntentResult(intentHandle: prepared.handle, quoteJson: prepared.value)
   }
 
   func cancelPreparedIntent(intentHandle: String) throws -> Promise<Void> {
-    if intentHandle == lastPreparedHandle {
-      lastPreparedHandle = nil
-    }
-    return Promise.async {
-      await PreparedIntentRegistry.shared.drop(intentHandle)
+    return Promise.async { [weak self] in
+      do {
+        guard let self else { throw BridgeLifecycleError.clientDestroyed }
+        try self.lifetime.checkActive()
+        await PreparedIntentRegistry.shared.drop(intentHandle, owner: self.lifetime)
+        try self.lifetime.checkActive()
+      } catch {
+        throw bridgeSDKError(error)
+      }
     }
   }
 
@@ -238,18 +265,20 @@ final class HybridOnramperNitro: HybridOnramperNitroSpec {
   /// Releases the stored JS callbacks (Nitro holds strong refs to them) and the
   /// SDK client. Called from `OnramperClient.destroy()` in JS.
   func dispose() {
+    guard lifetime.destroy() else { return }
     logRelay.setListener(nil)
-    stateObservation?.cancel()
-    stateObservation = nil
-    transactionIdObservation?.cancel()
-    transactionIdObservation = nil
-    eventTask?.cancel()
-    eventTask = nil
-    onState = nil
-    onEvent = nil
-    onTransactionId = nil
-    sessionHandler = nil
-    lastPreparedHandle = nil
-    client = nil
+    withCallbacks { $0 = Callbacks() }
+    // SDK ownership and Combine subscriptions belong to the main actor.
+    // Tickets are already invalid even if this cleanup has not run yet.
+    Task { @MainActor [self] in
+      stateObservation?.cancel()
+      stateObservation = nil
+      transactionIdObservation?.cancel()
+      transactionIdObservation = nil
+      eventTask?.cancel()
+      eventTask = nil
+      client = nil
+      await PreparedIntentRegistry.shared.dropInvalidated(for: lifetime)
+    }
   }
 }

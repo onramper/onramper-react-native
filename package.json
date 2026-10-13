@@ -41,6 +41,7 @@
     "lint": "biome check src",
     "format": "biome format --write src",
     "test": "jest",
+    "test:native": "bash scripts/test-native.sh",
     "typecheck": "tsc --noEmit",
     "nitrogen": "nitrogen && node scripts/sync-view-config.js",
     "prepare": "bob build",

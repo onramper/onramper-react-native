@@ -33,6 +33,9 @@ final class SDKLogRelay: @unchecked Sendable {
 /// Nitro otherwise converts a Swift error to a message-only JavaScript Error.
 /// Both failed events and rejected operations must carry the SDK's safe copy.
 func bridgeSDKError(_ error: Error) -> Error {
+  if let lifecycleError = error as? BridgeLifecycleError {
+    return RuntimeError.error(withMessage: "ONRAMPER_ERROR:" + jsonString(lifecycleError.payload))
+  }
   guard let sdkError = error as? OnramperError else { return error }
   return RuntimeError.error(withMessage: "ONRAMPER_ERROR:" + jsonString(sdkError.toJSDict()))
 }

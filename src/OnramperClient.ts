@@ -60,6 +60,7 @@ export class OnramperClient {
     }
     // Single native state callback → update the mirror + fan out to listeners.
     this.native.setStateListener((json) => {
+      if (this.destroyed) return;
       const s = JSON.parse(json) as OnramperState;
       this.state = s;
       if (s.kind === 'failed') this.lastError = OnramperError.from(s.error);
@@ -69,6 +70,7 @@ export class OnramperClient {
     // Single native checkout-event callback → keep the transaction ID mirror
     // synchronized at finalization, then fan out to checkout listeners.
     this.native.setEventListener((json) => {
+      if (this.destroyed) return;
       const e = JSON.parse(json) as CheckoutEvent;
       if (e.type === 'checkoutFinalized') {
         this.updateCurrentTransactionId(e.response.onramperTransactionId);
@@ -77,6 +79,7 @@ export class OnramperClient {
     });
 
     this.native.setTransactionIdListener((transactionId) => {
+      if (this.destroyed) return;
       // The SDK transiently publishes nil while re-preparing after the payment
       // sheet is dismissed. The finalized transaction ID remains durable across
       // that attempt change; only explicit reset()/signOut() clear the JS mirror.
@@ -87,7 +90,9 @@ export class OnramperClient {
     // Nitro stores the async callback natively and awaits it directly — no
     // event round-trip needed.
     this.native.setSessionExpirationHandler(async () => {
+      this.assertActive();
       const creds = await config.onSessionExpired();
+      this.assertActive();
       return { sessionId: creds.sessionId, sessionToken: creds.sessionToken };
     });
 
@@ -103,7 +108,7 @@ export class OnramperClient {
       })
       .catch((e: unknown) => {
         const err = OnramperError.from(e);
-        this.lastError = err;
+        if (!this.destroyed) this.lastError = err;
         throw err;
       });
     // Swallow the unhandled-rejection warning when no one awaits .configured
@@ -111,11 +116,23 @@ export class OnramperClient {
     this.configured.catch(() => undefined);
   }
 
+  private assertActive(): void {
+    if (this.destroyed) {
+      throw new OnramperError({
+        code: 'clientDestroyed',
+        message: 'This OnramperClient has been destroyed. Create a new client before making SDK calls.',
+        userMessage: 'This checkout session has ended. Please reopen checkout.',
+      });
+    }
+  }
+
   private updateCurrentTransactionId(next: string | null): void {
+    if (this.destroyed) return;
     if (next === this.currentTransactionId) return;
 
     this.currentTransactionId = next;
     for (const fn of [...this.transactionIdListeners]) {
+      if (this.destroyed) break;
       try {
         fn(next);
       } catch (error: unknown) {
@@ -126,19 +143,27 @@ export class OnramperClient {
 
   async initialize(creds: SessionCredentials): Promise<void> {
     try {
+      this.assertActive();
       await this.configured;
+      this.assertActive();
       await this.native.initialize(creds.sessionId, creds.sessionToken);
+      this.assertActive();
     } catch (e: unknown) {
+      this.assertActive();
       throw OnramperError.from(e);
     }
   }
 
   async reset(): Promise<void> {
     try {
+      this.assertActive();
       await this.configured;
+      this.assertActive();
       await this.native.reset();
+      this.assertActive();
       this.updateCurrentTransactionId(null);
     } catch (e: unknown) {
+      this.assertActive();
       throw OnramperError.from(e);
     }
   }
@@ -151,10 +176,14 @@ export class OnramperClient {
    */
   async signOut(): Promise<void> {
     try {
+      this.assertActive();
       await this.configured;
+      this.assertActive();
       await this.native.signOut();
+      this.assertActive();
       this.updateCurrentTransactionId(null);
     } catch (e: unknown) {
+      this.assertActive();
       throw OnramperError.from(e);
     }
   }
@@ -163,6 +192,8 @@ export class OnramperClient {
    * Fetches checkout requirements + quote and returns a native checkout button
    * to render plus the quote. The button handles login / finalize / webview
    * internally; outcomes surface via the event stream (`addEventListener`).
+   * A newer preparation, reset, or sign-out invalidates older unmounted buttons
+   * and rejects obsolete in-flight preparations with `intentInvalidated`.
    *
    * Pass `prefill` to pre-populate the OnramperID sign-in and additional-info
    * screens with values you already know about the user. It is best-effort and
@@ -180,27 +211,39 @@ export class OnramperClient {
     prefill: OnramperUserPrefill = {},
   ): Promise<GetCheckoutRequirementsResult> {
     try {
+      this.assertActive();
       await this.configured;
+      this.assertActive();
       const result = await this.native.getCheckoutRequirements(
         JSON.stringify(request),
         JSON.stringify(prefill),
         JSON.stringify(buttonStyle),
       );
+      this.assertActive();
       const quote = JSON.parse(result.quoteJson) as QuoteResponse;
       const button = createElement(CheckoutButton, { intentHandle: result.intentHandle });
       return { button, quote };
     } catch (e: unknown) {
+      this.assertActive();
       throw OnramperError.from(e);
     }
   }
 
   /** Discards a prepared intent (e.g. if the user navigates away before checkout). */
-  cancelPreparedIntent(intentHandle: string): Promise<void> {
-    return this.native.cancelPreparedIntent(intentHandle);
+  async cancelPreparedIntent(intentHandle: string): Promise<void> {
+    try {
+      this.assertActive();
+      await this.native.cancelPreparedIntent(intentHandle);
+      this.assertActive();
+    } catch (e: unknown) {
+      this.assertActive();
+      throw OnramperError.from(e);
+    }
   }
 
   /** Subscribe to state changes. Returns an unsubscribe function. */
   addStateListener(fn: (state: OnramperState) => void): () => void {
+    this.assertActive();
     this.stateListeners.add(fn);
     return () => {
       this.stateListeners.delete(fn);
@@ -209,6 +252,7 @@ export class OnramperClient {
 
   /** Subscribe to the durable Onramper transaction ID. Successful reset/signOut publish null. */
   addTransactionIdListener(fn: (transactionId: string | null) => void): () => void {
+    this.assertActive();
     this.transactionIdListeners.add(fn);
     return () => {
       this.transactionIdListeners.delete(fn);
@@ -217,6 +261,7 @@ export class OnramperClient {
 
   /** Subscribe to a specific checkout event. Returns an unsubscribe function. */
   addEventListener<K extends EventName>(name: K, fn: (e: EventPayload<K>) => void): () => void {
+    this.assertActive();
     const wrapper = (e: CheckoutEvent) => {
       if (e.type === name) fn(e as EventPayload<K>);
     };
@@ -226,8 +271,9 @@ export class OnramperClient {
     };
   }
 
-  /** Tear down: clears JS listeners and releases the native callbacks + SDK client. */
+  /** Idempotent teardown. Further operations reject with `clientDestroyed`; create a new client to restart. */
   destroy(): void {
+    if (this.destroyed) return;
     this.destroyed = true;
     this.stateListeners.clear();
     this.eventListeners.clear();

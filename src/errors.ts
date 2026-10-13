@@ -29,11 +29,12 @@ export type OnramperErrorCode =
   | 'deviceBlocked'
   | 'securityStorageFailed'
   | 'securityTrustFailed'
-  // JS-only codes
+  // Wrapper lifecycle and platform codes
   | 'platformUnsupported'
   | 'intentInvalidated'
   | 'intentAlreadyConsumed'
   | 'clientAlreadyConfigured'
+  | 'clientDestroyed'
   | 'sessionExpirationHandlerFailed';
 
 export interface OnramperErrorPayload {

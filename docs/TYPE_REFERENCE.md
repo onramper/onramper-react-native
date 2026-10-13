@@ -209,9 +209,14 @@ A provider surface failure does not establish the payment outcome. See the **Err
 [Getting Started](doc:getting-started) for the full taxonomy and recommended handling.
 
 `OnramperErrorCode` is a string union of the SDK codes (`notInitialized`,
-`quoteUnavailable`, `checkoutForbidden`, `userTokenRefreshFailed`, …) plus JS-only codes
+`quoteUnavailable`, `checkoutForbidden`, `userTokenRefreshFailed`, …) plus wrapper codes
 (`platformUnsupported`, `intentInvalidated`, `intentAlreadyConsumed`,
-`clientAlreadyConfigured`, `sessionExpirationHandlerFailed`).
+`clientAlreadyConfigured`, `clientDestroyed`, `sessionExpirationHandlerFailed`).
+
+`intentInvalidated` rejects a preparation superseded by a newer request, reset,
+or sign-out. Ignore obsolete requests when updating the quote UI.
+`clientDestroyed` means the instance cannot be reused: create a new client.
+Neither code establishes a payment outcome.
 
 ---
 

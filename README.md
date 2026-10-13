@@ -117,6 +117,24 @@ Use `error.userMessage` for customer copy and `error.supportCode` for support.
 payment outcome. The same fields survive native Promise rejections and failed events.
 Full code list in `src/errors.ts`.
 
+## Client lifecycle
+
+Each client keeps only its latest unmounted checkout button. A new
+`getCheckoutRequirements()` call, `reset()`, or `signOut()` invalidates older
+preparations; an in-flight request that becomes obsolete rejects with
+`intentInvalidated`. When replacing a quote, remove the previous button and
+ignore that obsolete request's rejection while waiting for the current request.
+Do not treat it as a payment failure. Other clients are unaffected.
+
+Call `destroy()` when disposing of a client and unmount its checkout button.
+Repeated destruction is safe. Further operations reject with `clientDestroyed`;
+new listener subscriptions throw the same typed error. Pending results and late
+callbacks cannot update the destroyed JS client. Create a new `OnramperClient`
+to start again; calling `initialize()` on a destroyed instance does not revive it.
+
+These rules release local prepared views; they do not cancel an already submitted
+payment or guarantee cancellation of a request already sent to the backend.
+
 ## Diagnostic logs
 
 Pass `logLevel: 'info'` (or `'debug'`) and `logHandler: record => yourStore.append(record)`

@@ -98,6 +98,7 @@ jobs:
           npm run lint
           npm run typecheck
           npx jest
+          npm run test:native
           npm run build
 
       - name: Configure git

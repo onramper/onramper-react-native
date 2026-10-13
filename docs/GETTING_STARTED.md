@@ -393,7 +393,7 @@ try {
 | `networkError` / `timeout` | Transport-level failure. Show retry. |
 | `deviceBlocked` | Server rejected the device — terminal. |
 | `configurationError` | Partner-side setup error (bad API key, missing scope). Not user-actionable — log it and show a setup-error message. |
-| `unrecoverable` | Catch-all for failures the Headless Wrapper couldn't resolve internally (refresh + re-bootstrap exhausted, or a superseded `getCheckoutRequirements`). Show retry, call `reset()`, and re-initialize if needed. |
+| `unrecoverable` | Catch-all for failures the Headless Wrapper couldn't resolve internally (for example, refresh + re-bootstrap exhausted). Show retry, call `reset()`, and re-initialize if needed. |
 | `oidcFlowCancelled` | User dismissed the OnramperID login sheet. Tapping Buy again retries. |
 | `oidcFlowFailed` / `oidcTokenExchangeFailed` | OnramperID flow inconsistency or code-exchange failure. Show retry — tapping Buy re-presents the login sheet. |
 | `userTokenInvalid` / `userTokenRefreshFailed` | OnramperID refresh token terminally rejected. The Headless Wrapper has already transitioned to `requireLogin` and the button will re-present the login sheet — usually nothing to do unless you want to log it. |
@@ -403,9 +403,10 @@ try {
 | `applePayNotConfigured` | Ask the user to set up an Apple Pay card in Wallet. |
 | `decodingError` / `invalidState` / `invalidStateTransition` / `deepLinkFailed` | Bridge / Headless Wrapper protocol inconsistency — treat as `unrecoverable`. Log `e.message` and `e.info` and report. |
 | `platformUnsupported` | Calling an iOS-only API on Android (Android is a stub in this release). Guard your call sites with a platform check. |
-| `intentInvalidated` | The button was rendered against an intent that has since been replaced by a newer `getCheckoutRequirements()` call. Render only the most recent button. |
+| `intentInvalidated` | An in-flight preparation was superseded by a newer request, reset, or sign-out. Ignore obsolete results while awaiting the latest quote; render only its button. This is not a payment failure. |
 | `intentAlreadyConsumed` | A single button instance can only drive one checkout. Re-render against a fresh result. |
-| `clientAlreadyConfigured` | Constructing a second `OnramperClient` with a different `apiKey`/`clientId` in the same JS context. Either reuse the existing client or `destroy()` it first. |
+| `clientAlreadyConfigured` | Reserved for compatibility; the current wrapper creates an independent native instance for each client. |
+| `clientDestroyed` | An operation or listener subscription used a destroyed instance. Unmount its button and create a new client; `initialize()` cannot revive it. |
 | `sessionExpirationHandlerFailed` | Your `onSessionExpired` handler threw or rejected. Surfaces if a refresh recovery attempt could not get fresh credentials. Same UX as `userTokenRefreshFailed`. |
 
 #### What you won't see
@@ -452,7 +453,7 @@ Values you pass as `prefill` are never logged at any level.
 | `addStateListener(fn)` | `() => void` | Returns an unsubscribe. `fn` receives every `OnramperState` transition. |
 | `addTransactionIdListener(fn)` | `() => void` | Returns an unsubscribe. `fn` receives the current durable Onramper transaction ID as `string | null`; reset/sign-out publish `null`. |
 | `addEventListener(name, fn)` | `() => void` | Returns an unsubscribe. `fn` receives only events whose `type` matches `name`. |
-| `destroy()` | `void` | Removes all listeners (host + internal). Call on unmount. |
+| `destroy()` | `void` | Removes all listeners and invalidates owned unmounted buttons. Call on unmount; repeated calls are safe. Further operations reject with `clientDestroyed`. |
 
 #### `client.state` (mirror of `OnramperState`)
 

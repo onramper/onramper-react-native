@@ -39,7 +39,7 @@ final class HybridOnramperCheckoutButton: HybridOnramperCheckoutButtonSpec {
       let entry = await PreparedIntentRegistry.shared.consume(handle)
       // A newer handle arrived while this one was being consumed; it owns the view.
       guard self.mountedHandle == handle else { return }
-      guard let entry else {
+      guard let entry, entry.isValid else {
         // Handle was invalidated or already consumed. Remove whatever an earlier
         // handle hosted, so a stale Buy button can't stay on screen.
         self.container.clear()
