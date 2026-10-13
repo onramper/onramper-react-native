@@ -44,10 +44,12 @@ namespace margelo::nitro::onramper {
     std::string environment     SWIFT_PRIVATE;
     std::string theme     SWIFT_PRIVATE;
     std::string logLevel     SWIFT_PRIVATE;
+    bool isEventLoggingEnabled     SWIFT_PRIVATE;
+    bool isEventConsoleLoggingEnabled     SWIFT_PRIVATE;
 
   public:
     OnramperNitroConfig() = default;
-    explicit OnramperNitroConfig(std::string apiKey, std::string clientId, std::string environment, std::string theme, std::string logLevel): apiKey(apiKey), clientId(clientId), environment(environment), theme(theme), logLevel(logLevel) {}
+    explicit OnramperNitroConfig(std::string apiKey, std::string clientId, std::string environment, std::string theme, std::string logLevel, bool isEventLoggingEnabled, bool isEventConsoleLoggingEnabled): apiKey(apiKey), clientId(clientId), environment(environment), theme(theme), logLevel(logLevel), isEventLoggingEnabled(isEventLoggingEnabled), isEventConsoleLoggingEnabled(isEventConsoleLoggingEnabled) {}
 
   public:
     friend bool operator==(const OnramperNitroConfig& lhs, const OnramperNitroConfig& rhs) = default;
@@ -67,7 +69,9 @@ namespace margelo::nitro {
         JSIConverter<std::string>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "clientId"))),
         JSIConverter<std::string>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "environment"))),
         JSIConverter<std::string>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "theme"))),
-        JSIConverter<std::string>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "logLevel")))
+        JSIConverter<std::string>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "logLevel"))),
+        JSIConverter<bool>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "isEventLoggingEnabled"))),
+        JSIConverter<bool>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "isEventConsoleLoggingEnabled")))
       );
     }
     static inline jsi::Value toJSI(jsi::Runtime& runtime, const margelo::nitro::onramper::OnramperNitroConfig& arg) {
@@ -77,6 +81,8 @@ namespace margelo::nitro {
       obj.setProperty(runtime, PropNameIDCache::get(runtime, "environment"), JSIConverter<std::string>::toJSI(runtime, arg.environment));
       obj.setProperty(runtime, PropNameIDCache::get(runtime, "theme"), JSIConverter<std::string>::toJSI(runtime, arg.theme));
       obj.setProperty(runtime, PropNameIDCache::get(runtime, "logLevel"), JSIConverter<std::string>::toJSI(runtime, arg.logLevel));
+      obj.setProperty(runtime, PropNameIDCache::get(runtime, "isEventLoggingEnabled"), JSIConverter<bool>::toJSI(runtime, arg.isEventLoggingEnabled));
+      obj.setProperty(runtime, PropNameIDCache::get(runtime, "isEventConsoleLoggingEnabled"), JSIConverter<bool>::toJSI(runtime, arg.isEventConsoleLoggingEnabled));
       return obj;
     }
     static inline bool canConvert(jsi::Runtime& runtime, const jsi::Value& value) {
@@ -92,6 +98,8 @@ namespace margelo::nitro {
       if (!JSIConverter<std::string>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "environment")))) return false;
       if (!JSIConverter<std::string>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "theme")))) return false;
       if (!JSIConverter<std::string>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "logLevel")))) return false;
+      if (!JSIConverter<bool>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "isEventLoggingEnabled")))) return false;
+      if (!JSIConverter<bool>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "isEventConsoleLoggingEnabled")))) return false;
       return true;
     }
   };

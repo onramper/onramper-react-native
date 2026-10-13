@@ -5,6 +5,16 @@ import type { OnramperErrorPayload } from './errors';
 
 export type OnramperEnvironment = 'development' | 'production';
 export type OnramperLogLevel = 'off' | 'error' | 'info' | 'debug';
+/** A sanitized native SDK diagnostic. Timestamp is Unix milliseconds. */
+export interface OnramperLogRecord {
+  timestamp: number;
+  level: OnramperLogLevel;
+  category: string;
+  event: string;
+  context: Record<string, string>;
+  message: string;
+}
+
 export type OnramperTheme = 'system' | 'light' | 'dark';
 
 export type TransactionType = 'buy' | 'sell';
@@ -20,12 +30,16 @@ export interface OnramperConfiguration {
   environment: OnramperEnvironment;
   theme?: OnramperTheme;
   logLevel?: OnramperLogLevel;
+  /** Receives native records in JS; system Console output is preserved. Off unless logLevel enables it. */
+  logHandler?: (record: OnramperLogRecord) => void;
+  /** Opt-in provider-event telemetry to the BFF. Defaults to false. */
+  isEventLoggingEnabled?: boolean;
+  /** Emit provider events at info even when logLevel is lower. Defaults to false. */
+  isEventConsoleLoggingEnabled?: boolean;
   /**
    * Called by the SDK when the session token expires and needs to be re-issued.
    *
-   * May be synchronous or async — under the hood the bridge uses an event
-   * round-trip (`onSessionExpired` → `provideSessionCredentials`) so Promises
-   * are awaited normally. Throw or reject to signal that no fresh credentials
+   * May be synchronous or async; the Nitro bridge awaits the callback directly. Throw or reject to signal that no fresh credentials
    * are available; the SDK will surface `userTokenRefreshFailed`.
    */
   onSessionExpired: () => SessionCredentials | Promise<SessionCredentials>;
@@ -67,6 +81,23 @@ export interface QuoteResponse {
   networkFee: number;
   transactionFee: number;
   recommendations?: string[];
+  providerContext?: Record<string, ProviderJSONValue>;
+}
+
+/** JSON values used in provider-specific quote metadata (including booleans and limits). */
+export type ProviderJSONValue =
+  | string
+  | number
+  | boolean
+  | null
+  | ProviderJSONValue[]
+  | { [key: string]: ProviderJSONValue };
+
+export interface PaymentDisclosure {
+  code: string;
+  version: string;
+  contentMarkdown: string;
+  contentHtml: string;
 }
 
 // Mirrors Swift `OnramperUserPrefill`. Values you already know about the user,
@@ -111,6 +142,7 @@ export interface HeadlessCheckoutData {
   checkoutPaymentType: CheckoutPaymentType;
   url: string;
   renderType: RenderType;
+  providerBootstrap?: { framesBaseUrl?: string };
 }
 
 export interface CheckoutFinalizeResponse {
@@ -181,6 +213,7 @@ export type OnramperState =
   | { kind: 'readyToCheckout' }
   | { kind: 'finalizing' }
   | { kind: 'rendering'; url: string; renderType: RenderType; paymentType: CheckoutPaymentType }
+  | { kind: 'paymentPending' }
   | { kind: 'completed' }
   | { kind: 'failed'; error: OnramperErrorPayload };
 

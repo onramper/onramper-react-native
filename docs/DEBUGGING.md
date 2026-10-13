@@ -22,3 +22,23 @@ config.resolver.nodeModulesPaths = [path.resolve(__dirname, 'node_modules')];
 ```
 
 On a **bare RN (Community CLI)** host, the `file:..` symlink also hides the package from CLI autolinking; add a `react-native.config.js` in the host app pointing at the package root and its podspec. Registry installs hit neither issue — there's no symlink.
+
+
+## SDK logs (1.3.0+)
+
+`logLevel` controls native diagnostics. Provide `logHandler` in client configuration
+to receive structured records in JavaScript as well as the native Console. Each
+record has `timestamp` (Unix milliseconds), `level`, `category`, `event`, `context`,
+and `message`. Logging defaults to `off`; callback exceptions are isolated from
+checkout, and records queued after `destroy()` are ignored.
+
+The bare demo's **Settings → Diagnostic logs** has an opt-in recording toggle,
+**Share logs**, and **Delete logs**. Enable recording before reproducing an issue.
+It persists SDK records independently of the 300-entry on-screen event panel.
+Two rotating files cap storage at 5 MiB; files older than seven days are pruned
+on write/export. Sharing creates a snapshot and opens the iOS share sheet.
+Records use the released SDK's sanitization, but provider messages may retain
+personal data after best-effort redaction. Review logs before sharing.
+
+The Expo example displays the callback records in its bounded on-screen log.
+Integrators own persistent storage and export; the library adds no storage dependency.

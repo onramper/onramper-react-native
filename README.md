@@ -19,7 +19,7 @@ Requires React Native 0.79+, `react-native-nitro-modules` 0.35+, the **New Archi
 { "expo": { "plugins": ["@onramper/onramper-react-native"] } }
 ```
 
-The plugin applies the required iOS build flag (it does not change your deployment target). Set your app's deployment target to **16.4+** — Expo SDK 56's own minimum (bare RN only needs 16.0). For bare-RN Podfile setup (Xcode 16+/26) and full details, see the [integration guide](docs/INTEGRATION.md).
+The plugin applies the required iOS build flag (it does not change your deployment target). Set your app's deployment target to **16.4+** — Expo SDK 56's own minimum (bare RN only needs 16.0). For bare-RN Podfile setup (Xcode 16+/26) and full details, see the [integration guide](docs/GETTING_STARTED.md).
 
 ## Quick start
 
@@ -74,14 +74,22 @@ const unsub = client.addEventListener('completed', (e) => {
   console.log('done:', e.checkoutId);
 });
 
+// Import OnramperError from '@onramper/onramper-react-native'.
 const onFailed = client.addEventListener('failed', (e) => {
-  console.log('failed:', e.error.code, e.error.message);
+  const failure = OnramperError.from(e.error);
+  showError(failure.userMessage, failure.supportCode);
 });
 ```
 
 `checkoutStarted.intentId` and `completed.checkoutId` identify an attempt, while
 `onramperTransactionId` identifies the transaction and is available before payment rendering.
 `client.currentTransactionId` mirrors the same value; `reset()` clears it.
+
+`paymentPending` means accepted but awaiting settlement. Show processing and track
+`currentTransactionId`; do not treat it as completion or automatically restart payment.
+The native button also handles MoonPay onboarding and 3-D Secure. Observe
+`customerOnboardingRequired`, `challengeStarted`, and `challengeCompleted` for progress.
+These events do not establish payment success. All flows still require backend webhooks.
 
 ## Error handling
 
@@ -103,7 +111,21 @@ try {
 }
 ```
 
+Use `error.userMessage` for customer copy and `error.supportCode` for support.
+`paymentFailed` confirms payment failure; `providerFailed` does not confirm the
+payment outcome. The same fields survive native Promise rejections and failed events.
 Full code list in `src/errors.ts`.
+
+## Diagnostic logs
+
+Pass `logLevel: 'info'` (or `'debug'`) and `logHandler: record => yourStore.append(record)`
+to receive structured `OnramperLogRecord`s in JavaScript. Native Console output is
+preserved. Logging defaults to off; storage and export are owned by your app.
+The bare demo provides Settings → Diagnostic logs → Save SDK logs / Share logs.
+See [debugging](docs/DEBUGGING.md) for the record shape and retention guidance.
+
+For migration details, including new enum cases and one-time OnramperID sign-in,
+see [1.3.0 release notes](CHANGELOG.md#130).
 
 ## Versioning
 
@@ -120,6 +142,6 @@ The vendored `OnramperSDK.xcframework` already ships its own `PrivacyInfo.xcpriv
 ## Troubleshooting
 
 - **`pod install` fails finding the xcframework** — confirm `node_modules/@onramper/onramper-react-native/ios/Frameworks/OnramperSDK.xcframework/` exists.
-- **Bare RN build fails with `module map file ... not found` (Xcode 16+/26)** — disable explicit Swift modules in your `Podfile` `post_install` (`SWIFT_ENABLE_EXPLICIT_MODULES = NO`). Expo apps get this automatically via the config plugin. See the [integration guide](docs/INTEGRATION.md).
+- **Bare RN build fails with `module map file ... not found` (Xcode 16+/26)** — disable explicit Swift modules in your `Podfile` `post_install` (`SWIFT_ENABLE_EXPLICIT_MODULES = NO`). Expo apps get this automatically via the config plugin. See the [integration guide](docs/GETTING_STARTED.md).
 - **App Attest errors in simulator** — expected. App Attest only works on real devices. The SDK surfaces this as `attestationFailed`.
 - **Buttons appear but sheets don't open** — the host RN screen must be inside a normal `UIViewController` (the default). Modal-presented screens may need extra care; report an issue with a repro.

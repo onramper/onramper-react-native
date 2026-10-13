@@ -224,3 +224,19 @@ test('settledEnvironment follows each finished run, failed or not', async () => 
   expect(latest.status).toBe('error');
   expect(latest.settledEnvironment).toBe('production');
 });
+
+
+test('pending clears prior completion and logs the processing outcome', async () => {
+  await render(DEV);
+  await act(async () => fire('completed', { checkoutId: 'old' }));
+  await act(async () => fire('paymentPending', {}));
+  expect(latest.completedCheckoutId).toBeNull();
+  expect(latest.lastFailure).toBeNull();
+  expect(latest.log.at(-1)?.line).toContain('Payment processing');
+});
+
+test('uses customer-friendly error copy in the status box', async () => {
+  await render(DEV);
+  await act(async () => fire('failed', { error: { code: 'providerFailed', message: 'diagnostic', userMessage: 'Check your transaction before trying again.' } }));
+  expect(latest.lastFailure).toBe('providerFailed — Check your transaction before trying again.');
+});

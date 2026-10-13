@@ -14,6 +14,7 @@ import {
 import * as Application from 'expo-application';
 import {
   OnramperClient,
+  OnramperError,
   type OnramperState,
   type OnramperUserPrefill,
   type QuoteResponse,
@@ -74,7 +75,7 @@ export default function App() {
   const scrollRef = useRef<ScrollView>(null);
 
   const append = (entry: LogEntry) => {
-    setLog((l) => [...l, entry]);
+    setLog((l) => [...l.slice(-299), entry]);
     requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
   };
   const info = (line: string) => append({ level: 'info', line });
@@ -94,9 +95,15 @@ export default function App() {
     c.addEventListener('checkoutFinalized', (e) =>
       event(`checkout finalized: transactionId=${e.response.onramperTransactionId}`),
     );
-    c.addEventListener('renderingStarted', (e) => event(`rendering: ${e.renderType} ${e.url}`));
+    c.addEventListener('renderingStarted', (e) => event(`rendering: ${e.renderType}`));
     c.addEventListener('completed', (e) => event(`COMPLETED checkoutId=${e.checkoutId}`));
-    c.addEventListener('failed', (e) => event(`FAILED: ${e.error.code} ${e.error.message}`));
+    c.addEventListener('failed', (e) => event(`FAILED: ${e.error.supportCode ?? e.error.code} ${e.error.userMessage}`));
+    c.addEventListener('paymentPending', () => event('Payment processing — track the transaction before starting another payment.'));
+    c.addEventListener('providerError', e => event(`provider error: ${e.reason}`));
+    for (const name of ['providerReady', 'paymentAuthorized', 'paymentProcessing', 'paymentCancelled',
+      'challengeStarted', 'challengeCompleted', 'customerOnboardingRequired'] as const) {
+      c.addEventListener(name, () => event(name));
+    }
   };
 
   const onConfigureInitialize = async () => {
@@ -111,13 +118,14 @@ export default function App() {
     try {
       info('minting demo session…');
       const session = await createDemoSession(ENV.demoToken);
-      info(`minted session: ${session.sessionId}`);
+      info('demo session minted');
 
       inflight = new OnramperClient({
         apiKey: ENV.apiKey,
         clientId: ENV.clientId,
         environment: 'development',
         logLevel: 'debug',
+        logHandler: record => append({ level: record.level === 'error' ? 'error' : 'info', line: `${record.category}: ${record.message}` }),
         theme: 'light',
         onSessionExpired: async () => {
           info('onSessionExpired invoked — refreshing');
@@ -131,11 +139,8 @@ export default function App() {
     } catch (e: unknown) {
       // Tear down the half-initialized client so its listeners don't leak.
       inflight?.destroy();
-      const err = e as { code?: string; message?: string; info?: Record<string, unknown> };
-      fail(`init error: ${err.code ?? 'unknown'} — ${err.message ?? String(e)}`);
-      if (err.info && Object.keys(err.info).length > 0) {
-        fail(`  info: ${JSON.stringify(err.info)}`);
-      }
+      const err = OnramperError.from(e);
+      fail(`init error: ${err.code ?? 'unknown'} — ${err.userMessage}`);
     }
   };
 
@@ -194,8 +199,8 @@ export default function App() {
       setButton(result.button);
       info(`got intent: rate=${result.quote.rate} payout=${result.quote.payout}`);
     } catch (e: unknown) {
-      const err = e as { code?: string; message?: string };
-      fail(`getCheckoutRequirements error: ${err.code ?? 'unknown'} — ${err.message ?? String(e)}`);
+      const err = OnramperError.from(e);
+      fail(`getCheckoutRequirements error: ${err.code ?? 'unknown'} — ${err.userMessage}`);
     }
   };
 
@@ -207,8 +212,8 @@ export default function App() {
       setButton(null);
       info('reset OK');
     } catch (e: unknown) {
-      const err = e as { code?: string; message?: string };
-      fail(`reset error: ${err.code ?? 'unknown'} — ${err.message ?? String(e)}`);
+      const err = OnramperError.from(e);
+      fail(`reset error: ${err.code ?? 'unknown'} — ${err.userMessage}`);
     }
   };
 
@@ -220,8 +225,8 @@ export default function App() {
       setButton(null);
       info('signed out — OIDC tokens cleared, next checkout will re-present login');
     } catch (e: unknown) {
-      const err = e as { code?: string; message?: string };
-      fail(`signOut error: ${err.code ?? 'unknown'} — ${err.message ?? String(e)}`);
+      const err = OnramperError.from(e);
+      fail(`signOut error: ${err.code ?? 'unknown'} — ${err.userMessage}`);
     }
   };
 

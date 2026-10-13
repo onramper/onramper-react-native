@@ -63,11 +63,11 @@ namespace margelo::nitro::onramper::bridge::swift {
     };
   }
   
-  // pragma MARK: std::function<void(const std::string& /* stateJson */)>
+  // pragma MARK: std::function<void(const std::string& /* recordJson */)>
   Func_void_std__string create_Func_void_std__string(void* NON_NULL swiftClosureWrapper) noexcept {
     auto swiftClosure = OnramperReactNative::Func_void_std__string::fromUnsafe(swiftClosureWrapper);
-    return [swiftClosure = std::move(swiftClosure)](const std::string& stateJson) mutable -> void {
-      swiftClosure.call(stateJson);
+    return [swiftClosure = std::move(swiftClosure)](const std::string& recordJson) mutable -> void {
+      swiftClosure.call(recordJson);
     };
   }
   

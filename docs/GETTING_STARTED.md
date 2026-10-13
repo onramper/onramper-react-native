@@ -260,7 +260,13 @@ const offCompleted = client.addEventListener('completed', (e) => {
 });
 
 const offFailed = client.addEventListener('failed', (e) => {
-  console.log('checkout failed:', e.error.code, e.error.message);
+  const error = OnramperError.from(e.error);
+  showMessage(error.userMessage);
+  recordSupportCode(error.supportCode);
+});
+
+const offPending = client.addEventListener('paymentPending', () => {
+  showProcessing(client.currentTransactionId);
 });
 
 // Optional: high-level state machine
@@ -271,6 +277,10 @@ const offState = client.addStateListener((state) => {
 // Each subscribe returns an unsubscribe. Call `client.destroy()` on unmount
 // to drop all listeners and release the native client.
 ```
+
+A pending payment was accepted but has not settled; it does not emit `completed`.
+Keep transaction webhooks configured for all flows. After a provider surface failure,
+follow `userMessage` and check the transaction status before offering another payment.
 
 ### 3.6 Store the Onramper transaction ID
 
@@ -387,7 +397,10 @@ try {
 | `oidcFlowCancelled` | User dismissed the OnramperID login sheet. Tapping Buy again retries. |
 | `oidcFlowFailed` / `oidcTokenExchangeFailed` | OnramperID flow inconsistency or code-exchange failure. Show retry — tapping Buy re-presents the login sheet. |
 | `userTokenInvalid` / `userTokenRefreshFailed` | OnramperID refresh token terminally rejected. The Headless Wrapper has already transitioned to `requireLogin` and the button will re-present the login sheet — usually nothing to do unless you want to log it. |
-| `webviewLoadFailed` | The payment webview couldn't load. Terminal for that checkout — show an error and let the user retry from the start. |
+| `webviewLoadFailed` | The payment webview could not load. Show `userMessage`; a surface error alone does not establish the payment outcome. |
+| `paymentFailed` | The provider confirmed payment failed. Show `userMessage`. |
+| `providerFailed` | The payment surface failed without confirming the outcome. Show `userMessage` and check transaction status before another payment. |
+| `applePayNotConfigured` | Ask the user to set up an Apple Pay card in Wallet. |
 | `decodingError` / `invalidState` / `invalidStateTransition` / `deepLinkFailed` | Bridge / Headless Wrapper protocol inconsistency — treat as `unrecoverable`. Log `e.message` and `e.info` and report. |
 | `platformUnsupported` | Calling an iOS-only API on Android (Android is a stub in this release). Guard your call sites with a platform check. |
 | `intentInvalidated` | The button was rendered against an intent that has since been replaced by a newer `getCheckoutRequirements()` call. Render only the most recent button. |
@@ -407,6 +420,12 @@ The Headless Wrapper absorbs these signals internally — they never surface to 
 Many errors carry an `info` payload (e.g., `{ debugInfo: 'OnramperBackend-40005: ...' }`). Treat it as opaque support-ticket fodder: **log it, but don't switch on its contents.** The format is non-localized and may change without notice.
 
 ### 3.11 Logging
+
+An optional configuration `logHandler` receives structured `OnramperLogRecord`s
+in JavaScript, while native Console output is preserved. Store/export them through
+your own app if needed. Provider messages use best-effort redaction and may still
+contain personal data. See [Debugging](DEBUGGING.md) for fields and demo export controls.
+
 
 Pass `logLevel: 'info'` while integrating to see HTTP method, URL path, and status for every Onramper-backend + security call in the device console. Levels:
 
@@ -448,6 +467,7 @@ Values you pass as `prefill` are never logged at any level.
 | `'readyToCheckout'` | All requirements satisfied; tapping Buy goes straight to finalize. |
 | `'finalizing'` | Backend finalize is in flight. |
 | `'rendering'` | Payment view is on screen. Carries `url`, `renderType`, `paymentType`. |
+| `'paymentPending'` | Payment accepted, settlement pending. Track `currentTransactionId`; do not show success or failure. |
 | `'completed'` | Terminal success. |
 | `'failed'` | Terminal failure. Carries `error: OnramperErrorPayload`. |
 
@@ -468,6 +488,9 @@ finalization, then is published at `checkoutFinalized`. Read or persist it befor
 | `'requirementSatisfied'` | A requirement (`tos`, `amount_limit`, `user_info`, `reverification`) just passed. The OnramperID flow emits one per type it resolves. |
 | `'checkoutFinalized'` | Backend finalized; carries `response.onramperTransactionId` before the payment surface renders. |
 | `'renderingStarted'` | The payment view is on screen. Carries `url`, `renderType`. |
+| `'paymentPending'` | Payment accepted, settlement pending; does not emit `completed`. |
+| `'challengeStarted'` / `'challengeCompleted'` | Provider verification progress, not a payment outcome. |
+| `'customerOnboardingRequired'` | Provider account onboarding is required. The native checkout handles it. |
 | `'completed'` | Terminal success. Carries `checkoutId`. |
 | `'failed'` | Terminal failure. Carries `error`. |
 | `'cancelled'` | User dismissed the payment webview. The Headless Wrapper transparently re-prepares the intent (Onramper backend intent ids are single-use) and lands back in `'readyToCheckout'` — tapping Buy again starts a fresh checkout. |

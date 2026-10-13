@@ -8,6 +8,7 @@ import type {
   CheckoutButtonStyle,
   CheckoutRequest,
   OnramperConfiguration,
+  OnramperLogRecord,
   OnramperState,
   OnramperUserPrefill,
   QuoteResponse,
@@ -42,8 +43,21 @@ export class OnramperClient {
   // Resolved when the constructor-issued configure() completes. Public methods
   // that need the native client await this first.
   private readonly configured: Promise<void>;
+  private destroyed = false;
 
   constructor(config: OnramperConfiguration) {
+    if (config.logHandler) {
+      const handler = config.logHandler;
+      this.native.setLogListener((json) => {
+        if (this.destroyed) return;
+        try {
+          handler(JSON.parse(json) as OnramperLogRecord);
+        } catch {
+          // Diagnostics must never interrupt checkout; do not log callback data.
+          console.warn('Onramper logHandler failed.');
+        }
+      });
+    }
     // Single native state callback → update the mirror + fan out to listeners.
     this.native.setStateListener((json) => {
       const s = JSON.parse(json) as OnramperState;
@@ -84,6 +98,8 @@ export class OnramperClient {
         environment: config.environment,
         theme: config.theme ?? 'system',
         logLevel: config.logLevel ?? 'off',
+        isEventLoggingEnabled: config.isEventLoggingEnabled ?? false,
+        isEventConsoleLoggingEnabled: config.isEventConsoleLoggingEnabled ?? false,
       })
       .catch((e: unknown) => {
         const err = OnramperError.from(e);
@@ -212,6 +228,7 @@ export class OnramperClient {
 
   /** Tear down: clears JS listeners and releases the native callbacks + SDK client. */
   destroy(): void {
+    this.destroyed = true;
     this.stateListeners.clear();
     this.eventListeners.clear();
     this.transactionIdListeners.clear();

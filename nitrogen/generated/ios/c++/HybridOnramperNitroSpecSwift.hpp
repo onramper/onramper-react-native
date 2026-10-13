@@ -125,6 +125,12 @@ namespace margelo::nitro::onramper {
       auto __value = std::move(__result.value());
       return __value;
     }
+    inline void setLogListener(const std::function<void(const std::string& /* recordJson */)>& onLog) override {
+      auto __result = _swiftPart.setLogListener(onLog);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
     inline void setStateListener(const std::function<void(const std::string& /* stateJson */)>& onState) override {
       auto __result = _swiftPart.setStateListener(onState);
       if (__result.hasError()) [[unlikely]] {

@@ -155,6 +155,7 @@ export function BuyCryptoScreen({
     }
   };
 
+  const pending = onramper.sdkState === 'paymentPending';
   const completed =
     onramper.sdkState === 'completed' || onramper.completedCheckoutId !== null;
   const errorBox = onramper.initError
@@ -376,7 +377,12 @@ export function BuyCryptoScreen({
           SDK:{' '}
           {onramper.status === 'ready' ? onramper.sdkState : onramper.status}
         </Text>
-        {completed ? (
+        {pending ? (
+          <StatusBox tone="info" title="Payment processing"
+            body={`Your payment was accepted and is awaiting settlement. Track it before starting another payment.\n${onramper.transactionId ?? ''}`}
+            selectableBody />
+        ) : null}
+        {completed && !pending ? (
           <StatusBox
             tone="success"
             title="Transaction complete"
@@ -388,7 +394,7 @@ export function BuyCryptoScreen({
             selectableBody
           />
         ) : null}
-        {!completed && onramper.transactionId ? (
+        {!completed && !pending && onramper.transactionId ? (
           <StatusBox
             tone="success"
             title="Onramper transaction ID"

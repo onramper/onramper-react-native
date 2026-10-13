@@ -19,3 +19,19 @@ describe('OnramperError', () => {
     expect(err.info).toEqual({ min: 5, max: 50 });
   });
 });
+
+
+test('uses safe fallback copy for JS or malformed native errors', () => {
+  const raw = new Error('ONRAMPER_ERROR:not JSON');
+  const error = OnramperError.from(raw);
+  expect(error.code).toBe('unrecoverable');
+  expect(error.userMessage).toBe('Something went wrong. Please try again.');
+  expect(error.supportCode).toBe('unrecoverable');
+});
+
+test('round-trips structured error metadata without altering the message', () => {
+  const payload = { code: 'amountOutOfRange', message: 'diagnostic', userMessage: 'Choose an amount between 5 and 50.', supportCode: 'amountOutOfRange', info: { min: 5, max: 50 } };
+  const error = OnramperError.from(new Error('ONRAMPER_ERROR:' + JSON.stringify(payload)));
+  expect(error).toMatchObject(payload);
+  expect(OnramperError.from(error)).toBe(error);
+});

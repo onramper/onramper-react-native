@@ -3,6 +3,7 @@ import { OnramperClient, type OnramperState } from '@onramper/onramper-react-nat
 import { resolveEnvironment, type AppEnvironment } from '../config/environments';
 import { createDemoSession } from '../createDemoSession';
 import type { ThemeName } from '../theme';
+import { recordDiagnostic } from '../utils/diagnostics';
 import { describeError } from '../utils/format';
 
 export type InitStatus = 'initializing' | 'ready' | 'error';
@@ -106,7 +107,7 @@ export function useOnramper({ environment, theme, generation }: UseOnramperOptio
       if (cancelled) {
         return;
       }
-      appendLog('info', `session ${session.sessionId}`);
+      appendLog('info', 'demo session minted');
 
       const c = new OnramperClient({
         apiKey: env.apiKey,
@@ -114,6 +115,7 @@ export function useOnramper({ environment, theme, generation }: UseOnramperOptio
         environment: env.name,
         theme,
         logLevel: 'debug',
+        logHandler: recordDiagnostic,
         onSessionExpired: async () => {
           appendLog('info', 'session expired — minting a new one');
           return mint();
@@ -136,10 +138,25 @@ export function useOnramper({ environment, theme, generation }: UseOnramperOptio
       });
       c.addEventListener('failed', e => {
         setCompletedCheckoutId(null);
-        setLastFailure(`${e.error.code} — ${e.error.message}`);
+        const { code, message } = describeError(e.error);
+        setLastFailure(`${code} — ${message}`);
         appendLog('error', `failed ${e.error.code} — ${e.error.message}`);
       });
       c.addEventListener('cancelled', () => appendLog('event', 'checkout cancelled'));
+      c.addEventListener('checkoutStarted', () => {
+        setCompletedCheckoutId(null);
+        setLastFailure(null);
+      });
+      c.addEventListener('paymentPending', () => {
+        setCompletedCheckoutId(null);
+        setLastFailure(null);
+        appendLog('event', 'Payment processing — track the transaction before starting another payment.');
+      });
+      c.addEventListener('providerError', e => appendLog('error', `provider error: ${e.reason}`));
+      for (const name of ['providerReady', 'paymentAuthorized', 'paymentProcessing', 'paymentCancelled',
+        'challengeStarted', 'challengeCompleted', 'customerOnboardingRequired'] as const) {
+        c.addEventListener(name, () => appendLog('event', name));
+      }
 
       await c.initialize(session);
       if (cancelled) {

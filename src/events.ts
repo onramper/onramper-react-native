@@ -16,6 +16,11 @@ export type CheckoutEvent =
   | { type: 'providerReady' }
   | { type: 'paymentAuthorized' }
   | { type: 'paymentProcessing' }
+  /** Accepted but not settled; use currentTransactionId to track the payment. */
+  | { type: 'paymentPending' }
+  | { type: 'challengeStarted' }
+  | { type: 'challengeCompleted' }
+  | { type: 'customerOnboardingRequired' }
   | { type: 'paymentCancelled' }
   | { type: 'providerError'; reason: string };
 

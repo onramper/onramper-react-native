@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Card } from '../components/Card';
+import { DiagnosticsCard } from '../components/DiagnosticsCard';
 import { EventLog } from '../components/EventLog';
 import { Segmented } from '../components/Segmented';
 import { SwitchRow } from '../components/SwitchRow';
@@ -86,6 +87,8 @@ export function SettingsSheet(props: SettingsSheetProps) {
           <Card title="Appearance" footer="Re-initializes the SDK with the matching theme.">
             <SwitchRow label="Dark mode" value={props.isDark} onValueChange={props.onChangeDark} />
           </Card>
+
+          <DiagnosticsCard />
 
           <EventLog entries={props.log} onClear={props.onClearLog} />
 

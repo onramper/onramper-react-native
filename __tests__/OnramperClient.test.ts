@@ -406,3 +406,70 @@ describe('OnramperClient', () => {
     expect(transactionIdFn).not.toHaveBeenCalled();
   });
 });
+
+
+describe('SDK 1.3.0 bridge', () => {
+  it('delivers native diagnostics, isolates handler errors, and stops after destroy', async () => {
+    const logHandler = jest.fn();
+    const client = new OnramperClient({ ...baseConfig, logLevel: 'debug', logHandler, onSessionExpired: jest.fn() });
+    const native = __lastNative();
+    const record = { timestamp: 1000, level: 'debug', category: 'Network', event: 'request.started', context: { method: 'POST' }, message: 'request.started method=POST' };
+    native.__logListener?.(JSON.stringify(record));
+    expect(logHandler).toHaveBeenCalledWith(record);
+    const warning = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    logHandler.mockImplementationOnce(() => { throw new Error('handler failed'); });
+    expect(() => native.__logListener?.(JSON.stringify(record))).not.toThrow();
+    expect(warning).toHaveBeenCalledWith('Onramper logHandler failed.');
+    warning.mockRestore();
+    client.destroy();
+    logHandler.mockClear();
+    native.__logListener?.(JSON.stringify(record));
+    expect(logHandler).not.toHaveBeenCalled();
+  });
+
+  it('leaves logging opt-in and forwards explicit telemetry settings', async () => {
+    new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
+    expect(__lastNative().setLogListener).not.toHaveBeenCalled();
+    expect(__lastNative().configure).toHaveBeenCalledWith(expect.objectContaining({ isEventLoggingEnabled: false, isEventConsoleLoggingEnabled: false }));
+    new OnramperClient({ ...baseConfig, isEventLoggingEnabled: true, isEventConsoleLoggingEnabled: true, onSessionExpired: jest.fn() });
+    expect(__lastNative().configure).toHaveBeenCalledWith(expect.objectContaining({ isEventLoggingEnabled: true, isEventConsoleLoggingEnabled: true }));
+    await tick();
+  });
+
+  it('keeps pending distinct from completed and preserves the transaction id', () => {
+    const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
+    const native = __lastNative();
+    const completed = jest.fn();
+    const pending = jest.fn();
+    client.addEventListener('completed', completed);
+    client.addEventListener('paymentPending', pending);
+    native.__eventListener?.(JSON.stringify(checkoutFinalizedEvent));
+    native.__stateListener?.(JSON.stringify({ kind: 'paymentPending' }));
+    native.__eventListener?.(JSON.stringify({ type: 'paymentPending' }));
+    expect(client.state.kind).toBe('paymentPending');
+    expect(pending).toHaveBeenCalledTimes(1);
+    expect(completed).not.toHaveBeenCalled();
+    expect(client.currentTransactionId).toBe('txn_123');
+  });
+
+  it('preserves provider metadata without coercing booleans, limits or disclosures', async () => {
+    const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
+    const providerContext = { executable: false, limits: { min: 20, max: 1000 }, token: 'synthetic', disclosures: [{ code: 'test', version: '1', contentMarkdown: 'text', contentHtml: '<p>text</p>' }], optional: null };
+    __lastNative().getCheckoutRequirements.mockResolvedValueOnce({ intentHandle: 'h', quoteJson: JSON.stringify({ providerContext }) });
+    expect((await client.getCheckoutRequirements(checkoutRequest)).quote.providerContext).toEqual(providerContext);
+  });
+
+  it.each(['paymentFailed', 'providerFailed', 'applePayNotConfigured'] as const)('preserves %s safe copy in rejected calls and failed events', async code => {
+    const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
+    const native = __lastNative();
+    const error = { code, message: 'diagnostic', userMessage: 'Customer guidance.', supportCode: code + ':test' };
+    native.getCheckoutRequirements.mockRejectedValueOnce(new Error('ONRAMPER_ERROR:' + JSON.stringify(error)));
+    await expect(client.getCheckoutRequirements(checkoutRequest)).rejects.toMatchObject(error);
+    const failed = jest.fn();
+    client.addEventListener('failed', failed);
+    native.__stateListener?.(JSON.stringify({ kind: 'failed', error }));
+    native.__eventListener?.(JSON.stringify({ type: 'failed', error }));
+    expect(client.lastError).toMatchObject(error);
+    expect(failed).toHaveBeenCalledWith({ type: 'failed', error });
+  });
+});

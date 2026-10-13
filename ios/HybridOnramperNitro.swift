@@ -9,6 +9,7 @@ import SwiftUI
 /// callbacks, and feeds the SDK's `sessionExpirationHandler` from a stored
 /// async JS callback. The public typed JS API lives in `OnramperClient.ts`.
 final class HybridOnramperNitro: HybridOnramperNitroSpec {
+  private let logRelay = SDKLogRelay()
   private var client: OnramperClient?
   private var stateObservation: AnyCancellable?
   private var transactionIdObservation: AnyCancellable?
@@ -26,6 +27,10 @@ final class HybridOnramperNitro: HybridOnramperNitroSpec {
   private var lastPreparedHandle: String?
 
   // MARK: - Listener registration (synchronous)
+
+  func setLogListener(onLog: @escaping (String) -> Void) {
+    logRelay.setListener(onLog)
+  }
 
   func setStateListener(onState: @escaping (String) -> Void) {
     self.onState = onState
@@ -48,7 +53,11 @@ final class HybridOnramperNitro: HybridOnramperNitroSpec {
   func configure(config: OnramperNitroConfig) throws -> Promise<Void> {
     return Promise.async { [weak self] in
       guard let self else { return }
-      try await self.performConfigure(config)
+      do {
+        try await self.performConfigure(config)
+      } catch {
+        throw bridgeSDKError(error)
+      }
     }
   }
 
@@ -75,12 +84,19 @@ final class HybridOnramperNitro: HybridOnramperNitroSpec {
       }
     }()
 
+    let relay = logRelay
     let swiftConfig = OnramperConfiguration(
       apiKey: config.apiKey,
       clientId: config.clientId,
       environment: environment,
       theme: theme,
       logLevel: logLevel,
+      logHandler: { record in
+        OnramperLog.systemHandler(record)
+        relay.emit(record)
+      },
+      isEventLoggingEnabled: config.isEventLoggingEnabled,
+      isEventConsoleLoggingEnabled: config.isEventConsoleLoggingEnabled,
       sessionExpirationHandler: { [weak self] in
         guard let self, let handler = self.sessionHandler else {
           throw OnramperError.userTokenRefreshFailed("no session expiration handler registered")
@@ -125,24 +141,36 @@ final class HybridOnramperNitro: HybridOnramperNitroSpec {
   func initialize(sessionId: String, sessionToken: String) throws -> Promise<Void> {
     return Promise.async { [weak self] in
       guard let self else { return }
-      let client = try await self.requireClient()
-      try await client.initialize(sessionId: sessionId, sessionToken: sessionToken)
+      do {
+        let client = try await self.requireClient()
+        try await client.initialize(sessionId: sessionId, sessionToken: sessionToken)
+      } catch {
+        throw bridgeSDKError(error)
+      }
     }
   }
 
   func reset() throws -> Promise<Void> {
     return Promise.async { [weak self] in
       guard let self else { return }
-      let client = try await self.requireClient()
-      await client.reset()
+      do {
+        let client = try await self.requireClient()
+        await client.reset()
+      } catch {
+        throw bridgeSDKError(error)
+      }
     }
   }
 
   func signOut() throws -> Promise<Void> {
     return Promise.async { [weak self] in
       guard let self else { return }
-      let client = try await self.requireClient()
-      await client.signOut()
+      do {
+        let client = try await self.requireClient()
+        await client.signOut()
+      } catch {
+        throw bridgeSDKError(error)
+      }
     }
   }
 
@@ -154,12 +182,16 @@ final class HybridOnramperNitro: HybridOnramperNitroSpec {
     styleJson: String
   ) throws -> Promise<PreparedIntentResult> {
     return Promise.async { [weak self] in
-      guard let self else { throw OnramperError.notInitialized }
-      return try await self.performGetCheckoutRequirements(
-        requestJson: requestJson,
-        prefillJson: prefillJson,
-        styleJson: styleJson
-      )
+      do {
+        guard let self else { throw OnramperError.notInitialized }
+        return try await self.performGetCheckoutRequirements(
+          requestJson: requestJson,
+          prefillJson: prefillJson,
+          styleJson: styleJson
+        )
+      } catch {
+        throw bridgeSDKError(error)
+      }
     }
   }
 
@@ -206,6 +238,7 @@ final class HybridOnramperNitro: HybridOnramperNitroSpec {
   /// Releases the stored JS callbacks (Nitro holds strong refs to them) and the
   /// SDK client. Called from `OnramperClient.destroy()` in JS.
   func dispose() {
+    logRelay.setListener(nil)
     stateObservation?.cancel()
     stateObservation = nil
     transactionIdObservation?.cancel()
