@@ -1,6 +1,6 @@
 {
   "name": "@onramper/onramper-react-native",
-  "version": "1.2.2-1",
+  "version": "1.3.0",
   "description": "React Native wrapper for the Onramper iOS SDK",
   "main": "./lib/commonjs/index.js",
   "module": "./lib/module/index.js",
@@ -41,6 +41,7 @@
     "lint": "biome check src",
     "format": "biome format --write src",
     "test": "jest",
+    "test:native": "bash scripts/test-native.sh",
     "typecheck": "tsc --noEmit",
     "nitrogen": "nitrogen && node scripts/sync-view-config.js",
     "prepare": "bob build",
@@ -64,7 +65,7 @@
   "license": "Apache-2.0",
   "homepage": "https://github.com/onramper/onramper-react-native#readme",
   "onramperSDK": {
-    "checksum": "754184c10a736e1db3292b592ca634ddbaa61dd01540b60610df4aa73a61de9a"
+    "checksum": "7611f869eab69109b317bb2b81e23c99f9d6f108bb6425ed2aace5cc4d5ad766"
   },
   "peerDependencies": {
     "react": ">=19.0.0",

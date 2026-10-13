@@ -10,7 +10,7 @@ export function StatusBox({
   actionLabel,
   onAction,
 }: {
-  tone: 'success' | 'error';
+  tone: 'success' | 'error' | 'info';
   title: string;
   body?: string;
   selectableBody?: boolean;
@@ -18,7 +18,7 @@ export function StatusBox({
   onAction?: () => void;
 }) {
   const t = useTheme();
-  const color = tone === 'success' ? t.success : t.danger;
+  const color = tone === 'success' ? t.success : tone === 'info' ? t.accent : t.danger;
   return (
     <View style={[styles.box, { backgroundColor: withAlpha(color, 0.15), borderColor: color }]}>
       <Text style={[styles.title, { color }]}>{title}</Text>

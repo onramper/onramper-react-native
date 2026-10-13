@@ -13,10 +13,10 @@ export function formatAmount(value: number): string {
 /** Reads `code` / `message` from an OnramperError (or anything shaped like one). */
 export function describeError(e: unknown): { code: string; message: string } {
   if (typeof e === 'object' && e !== null) {
-    const record = e as { code?: unknown; message?: unknown };
+    const record = e as { code?: unknown; message?: unknown; userMessage?: unknown; supportCode?: unknown };
     return {
       code: typeof record.code === 'string' ? record.code : 'unknown',
-      message: typeof record.message === 'string' ? record.message : String(e),
+      message: typeof record.userMessage === 'string' ? record.userMessage : typeof record.message === 'string' ? record.message : 'Something went wrong. Please try again.',
     };
   }
   return { code: 'unknown', message: String(e) };

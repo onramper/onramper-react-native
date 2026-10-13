@@ -19,7 +19,7 @@ jobs:
       - run: npm run typecheck
       - run: npx jest
 
-  # iOS verification is limited to the wrapper repo today.
+  # iOS verification covers the archive, prepared-intent lifecycle, and demo log store.
   # Example-app xcodebuild + xctest scheme are deferred:
   #   - The bundled example uses RN 0.85 / Expo SDK 55 which has a known build
   #     error in node_modules/expo/.../ExpoReactNativeFactory.swift.
@@ -37,3 +37,7 @@ jobs:
       - run: npm ci
       - run: npm run fetch-xcframework
       - run: npm run verify-version
+      - name: Test native prepared-intent lifecycle
+        run: npm run test:native
+      - name: Test demo daily log storage
+        run: npm --prefix example run test:logs

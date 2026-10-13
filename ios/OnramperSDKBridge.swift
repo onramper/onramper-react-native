@@ -19,6 +19,9 @@ extension OnramperError {
     case .networkError: return "networkError"
     case .decodingError: return "decodingError"
     case .timeout: return "timeout"
+    case .paymentFailed: return "paymentFailed"
+    case .providerFailed: return "providerFailed"
+    case .applePayNotConfigured: return "applePayNotConfigured"
     case .requirementNotSatisfied: return "requirementNotSatisfied"
     case .amountOutOfRange: return "amountOutOfRange"
     case .oidcFlowCancelled: return "oidcFlowCancelled"
@@ -73,9 +76,14 @@ extension OnramperError {
     }
   }
 
-  /// A JS-friendly error dict: `{ code, message, info? }`.
+  /// A JS-friendly error dict, including customer-facing copy and support code.
   func toJSDict() -> [String: Any] {
-    var dict: [String: Any] = ["code": jsCode, "message": errorDescription ?? "Unknown error"]
+    var dict: [String: Any] = [
+      "code": jsCode,
+      "message": errorDescription ?? "Unknown error",
+      "userMessage": userMessage,
+      "supportCode": supportCode,
+    ]
     if let info = jsInfo { dict["info"] = info }
     return dict
   }
@@ -149,6 +157,7 @@ extension OnramperState {
         "renderType": ctx.renderType.jsValue,
         "paymentType": ctx.paymentType.jsValue,
       ]
+    case .paymentPending: return ["kind": "paymentPending"]
     case .completed: return ["kind": "completed"]
     case .failed(let error):
       return ["kind": "failed", "error": error.toJSDict()]
@@ -188,6 +197,14 @@ extension CheckoutEvent {
       return ["type": "paymentAuthorized"]
     case .paymentProcessing:
       return ["type": "paymentProcessing"]
+    case .paymentPending:
+      return ["type": "paymentPending"]
+    case .challengeStarted:
+      return ["type": "challengeStarted"]
+    case .challengeCompleted:
+      return ["type": "challengeCompleted"]
+    case .customerOnboardingRequired:
+      return ["type": "customerOnboardingRequired"]
     case .paymentCancelled:
       return ["type": "paymentCancelled"]
     case .providerError(let reason):

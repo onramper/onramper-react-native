@@ -224,3 +224,53 @@ test('settledEnvironment follows each finished run, failed or not', async () => 
   expect(latest.status).toBe('error');
   expect(latest.settledEnvironment).toBe('production');
 });
+
+
+test('pending clears prior completion and logs the processing outcome', async () => {
+  await render(DEV);
+  await act(async () => fire('completed', { checkoutId: 'old' }));
+  await act(async () => fire('paymentPending', {}));
+  expect(latest.completedCheckoutId).toBeNull();
+  expect(latest.lastFailure).toBeNull();
+  expect(latest.log.at(-1)?.line).toContain('Payment processing');
+});
+
+test('uses customer-friendly error copy in the status box', async () => {
+  await render(DEV);
+  await act(async () => fire('failed', { error: { code: 'providerFailed', message: 'diagnostic', userMessage: 'Check your transaction before trying again.' } }));
+  expect(latest.lastFailure).toBe('providerFailed — Check your transaction before trying again.');
+});
+
+test('records finalization separately from failures and clearing the message', async () => {
+  await render(DEV);
+  expect(latest.hasFinalizedCheckout).toBe(false);
+  await act(async () => fire('failed', { error: { code: 'temporaryFailure', message: 'offline' } }));
+  expect(latest.hasFinalizedCheckout).toBe(false);
+  await act(async () => fire('checkoutFinalized', { response: { onramperTransactionId: 'tx' } }));
+  await act(async () => fire('failed', { error: { code: 'providerFailed', message: 'Check status' } }));
+  expect(latest.hasFinalizedCheckout).toBe(true);
+  await act(async () => latest.clearOutcome());
+  expect(latest.hasFinalizedCheckout).toBe(true);
+});
+
+test.each(['checkoutPreparing', 'ready'])(
+  '%s clears finalization without losing the retained transaction ID',
+  async kind => {
+    await render(DEV);
+    await act(async () => {
+      clients[0].addTransactionIdListener.mock.calls[0][0]('old-tx');
+      fire('checkoutFinalized', { response: { onramperTransactionId: 'old-tx' } });
+    });
+    await act(async () => clients[0].addStateListener.mock.calls[0][0]({ kind }));
+    expect(latest.hasFinalizedCheckout).toBe(false);
+    expect(latest.transactionId).toBe('old-tx');
+  },
+);
+
+test('re-initializing does not carry finalization over to a new client', async () => {
+  const renderer = await render(DEV);
+  await act(async () => fire('checkoutFinalized', { response: { onramperTransactionId: 'tx' } }));
+  expect(latest.hasFinalizedCheckout).toBe(true);
+  await act(async () => renderer.update(<Harness {...DEV} generation={1} />));
+  expect(latest.hasFinalizedCheckout).toBe(false);
+});

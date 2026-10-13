@@ -8,6 +8,8 @@ export interface MockNative {
   initialize: jest.Mock;
   reset: jest.Mock;
   signOut: jest.Mock;
+  setLogListener: jest.Mock;
+  __logListener?: (json: string) => void;
   setStateListener: jest.Mock;
   setEventListener: jest.Mock;
   setTransactionIdListener: jest.Mock;
@@ -22,12 +24,13 @@ export interface MockNative {
   __sessionHandler?: () => Promise<{ sessionId: string; sessionToken: string }>;
 }
 
-function makeNative(): MockNative {
+export function makeNative(): MockNative {
   const native = {
     configure: jest.fn().mockResolvedValue(undefined),
     initialize: jest.fn().mockResolvedValue(undefined),
     reset: jest.fn().mockResolvedValue(undefined),
     signOut: jest.fn().mockResolvedValue(undefined),
+    setLogListener: jest.fn((fn: (json: string) => void) => { native.__logListener = fn; }),
     setStateListener: jest.fn((fn: (json: string) => void) => {
       native.__stateListener = fn;
     }),

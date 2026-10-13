@@ -17,6 +17,9 @@ Passed to `new OnramperClient(...)`.
 | `environment` | `OnramperEnvironment` | Yes | `'development'` (staging) or `'production'`. |
 | `theme` | `OnramperTheme?` | No | `'system'` (default) \| `'light'` \| `'dark'`. |
 | `logLevel` | `OnramperLogLevel?` | No | `'off'` (default) \| `'error'` \| `'info'` \| `'debug'`. |
+| `logHandler` | `(record: OnramperLogRecord) => void` | No | Native SDK records delivered in JS; Console output is preserved. |
+| `isEventLoggingEnabled` | `boolean` | No | BFF provider-event telemetry; default false. |
+| `isEventConsoleLoggingEnabled` | `boolean` | No | Provider events at info even below that log level; default false. |
 | `onSessionExpired` | `() => SessionCredentials \| Promise<SessionCredentials>` | Yes | Called when the session must be re-bootstrapped; return fresh credentials. Throw/reject to signal none are available. |
 
 ### `SessionCredentials`
@@ -27,6 +30,13 @@ Passed to `new OnramperClient(...)`.
 | `sessionToken` | `string` | Session token minted by your backend. |
 
 ---
+
+## Structured logs
+
+`OnramperLogRecord` contains `timestamp: number` (Unix milliseconds),
+`level: OnramperLogLevel`, `category: string`, `event: string`,
+`context: Record<string, string>`, and `message: string`. The callback runs in JS
+and stops after client destruction. No files are written by the library.
 
 ## Checkout request
 
@@ -112,6 +122,11 @@ partial quote, so the core fields are never null.
 | `networkFee` | `number` | Network/processing fee for the trade. |
 | `transactionFee` | `number` | Provider transaction fee for the trade. |
 | `recommendations` | `string[]?` | Optional provider recommendation metadata. |
+| `providerContext` | `Record<string, ProviderJSONValue>?` | Provider metadata, including tokens, executable flags and limits. Do not log it. |
+
+`ProviderJSONValue` is recursive JSON: string, number, boolean, null, arrays, or objects.
+`PaymentDisclosure` contains four strings: `code`, `version`, `contentMarkdown`, and `contentHtml`.
+The native checkout button handles disclosure rendering.
 
 ---
 
@@ -185,13 +200,23 @@ either operation.
 ### `OnramperError` / `OnramperErrorPayload`
 
 `OnramperError` is a JS `Error` subclass with `code: OnramperErrorCode`, `message: string`,
-and optional `info?: Record<string, unknown>`. See the **Error code reference** in
+`userMessage: string`, `supportCode: string`, and optional `info?: Record<string, unknown>`.
+Use `userMessage` in the UI and `supportCode` in support reports. Error payloads
+carry the same fields; the two new fields are optional on `OnramperErrorPayload`
+for existing fixtures. `OnramperError.from` supplies defaults if absent.
+The new codes are `paymentFailed`, `providerFailed`, and `applePayNotConfigured`.
+A provider surface failure does not establish the payment outcome. See the **Error code reference** in
 [Getting Started](doc:getting-started) for the full taxonomy and recommended handling.
 
 `OnramperErrorCode` is a string union of the SDK codes (`notInitialized`,
-`quoteUnavailable`, `checkoutForbidden`, `userTokenRefreshFailed`, …) plus JS-only codes
+`quoteUnavailable`, `checkoutForbidden`, `userTokenRefreshFailed`, …) plus wrapper codes
 (`platformUnsupported`, `intentInvalidated`, `intentAlreadyConsumed`,
-`clientAlreadyConfigured`, `sessionExpirationHandlerFailed`).
+`clientAlreadyConfigured`, `clientDestroyed`, `sessionExpirationHandlerFailed`).
+
+`intentInvalidated` rejects a preparation superseded by a newer request, reset,
+or sign-out. Ignore obsolete requests when updating the quote UI.
+`clientDestroyed` means the instance cannot be reused: create a new client.
+Neither code establishes a payment outcome.
 
 ---
 
@@ -203,3 +228,13 @@ and optional `info?: Record<string, unknown>`. See the **Error code reference** 
   the `CheckoutEvent` table in [Getting Started](doc:getting-started).
 - **`EventName`** = `CheckoutEvent['type']`; **`EventPayload<K>`** extracts the event whose
   `type` is `K` — used to type `addEventListener(name, fn)` handlers.
+
+## SDK 1.3.0 states and events
+
+`OnramperState` adds `{ kind: 'paymentPending' }`; `CheckoutEvent` adds
+`{ type: 'paymentPending' }`, `{ type: 'challengeStarted' }`,
+`{ type: 'challengeCompleted' }`, and `{ type: 'customerOnboardingRequired' }`.
+Pending means accepted and not yet settled: show processing and track
+`currentTransactionId` with your backend. It does not emit `completed`.
+`HeadlessCheckoutData.providerBootstrap?: { framesBaseUrl?: string }` describes
+optional native provider bootstrap information; the checkout button handles it.

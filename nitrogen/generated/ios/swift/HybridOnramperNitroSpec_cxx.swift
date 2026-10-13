@@ -84,7 +84,7 @@ open class HybridOnramperNitroSpec_cxx {
     }
   }
 
-  
+
 
   /**
    * Get the memory size of the Swift class (plus size of any other allocations)
@@ -121,7 +121,7 @@ open class HybridOnramperNitroSpec_cxx {
   }
 
   // Properties
-  
+
 
   // Methods
   @inline(__always)
@@ -142,7 +142,7 @@ open class HybridOnramperNitroSpec_cxx {
       return bridge.create_Result_std__shared_ptr_Promise_void___(__exceptionPtr)
     }
   }
-  
+
   @inline(__always)
   public final func initialize(sessionId: std.string, sessionToken: std.string) -> bridge.Result_std__shared_ptr_Promise_void___ {
     do {
@@ -161,7 +161,7 @@ open class HybridOnramperNitroSpec_cxx {
       return bridge.create_Result_std__shared_ptr_Promise_void___(__exceptionPtr)
     }
   }
-  
+
   @inline(__always)
   public final func reset() -> bridge.Result_std__shared_ptr_Promise_void___ {
     do {
@@ -180,7 +180,7 @@ open class HybridOnramperNitroSpec_cxx {
       return bridge.create_Result_std__shared_ptr_Promise_void___(__exceptionPtr)
     }
   }
-  
+
   @inline(__always)
   public final func signOut() -> bridge.Result_std__shared_ptr_Promise_void___ {
     do {
@@ -199,7 +199,7 @@ open class HybridOnramperNitroSpec_cxx {
       return bridge.create_Result_std__shared_ptr_Promise_void___(__exceptionPtr)
     }
   }
-  
+
   @inline(__always)
   public final func getCheckoutRequirements(requestJson: std.string, prefillJson: std.string, styleJson: std.string) -> bridge.Result_std__shared_ptr_Promise_PreparedIntentResult___ {
     do {
@@ -218,7 +218,7 @@ open class HybridOnramperNitroSpec_cxx {
       return bridge.create_Result_std__shared_ptr_Promise_PreparedIntentResult___(__exceptionPtr)
     }
   }
-  
+
   @inline(__always)
   public final func cancelPreparedIntent(intentHandle: std.string) -> bridge.Result_std__shared_ptr_Promise_void___ {
     do {
@@ -237,7 +237,23 @@ open class HybridOnramperNitroSpec_cxx {
       return bridge.create_Result_std__shared_ptr_Promise_void___(__exceptionPtr)
     }
   }
-  
+
+  @inline(__always)
+  public final func setLogListener(onLog: bridge.Func_void_std__string) -> bridge.Result_void_ {
+    do {
+      try self.__implementation.setLogListener(onLog: { () -> (String) -> Void in
+        let __wrappedFunction = bridge.wrap_Func_void_std__string(onLog)
+        return { (__recordJson: String) -> Void in
+          __wrappedFunction.call(std.string(__recordJson))
+        }
+      }())
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+
   @inline(__always)
   public final func setStateListener(onState: bridge.Func_void_std__string) -> bridge.Result_void_ {
     do {
@@ -253,7 +269,7 @@ open class HybridOnramperNitroSpec_cxx {
       return bridge.create_Result_void_(__exceptionPtr)
     }
   }
-  
+
   @inline(__always)
   public final func setEventListener(onEvent: bridge.Func_void_std__string) -> bridge.Result_void_ {
     do {
@@ -269,7 +285,7 @@ open class HybridOnramperNitroSpec_cxx {
       return bridge.create_Result_void_(__exceptionPtr)
     }
   }
-  
+
   @inline(__always)
   public final func setTransactionIdListener(onTransactionId: bridge.Func_void_std__optional_std__string_) -> bridge.Result_void_ {
     do {
@@ -291,7 +307,7 @@ open class HybridOnramperNitroSpec_cxx {
       return bridge.create_Result_void_(__exceptionPtr)
     }
   }
-  
+
   @inline(__always)
   public final func setSessionExpirationHandler(handler: bridge.Func_std__shared_ptr_Promise_std__shared_ptr_Promise_NitroSessionCredentials____) -> bridge.Result_void_ {
     do {

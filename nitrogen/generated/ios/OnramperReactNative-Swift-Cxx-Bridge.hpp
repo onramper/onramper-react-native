@@ -182,22 +182,22 @@ namespace margelo::nitro::onramper::bridge::swift {
     return Func_void_PreparedIntentResult_Wrapper(std::move(value));
   }
   
-  // pragma MARK: std::function<void(const std::string& /* stateJson */)>
+  // pragma MARK: std::function<void(const std::string& /* recordJson */)>
   /**
    * Specialized version of `std::function<void(const std::string&)>`.
    */
-  using Func_void_std__string = std::function<void(const std::string& /* stateJson */)>;
+  using Func_void_std__string = std::function<void(const std::string& /* recordJson */)>;
   /**
-   * Wrapper class for a `std::function<void(const std::string& / * stateJson * /)>`, this can be used from Swift.
+   * Wrapper class for a `std::function<void(const std::string& / * recordJson * /)>`, this can be used from Swift.
    */
   class Func_void_std__string_Wrapper final {
   public:
-    explicit Func_void_std__string_Wrapper(std::function<void(const std::string& /* stateJson */)>&& func): _function(std::make_unique<std::function<void(const std::string& /* stateJson */)>>(std::move(func))) {}
-    inline void call(std::string stateJson) const noexcept {
-      _function->operator()(stateJson);
+    explicit Func_void_std__string_Wrapper(std::function<void(const std::string& /* recordJson */)>&& func): _function(std::make_unique<std::function<void(const std::string& /* recordJson */)>>(std::move(func))) {}
+    inline void call(std::string recordJson) const noexcept {
+      _function->operator()(recordJson);
     }
   private:
-    std::unique_ptr<std::function<void(const std::string& /* stateJson */)>> _function;
+    std::unique_ptr<std::function<void(const std::string& /* recordJson */)>> _function;
   } SWIFT_NONCOPYABLE;
   Func_void_std__string create_Func_void_std__string(void* NON_NULL swiftClosureWrapper) noexcept;
   inline Func_void_std__string_Wrapper wrap_Func_void_std__string(Func_void_std__string value) noexcept {

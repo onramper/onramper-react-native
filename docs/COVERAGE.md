@@ -21,3 +21,4 @@ What the Headless Wrapper supports today — regions, payment methods, and onram
 |---|---|
 | Coinbase | ✅ |
 | Paybis | ✅ |
+| MoonPay (SDK 1.3.0+) | ✅ |

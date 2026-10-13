@@ -18,32 +18,42 @@ public extension OnramperNitroConfig {
   /**
    * Create a new instance of `OnramperNitroConfig`.
    */
-  init(apiKey: String, clientId: String, environment: String, theme: String, logLevel: String) {
-    self.init(std.string(apiKey), std.string(clientId), std.string(environment), std.string(theme), std.string(logLevel))
+  init(apiKey: String, clientId: String, environment: String, theme: String, logLevel: String, isEventLoggingEnabled: Bool, isEventConsoleLoggingEnabled: Bool) {
+    self.init(std.string(apiKey), std.string(clientId), std.string(environment), std.string(theme), std.string(logLevel), isEventLoggingEnabled, isEventConsoleLoggingEnabled)
   }
 
   @inline(__always)
   var apiKey: String {
     return String(self.__apiKey)
   }
-  
+
   @inline(__always)
   var clientId: String {
     return String(self.__clientId)
   }
-  
+
   @inline(__always)
   var environment: String {
     return String(self.__environment)
   }
-  
+
   @inline(__always)
   var theme: String {
     return String(self.__theme)
   }
-  
+
   @inline(__always)
   var logLevel: String {
     return String(self.__logLevel)
+  }
+
+  @inline(__always)
+  var isEventLoggingEnabled: Bool {
+    return self.__isEventLoggingEnabled
+  }
+
+  @inline(__always)
+  var isEventConsoleLoggingEnabled: Bool {
+    return self.__isEventConsoleLoggingEnabled
   }
 }

@@ -8,6 +8,8 @@ export interface OnramperNitroConfig {
   environment: string; // 'development' | 'production'
   theme: string; // 'system' | 'light' | 'dark'
   logLevel: string; // 'off' | 'error' | 'info' | 'debug'
+  isEventLoggingEnabled: boolean;
+  isEventConsoleLoggingEnabled: boolean;
 }
 
 // Mirrors OnramperSDK.SessionCredentials. Named with a Nitro prefix to avoid a
@@ -50,6 +52,7 @@ export interface OnramperNitro extends HybridObject<{ ios: 'swift' }> {
   cancelPreparedIntent(intentHandle: string): Promise<void>;
 
   // Single native callback per stream; the JS wrapper fans out to multiple listeners.
+  setLogListener(onLog: (recordJson: string) => void): void;
   setStateListener(onState: (stateJson: string) => void): void;
   setEventListener(onEvent: (eventJson: string) => void): void;
   // Mirrors OnramperSDK.$currentTransactionId. `undefined` represents native nil.

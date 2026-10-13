@@ -13,6 +13,9 @@ final class OnramperErrorMappingTests: XCTestCase {
             (.networkError(code: 500, message: "boom"), "networkError"),
             (.decodingError("x"), "decodingError"),
             (.timeout, "timeout"),
+            (.paymentFailed("declined"), "paymentFailed"),
+            (.providerFailed("unavailable"), "providerFailed"),
+            (.applePayNotConfigured, "applePayNotConfigured"),
             (.requirementNotSatisfied("x"), "requirementNotSatisfied"),
             (.amountOutOfRange(min: 10, max: 1000), "amountOutOfRange"),
             (.oidcFlowCancelled, "oidcFlowCancelled"),
@@ -34,18 +37,18 @@ final class OnramperErrorMappingTests: XCTestCase {
 
         for (error, expectedCode) in cases {
             XCTAssertEqual(error.jsCode, expectedCode, "case: \(error)")
-            XCTAssertFalse(error.toJSMessage().isEmpty, "case: \(error)")
+            XCTAssertFalse(jsonString(error.toJSDict()).isEmpty, "case: \(error)")
         }
     }
 
     func test_amountOutOfRange_carriesMinMaxInMessage() {
-        let msg = OnramperError.amountOutOfRange(min: 5, max: 50).toJSMessage()
+        let msg = jsonString(OnramperError.amountOutOfRange(min: 5, max: 50).toJSDict())
         XCTAssertTrue(msg.contains("\"min\":5"), "got: \(msg)")
         XCTAssertTrue(msg.contains("\"max\":50"), "got: \(msg)")
     }
 
     func test_networkError_carriesStatusInMessage() {
-        let msg = OnramperError.networkError(code: 503, message: "x").toJSMessage()
+        let msg = jsonString(OnramperError.networkError(code: 503, message: "x").toJSDict())
         XCTAssertTrue(msg.contains("\"status\":503"), "got: \(msg)")
     }
 }

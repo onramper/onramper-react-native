@@ -3,6 +3,7 @@ import { OnramperClient, type OnramperState } from '@onramper/onramper-react-nat
 import { resolveEnvironment, type AppEnvironment } from '../config/environments';
 import { createDemoSession } from '../createDemoSession';
 import type { ThemeName } from '../theme';
+import { recordDiagnostic } from '../utils/diagnostics';
 import { describeError } from '../utils/format';
 
 export type InitStatus = 'initializing' | 'ready' | 'error';
@@ -27,6 +28,8 @@ export interface OnramperHandle {
   status: InitStatus;
   initError: string | null;
   sdkState: OnramperState['kind'];
+  /** Current checkout reached finalization; independent of the retained transaction ID. */
+  hasFinalizedCheckout: boolean;
   transactionId: string | null;
   completedCheckoutId: string | null;
   lastFailure: string | null;
@@ -64,6 +67,7 @@ export function useOnramper({ environment, theme, generation }: UseOnramperOptio
   const [status, setStatus] = useState<InitStatus>('initializing');
   const [initError, setInitError] = useState<string | null>(null);
   const [sdkState, setSdkState] = useState<OnramperState['kind']>('idle');
+  const [hasFinalizedCheckout, setHasFinalizedCheckout] = useState(false);
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [completedCheckoutId, setCompletedCheckoutId] = useState<string | null>(null);
   const [lastFailure, setLastFailure] = useState<string | null>(null);
@@ -94,6 +98,7 @@ export function useOnramper({ environment, theme, generation }: UseOnramperOptio
     setStatus('initializing');
     setInitError(null);
     setSdkState('idle');
+    setHasFinalizedCheckout(false);
     setTransactionId(null);
     setCompletedCheckoutId(null);
     setLastFailure(null);
@@ -106,7 +111,7 @@ export function useOnramper({ environment, theme, generation }: UseOnramperOptio
       if (cancelled) {
         return;
       }
-      appendLog('info', `session ${session.sessionId}`);
+      appendLog('info', 'demo session minted');
 
       const c = new OnramperClient({
         apiKey: env.apiKey,
@@ -114,6 +119,7 @@ export function useOnramper({ environment, theme, generation }: UseOnramperOptio
         environment: env.name,
         theme,
         logLevel: 'debug',
+        logHandler: recordDiagnostic,
         onSessionExpired: async () => {
           appendLog('info', 'session expired — minting a new one');
           return mint();
@@ -122,13 +128,17 @@ export function useOnramper({ environment, theme, generation }: UseOnramperOptio
       created = c;
       c.addStateListener(s => {
         setSdkState(s.kind);
+        if (s.kind === 'checkoutPreparing' || s.kind === 'ready') {
+          setHasFinalizedCheckout(false);
+        }
         appendLog(s.kind === 'failed' ? 'error' : 'event', `state → ${s.kind}${s.kind === 'failed' ? `: ${s.error.code}` : ''}`);
       });
       c.addTransactionIdListener(setTransactionId);
       c.addEventListener('renderingStarted', e => appendLog('event', `rendering started (${e.renderType})`));
-      c.addEventListener('checkoutFinalized', e =>
-        appendLog('event', `finalized — transaction ${e.response.onramperTransactionId}`),
-      );
+      c.addEventListener('checkoutFinalized', e => {
+        setHasFinalizedCheckout(true);
+        appendLog('event', `finalized — transaction ${e.response.onramperTransactionId}`);
+      });
       c.addEventListener('completed', e => {
         setCompletedCheckoutId(e.checkoutId);
         setLastFailure(null);
@@ -136,10 +146,25 @@ export function useOnramper({ environment, theme, generation }: UseOnramperOptio
       });
       c.addEventListener('failed', e => {
         setCompletedCheckoutId(null);
-        setLastFailure(`${e.error.code} — ${e.error.message}`);
+        const { code, message } = describeError(e.error);
+        setLastFailure(`${code} — ${message}`);
         appendLog('error', `failed ${e.error.code} — ${e.error.message}`);
       });
       c.addEventListener('cancelled', () => appendLog('event', 'checkout cancelled'));
+      c.addEventListener('checkoutStarted', () => {
+        setCompletedCheckoutId(null);
+        setLastFailure(null);
+      });
+      c.addEventListener('paymentPending', () => {
+        setCompletedCheckoutId(null);
+        setLastFailure(null);
+        appendLog('event', 'Payment processing — track the transaction before starting another payment.');
+      });
+      c.addEventListener('providerError', e => appendLog('error', `provider error: ${e.reason}`));
+      for (const name of ['providerReady', 'paymentAuthorized', 'paymentProcessing', 'paymentCancelled',
+        'challengeStarted', 'challengeCompleted', 'customerOnboardingRequired'] as const) {
+        c.addEventListener(name, () => appendLog('event', name));
+      }
 
       await c.initialize(session);
       if (cancelled) {
@@ -174,6 +199,7 @@ export function useOnramper({ environment, theme, generation }: UseOnramperOptio
     status: client === null && status === 'ready' ? 'initializing' : status,
     initError,
     sdkState,
+    hasFinalizedCheckout,
     transactionId,
     completedCheckoutId,
     lastFailure,
