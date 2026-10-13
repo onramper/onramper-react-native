@@ -32,8 +32,10 @@ record has `timestamp` (Unix milliseconds), `level`, `category`, `event`, `conte
 and `message`. Logging defaults to `off`; callback exceptions are isolated from
 checkout, and records queued after `destroy()` are ignored.
 
-The bare demo's **Settings → Diagnostic logs** has an opt-in recording toggle,
-**Share logs**, and **Delete logs**. Enable recording before reproducing an issue.
+The bare demo records SDK logs by default from initialization, including in bundled
+Release builds. **Settings → Diagnostic logs** has a recording toggle, **Share logs**,
+and **Delete logs**. A saved off choice is respected across launches and upgrades;
+turn recording back on before reproducing an issue if you previously disabled it.
 It persists SDK records independently of the 300-entry on-screen event panel.
 Two rotating files cap storage at 5 MiB; files older than seven days are pruned
 on write/export. Sharing creates a snapshot and opens the iOS share sheet.

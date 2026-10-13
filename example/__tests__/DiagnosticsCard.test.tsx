@@ -5,7 +5,7 @@ import { diagnosticStore } from '../utils/diagnostics';
 
 jest.mock('../utils/diagnostics', () => ({
   diagnosticStore: {
-    getEnabled: jest.fn().mockResolvedValue(false),
+    getEnabled: jest.fn().mockResolvedValue(true),
     setEnabled: jest.fn().mockResolvedValue(undefined),
     shareLogs: jest.fn().mockResolvedValue(undefined),
     clearLogs: jest.fn().mockResolvedValue(undefined),
@@ -14,7 +14,10 @@ jest.mock('../utils/diagnostics', () => ({
 
 const store = diagnosticStore as jest.Mocked<NonNullable<typeof diagnosticStore>>;
 
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => {
+  jest.clearAllMocks();
+  store.getEnabled.mockResolvedValue(true);
+});
 
 async function render() {
   let r!: ReactTestRenderer.ReactTestRenderer;
@@ -22,17 +25,18 @@ async function render() {
   return r;
 }
 
-test('loads the saved setting and only enables recording after confirmation', async () => {
+test('reflects default-on recording and lets the tester turn it off', async () => {
   const r = await render();
   const toggle = () => r.root.findByProps({ accessibilityLabel: 'Save SDK logs' });
-  expect(toggle().props.value).toBe(false);
-  expect(store.setEnabled).not.toHaveBeenCalled();
-  await act(async () => toggle().props.onValueChange(true));
-  expect(store.setEnabled).toHaveBeenCalledWith(true);
   expect(toggle().props.value).toBe(true);
+  expect(store.setEnabled).not.toHaveBeenCalled();
+  await act(async () => toggle().props.onValueChange(false));
+  expect(store.setEnabled).toHaveBeenCalledWith(false);
+  expect(toggle().props.value).toBe(false);
 });
 
 test('failed enable keeps recording off and shows the error', async () => {
+  store.getEnabled.mockResolvedValueOnce(false);
   store.setEnabled.mockRejectedValueOnce(new Error('Could not save setting.'));
   const r = await render();
   await act(async () => r.root.findByProps({ accessibilityLabel: 'Save SDK logs' }).props.onValueChange(true));
@@ -53,5 +57,12 @@ test('delete clears stored logs without changing the preference', async () => {
   const r = await render();
   await act(async () => r.root.findAll(node => node.props.accessibilityRole === 'button' && typeof node.props.onPress === 'function')[1].props.onPress());
   expect(store.clearLogs).toHaveBeenCalledTimes(1);
+  expect(store.setEnabled).not.toHaveBeenCalled();
+});
+
+test('preserves a previously saved off preference', async () => {
+  store.getEnabled.mockResolvedValueOnce(false);
+  const r = await render();
+  expect(r.root.findByProps({ accessibilityLabel: 'Save SDK logs' }).props.value).toBe(false);
   expect(store.setEnabled).not.toHaveBeenCalled();
 });

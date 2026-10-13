@@ -56,7 +56,7 @@ export function DiagnosticsCard() {
   return (
     <Card
       title="Diagnostic logs"
-      footer="Enable before reproducing an issue, then share the file. Logs stay on this device until shared, expire after 7 days, and are limited to 5 MB. Provider messages may contain personal information."
+      footer="SDK logging is on by default in this demo. You can turn it off here. Logs stay on this device until shared, are pruned after 7 days on write or export, and are limited to 5 MB. Provider messages may contain personal information."
     >
       <SwitchRow
         label="Save SDK logs"

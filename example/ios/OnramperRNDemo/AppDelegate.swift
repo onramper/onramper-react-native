@@ -14,6 +14,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
+    // Capture the first SDK initialization, including in bundled Release demos.
+    // Registration supplies a default without overwriting a tester's saved choice.
+    UserDefaults.standard.register(defaults: ["onramperDiagnosticLogging": true])
+
     let delegate = ReactNativeDelegate()
     let factory = RCTReactNativeFactory(delegate: delegate)
     delegate.dependencyProvider = RCTAppDependencyProvider()
