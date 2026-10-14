@@ -4,145 +4,196 @@ All notable changes to this project are documented in this file.
 
 ## [1.3.0]
 
-Bundles `OnramperSDK@1.3.0` from its published, checksum-verified release.
+Bundles the published, checksum-verified `OnramperSDK@1.3.0` for iOS.
 
-### Added
+Most checkout changes in this release come from
+[OnramperSDK for iOS 1.3.0](https://github.com/onramper/onramper-ios/releases/tag/v1.3.0):
+MoonPay Apple Pay, pending payments, customer-facing errors, structured logging, and
+credential isolation. The React Native wrapper exposes these native capabilities in
+JavaScript and adds prepared-checkout cleanup and client-lifecycle fixes. The demo adds
+log-file management and checkout recovery.
 
-- **MoonPay Apple Pay checkout.** The native checkout button now drives MoonPay's
-  Frames flow when MoonPay is selected: guest checkout or account onboarding,
-  payment disclosures, Apple Pay, and 3-D Secure verification when required.
-  Integrators continue to render the returned `button`; there is no separate
-  MoonPay WebView to create. Coinbase and Paybis continue through the same API.
+### Before you upgrade
 
-- **Pending payments.** `OnramperState.kind` and `CheckoutEvent.type` gain
-  `paymentPending`. It means payment was accepted but settlement is still pending;
-  it does **not** emit `completed`. Show a processing state and retain
-  `currentTransactionId` for tracking through your backend and webhooks. Do not
-  start another payment solely because the first is pending.
+- **Handle the new error, state and event cases.** Update exhaustive switches for the
+  additions below. Keep `paymentPending` separate from completion and failure; an
+  accepted payment may still be settling.
+- **Previously signed-in users will sign in to OnramperID again.** The native SDK now
+  stores credentials separately by environment and removes the old shared entries once.
+  SDK session setup remains automatic; the next checkout requiring login presents
+  sign-in again.
+- **Rebuild the native app.** After updating the package, run `pod install` in your iOS
+  project and rebuild. A JavaScript-only update cannot replace the bundled iOS SDK.
 
-  ```ts
-  client.addEventListener('paymentPending', () => {
-    showProcessing(client.currentTransactionId);
-  });
-  ```
+Existing checkout, prefill, button-rendering and session-refresh signatures are
+unchanged. Minimum React Native and iOS versions are unchanged.
 
-- **Customer-facing errors and support codes.** `OnramperError` now exposes
-  `userMessage` for the customer and `supportCode` for diagnostics. The existing
-  `code`, `message`, and `info` fields remain available. Native failed-event/state
-  payloads carry the new fields too; `OnramperError.from()` supplies safe defaults
-  for JavaScript errors and older, manually constructed payloads.
+### Included from iOS SDK 1.3.0
 
-  ```ts
-  client.addEventListener('failed', ({ error }) => {
-    const failure = OnramperError.from(error);
-    showError(failure.userMessage, failure.supportCode);
-  });
+**MoonPay Apple Pay checkout.** When MoonPay is selected for an available Apple Pay
+quote, the native checkout button handles MoonPay's Frames flow: guest checkout or
+account onboarding, required payment disclosures, Apple Pay, and 3-D Secure verification
+when needed. Integrators continue rendering the returned `button`; no separate MoonPay
+WebView is required. The MoonPay sheet opens at a compact height and expands when the
+provider needs more room. Required disclosures appear next to the Apple Pay button and
+cannot be hidden. Coinbase and Paybis continue through the same API.
 
-  try {
-    await client.getCheckoutRequirements(request);
-  } catch (error) {
-    const failure = OnramperError.from(error);
-    showError(failure.userMessage, failure.supportCode);
-  }
-  ```
+**Pending-payment outcome and UI.** The native SDK distinguishes an accepted payment
+awaiting settlement from a completed payment. Its sheet shows **Payment processing**
+with the transaction ID; dismissing the sheet preserves the pending outcome.
 
-  New error codes are `paymentFailed` (confirmed payment failure),
-  `providerFailed` (checkout surface failed without confirming payment outcome),
-  and `applePayNotConfigured` (Apple Pay needs setup). A `providerFailed` error
-  must not be treated as proof that no payment was taken. Follow `userMessage`
-  rather than offering an unconditional retry.
+**Customer-facing errors and failure UI.** The native SDK supplies `userMessage` and
+`supportCode`, and distinguishes confirmed payment failure from a checkout-surface error
+with an unknown payment outcome. Its failure screen displays that copy and support
+code. **Try Again** closes the sheet and starts a fresh checkout. The RN API below
+exposes the same error categories and messages for the integrator's own UI.
 
-- **Structured SDK logs in JavaScript.** Set `logLevel` and an optional
-  `logHandler` on the client configuration. Each `OnramperLogRecord` contains a
-  Unix-millisecond `timestamp`, `level`, `category`, `event`, string-valued
-  `context`, and formatted `message`. Native Console output is preserved.
+**Structured, sanitized logging.** The native SDK produces structured records and
+supports a custom log sink. HTTP paths use route templates, URLs are reduced to hosts,
+and sensitive-looking values are redacted. Native `errorDescription` and `debugInfo`
+also exclude URLs, response bodies, and tokens. Provider messages receive best-effort
+redaction, so exported logs may still contain personal data. Logging remains off by
+default; the RN wrapper forwards these native records to JavaScript.
 
-  ```ts
-  const client = new OnramperClient({
-    apiKey,
-    clientId,
-    environment: 'production',
-    onSessionExpired,
-    logLevel: 'info',
-    logHandler: record => diagnosticStore.append(record),
-  });
-  ```
+**Environment-specific credentials.** The native SDK now keeps credentials separate
+for development and production, preventing a session from carrying across environments.
+The one-time sign-in requirement is described above.
 
-  Logging defaults to `off`. Callbacks run in JavaScript, stop after `destroy()`,
-  and should do little work; callback exceptions do not interrupt checkout.
-  Records use the public SDK's sanitization, not its internal verbose build.
-  Provider messages receive best-effort redaction and may still contain personal
-  data; choose retention and sharing appropriate for your app.
+### React Native API additions
 
-- **Provider lifecycle and metadata.** New events are `challengeStarted`,
-  `challengeCompleted`, and `customerOnboardingRequired`. These describe progress,
-  not successful payment. Optional `QuoteResponse.providerContext` preserves JSON
-  strings, numbers, booleans, arrays, objects, and nulls (including provider tokens,
-  executable flags, and limits). `ProviderJSONValue` and `PaymentDisclosure` are
-  exported types; finalized data also types the optional `providerBootstrap`.
-  Avoid logging provider metadata or payment URLs.
+The following APIs expose the bundled native SDK's states, events, errors, logging, and
+provider metadata to JavaScript.
 
-- **Optional provider-event logging controls.** `isEventLoggingEnabled` enables
-  SDK event telemetry to the BFF. `isEventConsoleLoggingEnabled` emits provider
-  events at info level even when `logLevel` is lower. Both default to `false`.
+**Pending-payment handling.** `OnramperState.kind` and `CheckoutEvent.type` now include
+`paymentPending`. It means payment was accepted but settlement is pending, and does not
+emit `completed`. Show a processing state and retain `currentTransactionId` to track the
+transaction through your backend and webhooks. Do not start another payment just because
+the first is pending.
 
-### Fixed
+```ts
+client.addEventListener('paymentPending', () => {
+  showProcessing(client.currentTransactionId);
+});
+```
 
-- **Overlapping quote preparations no longer retain abandoned buttons.** Each
-  client invalidates older unmounted handles when a newer request starts, even
-  if that newer request fails. Superseded in-flight calls reject with
-  `intentInvalidated`, which apps should ignore when waiting for the latest
-  quote. Reset, sign-out, and destruction also clear owned handles; other
-  clients are unaffected. Consuming a handle transfers the view out of the
-  registry, and expired handles cannot mount. This is local view cleanup, not
-  cancellation of a backend request or payment.
+**Customer-facing errors and support codes.** The JavaScript `OnramperError` now exposes
+the native SDK's `userMessage` for customer copy and `supportCode` for diagnostics.
+Existing `code`, `message` and `info` fields remain available. These fields are preserved
+across both failed events and rejected native SDK calls.
 
-- **Safe client destruction.** Repeated `destroy()` calls are harmless. Calls
-  and listener subscriptions after destruction now return the typed
-  `clientDestroyed` error instead of Nitro's `NativeState is null`. Operations
-  waiting for configuration do not start native work after destruction, and
-  late results, events, and logs cannot update the destroyed JS client. Unmount
-  the old button and create a new client to start another session.
+```ts
+client.addEventListener('failed', ({ error }) => {
+  const failure = OnramperError.from(error);
+  showError(failure.userMessage, failure.supportCode);
+});
 
-- Rejected native SDK calls now preserve the structured error code, customer
-  message, support code, and associated information across Nitro, matching the
-  error fields delivered by failed events. Previously Nitro reduced exceptions
-  to a message and the wrapper could classify them as `unrecoverable`.
+try {
+  await client.getCheckoutRequirements(request);
+} catch (error) {
+  const failure = OnramperError.from(error);
+  showError(failure.userMessage, failure.supportCode);
+}
+```
 
-### Changed
+New JavaScript error codes mirroring iOS SDK 1.3.0:
 
-- The bare RN demo replaces the disabled Buy button after a failure before
-  finalization with **Get a new quote**. Recovery fetches fresh requirements and
-  replaces the button, preserving the login without automatically retrying
-  payment. Failures after finalization retain the native outcome sheet.
-- The bare RN demo shows pending payments separately from completion, displays
-  customer-friendly failure copy, and includes provider lifecycle events. Its
-  Settings sheet lists daily UTC `.log` files with sizes, readable previews,
-  individual sharing, and confirmed deletion. Logs include a launch header with
-  app/build/iOS/device-model details. Demo recording is on by default and respects
-  a saved off choice; files are excluded from backups, limited to 5 MiB, and
-  pruned after seven days during use. Older days are removed first; if one day
-  fills the cap, its newest complete lines are kept with a truncation notice.
-  The event panel remains an in-memory view. The Expo example demonstrates the
-  new events and log callback.
-- This stable release includes the self-sizing checkout button and demo changes
-  previously published in `1.2.2-1`. Continue styling the button's container;
-  `cloneElement(button, { style })` does not style the native button.
+- `paymentFailed`: the provider confirmed the payment failed.
+- `providerFailed`: the checkout surface failed without confirming the payment outcome.
+  This does not prove that no payment was taken; follow `userMessage` and check
+  transaction status before offering another payment attempt.
+- `applePayNotConfigured`: Apple Pay needs to be set up on the device.
 
-### Upgrading from 1.2.x
+`OnramperError.from()` supplies fallback customer copy and a support code for older or
+manually constructed payloads. The new fields are optional on `OnramperErrorPayload` to
+preserve compatibility with existing fixtures and callers.
 
-- Update exhaustive switches over errors, states, and events for the new cases.
-  Keep pending separate from both completed and failed; use `userMessage` for UI
-  and `supportCode` for support. The new error-payload fields are optional in
-  TypeScript to keep existing fixtures and manually constructed payloads valid.
-- Existing `getCheckoutRequirements`, prefill, button rendering, and session
-  refresh signatures are unchanged. The minimum React Native and iOS versions
-  are unchanged. Run `pod install` and rebuild the native app after upgrading.
-- The iOS SDK now isolates stored credentials by environment and removes the old
-  shared entries once. Previously signed-in users will see OnramperID sign-in
-  again on their next checkout after upgrading; SDK session setup is automatic.
-- Keep transaction webhooks configured for every provider and payment flow.
-  In-app events complement your backend's transaction tracking.
+**Structured SDK logs in JavaScript.** Configure `logLevel` and an optional `logHandler`
+to receive native `OnramperLogRecord` values. Records contain a Unix-millisecond
+timestamp, level, category, event, string-valued context and formatted message. The RN
+bridge preserves native Console output while forwarding records to the callback.
+
+```ts
+const client = new OnramperClient({
+  apiKey,
+  clientId,
+  environment: 'production',
+  onSessionExpired,
+  logLevel: 'info',
+  logHandler: record => diagnosticStore.append(record),
+});
+```
+
+Library logging defaults to `off`. Callbacks run in JavaScript, stop after `destroy()`,
+and should do little work; callback exceptions do not interrupt checkout. Native
+sanitization is preserved; choose appropriate retention and sharing controls for your
+app's exported logs.
+
+**Provider lifecycle events and metadata.** The wrapper exposes the native SDK's new
+`challengeStarted`, `challengeCompleted` and `customerOnboardingRequired` events. These
+describe progress, not payment completion. Optional `QuoteResponse.providerContext` preserves JSON values,
+including executable flags and limits where supplied. `ProviderJSONValue` and
+`PaymentDisclosure` are exported types, and finalized data types the optional
+`providerBootstrap`. Provider metadata may contain tokens; avoid logging it or payment
+URLs.
+
+**Opt-in provider-event diagnostics.** The wrapper also exposes the native configuration
+flags: `isEventLoggingEnabled` enables SDK event telemetry to the BFF.
+`isEventConsoleLoggingEnabled` emits provider events at info level even when `logLevel`
+is lower. Both default to `false`.
+
+### React Native wrapper fixes
+
+- **Superseded quote preparations release abandoned buttons.** A newer preparation
+  invalidates older unmounted handles owned by that client, even if the newer request
+  fails. Superseded in-flight calls reject with `intentInvalidated`; ignore those when
+  waiting for the latest quote. Reset, sign-out and destruction clear owned handles, and
+  expired handles cannot mount. Other clients are unaffected. This cleans up local
+  views; it does not cancel a submitted payment or guarantee cancellation of a backend
+  request.
+- **Client destruction is safe and explicit.** Repeated `destroy()` calls are harmless.
+  Subsequent operations reject, and listener subscriptions throw, with the typed
+  `clientDestroyed` error instead of Nitro's `NativeState is null`. Late results, events
+  and logs cannot update a destroyed JS client. Unmount the old button and create a new
+  client to start another session.
+- **Native errors retain their context across Nitro.** Promise rejections preserve the
+  structured error code, customer message, support code and associated information,
+  matching failed-event payloads. Previously, exceptions could be reduced to a message
+  and classified as `unrecoverable`.
+
+### Demo app changes
+
+- The bare RN demo offers **Get a new quote** after a failure before finalization,
+  replacing the disabled Buy button while preserving login. It fetches fresh
+  requirements without automatically retrying payment. Failures after finalization
+  retain the native outcome sheet.
+- Pending payments appear separately from completion, and error displays use
+  customer-friendly messages and support codes.
+- Settings now lists daily UTC log files with previews, sizes, individual sharing and
+  confirmed deletion. Demo recording is on by default and respects a saved off choice.
+  Files are excluded from backups, capped at 5 MiB in total and pruned after seven days
+  during use. The event panel remains an in-memory view.
+- The Expo example demonstrates the new events, customer-facing errors and log callback.
+
+### Upgrading from stable 1.2.2
+
+This stable release also includes the self-sizing checkout button and demo improvements
+previously published in `1.2.2-1`. The native button reports its content height,
+including its Terms of Service text. Style the button's container; `cloneElement(button,
+{ style })` does not style the native button.
+
+Keep transaction webhooks configured for every provider and payment flow. In-app SDK
+events complement backend transaction tracking.
+
+### Known issue in the Expo example
+
+The Expo demo's native build on the tested Xcode 27 toolchain remains blocked by the
+existing `ExpoModulesJSI` compiler error in `JavaScriptRuntime.swift:219`: “a C function
+pointer can only be formed from a reference to a 'func' or a literal closure.” This was
+reproduced before these changes. Expo JavaScript tests and type checking pass; the bare
+RN app's Release build has been validated.
+
+[iOS SDK 1.3.0 changelog](https://github.com/onramper/onramper-ios/blob/master/CHANGELOG.md#130)
+· [React Native changes since 1.2.2-1](https://github.com/onramper/onramper-react-native/compare/v1.2.2-1...v1.3.0)
 
 ## [1.2.2-1]
 
