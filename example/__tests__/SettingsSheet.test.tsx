@@ -3,6 +3,9 @@ import ReactTestRenderer, { act } from 'react-test-renderer';
 import { SettingsSheet, type SettingsSheetProps } from '../screens/SettingsSheet';
 
 jest.mock('../env.local', () => ({ ENV: {} }), { virtual: true });
+jest.mock('@onramper/onramper-react-native', () => ({
+  OnramperClient: { sdkVersion: '9.8.7' },
+}));
 
 function props(overrides: Partial<SettingsSheetProps> = {}): SettingsSheetProps {
   return {
@@ -31,6 +34,7 @@ async function render(p: SettingsSheetProps) {
 test('renders every section with versions', async () => {
   const r = await render(props());
   const out = JSON.stringify(r.toJSON());
+  expect(out).toContain('9.8.7');
   for (const s of ['Environment', 'Clear local sessions', 'Dark mode', 'SDK events', 'Library', 'OnramperSDK']) {
     expect(out).toContain(s);
   }

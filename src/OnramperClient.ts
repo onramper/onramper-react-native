@@ -29,6 +29,19 @@ export interface GetCheckoutRequirementsResult {
  * unions, then fanned out to any number of listeners.
  */
 export class OnramperClient {
+  /**
+   * Version of the native Onramper iOS SDK loaded by this app (not the RN
+   * package version). No client configuration or session is required. iOS only.
+   */
+  static get sdkVersion(): string {
+    const native = createOnramperNative();
+    try {
+      return native.sdkVersion;
+    } finally {
+      native.dispose();
+    }
+  }
+
   state: OnramperState = { kind: 'idle' };
   lastError: OnramperError | null = null;
   currentTransactionId: string | null = null;

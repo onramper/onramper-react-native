@@ -10,7 +10,7 @@ import { createDemoSession } from '../createDemoSession';
 // resolveEnvironment, before any network call.
 jest.mock('../env.local', () => ({ ENV: {} }), { virtual: true });
 jest.mock('@onramper/onramper-react-native', () => ({
-  OnramperClient: jest.fn(),
+  OnramperClient: Object.assign(jest.fn(), { sdkVersion: '9.8.7' }),
 }));
 jest.mock('../createDemoSession', () => ({ createDemoSession: jest.fn() }));
 jest.mock('react-native-safe-area-context', () => ({

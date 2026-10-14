@@ -121,7 +121,12 @@ open class HybridOnramperNitroSpec_cxx {
   }
 
   // Properties
-
+  public final var sdkVersion: std.string {
+    @inline(__always)
+    get {
+      return std.string(self.__implementation.sdkVersion)
+    }
+  }
 
   // Methods
   @inline(__always)

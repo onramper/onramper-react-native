@@ -2,6 +2,41 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.3.1]
+
+Bundles `OnramperSDK@1.3.1` from its published, checksum-verified release.
+
+### Added
+
+- **Runtime native SDK version.** `OnramperClient.sdkVersion` returns the iOS SDK
+  version actually loaded by the app, as plain semver (for example, `"1.3.1"`).
+  It is synchronous and read-only, and requires no client instance, credentials,
+  or initialization. Use it in diagnostics, analytics, or a support screen.
+
+  ```ts
+  const sdkVersion = OnramperClient.sdkVersion;
+  ```
+
+  This reports the native SDK version, not the React Native package or app
+  version. Do not infer it from the framework bundle's version fields.
+
+### Changed
+
+- The bare RN demo's Settings screen now reads the SDK version from native code
+  instead of inferring it from the JavaScript package version. The Expo demo
+  also shows the native SDK version in its build information.
+- The bare RN demo records TestFlight build number 2 and declares its use of
+  exempt encryption in `Info.plist`, avoiding a repeated encryption questionnaire
+  for future uploads. Already uploaded builds still need their declaration in
+  App Store Connect.
+
+### Upgrading from 1.3.0
+
+- Existing checkout, event, error, and logging APIs are unchanged. No existing
+  call sites need to change; the runtime version property is optional and iOS-only.
+- Run `pod install` and rebuild the native app after updating the package. A
+  JavaScript-only update cannot add the native version getter.
+
 ## [1.3.0]
 
 Bundles `OnramperSDK@1.3.0` from its published, checksum-verified release.

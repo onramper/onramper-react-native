@@ -14,6 +14,7 @@ namespace margelo::nitro::onramper {
     HybridObject::loadHybridMethods();
     // load custom methods/properties
     registerHybrids(this, [](Prototype& prototype) {
+      prototype.registerHybridGetter("sdkVersion", &HybridOnramperNitroSpec::getSdkVersion);
       prototype.registerHybridMethod("configure", &HybridOnramperNitroSpec::configure);
       prototype.registerHybridMethod("initialize", &HybridOnramperNitroSpec::initialize);
       prototype.registerHybridMethod("reset", &HybridOnramperNitroSpec::reset);
