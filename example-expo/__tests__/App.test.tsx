@@ -17,7 +17,7 @@ jest.mock('../env.local', () => ({
 }), { virtual: true });
 
 jest.mock('@onramper/onramper-react-native', () => ({
-  OnramperClient: jest.fn(),
+  OnramperClient: Object.assign(jest.fn(), { sdkVersion: '9.8.7' }),
   OnramperError: jest.requireActual('../../src/errors').OnramperError,
 }));
 
@@ -32,6 +32,7 @@ test('renders an empty Onramper transaction ID before finalization', async () =>
   await ReactTestRenderer.act(() => {
     renderer = ReactTestRenderer.create(<App />);
   });
+  expect(JSON.stringify(renderer.toJSON())).toContain('9.8.7');
   expect(JSON.stringify(renderer.toJSON())).toContain('Onramper transaction ID');
   expect(JSON.stringify(renderer.toJSON())).toContain('—');
   await ReactTestRenderer.act(async () => renderer.unmount());

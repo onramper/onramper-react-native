@@ -242,6 +242,7 @@ export default function App() {
           <Text style={styles.title}>Onramper RN Example</Text>
 
           <Text style={styles.section}>Build info</Text>
+          <Text style={styles.kv}>OnramperSDK: {Platform.OS === 'ios' ? OnramperClient.sdkVersion : 'iOS only'}</Text>
           <Text style={styles.kv}>bundleId: {Application.applicationId ?? '(unknown)'}</Text>
           <Text style={styles.kv}>version: {Application.nativeApplicationVersion ?? '(unknown)'} ({Application.nativeBuildVersion ?? '(unknown)'})</Text>
 

@@ -147,6 +147,24 @@ See [debugging](docs/DEBUGGING.md) for the record shape and retention guidance.
 For migration details, including new enum cases and one-time OnramperID sign-in,
 see [1.3.0 release notes](CHANGELOG.md#130).
 
+## Runtime SDK version
+
+Read `OnramperClient.sdkVersion` to identify the native iOS SDK loaded by the app:
+
+```ts
+import { OnramperClient } from '@onramper/onramper-react-native';
+
+const sdkVersion = OnramperClient.sdkVersion; // e.g. "1.3.1"
+```
+
+This is a synchronous, read-only property. It needs no client instance, API key,
+SDK session, or initialization. Use it in diagnostics and support screens;
+read the RN package version separately from its `package.json`. Wrapper-only
+releases can have a different version from their bundled native SDK.
+
+Available on iOS with RN package 1.3.1 or newer. Run `pod install` and rebuild the
+native app after upgrading; a JavaScript-only update cannot add the native getter.
+
 ## Versioning
 
 `@onramper/onramper-react-native@X.Y.Z` always bundles `OnramperSDK@X.Y.Z` (iOS). Wrapper-only patches are published as `X.Y.Z-N` pre-releases (`npm install @onramper/onramper-react-native@next` to opt in).

@@ -8,7 +8,7 @@ import type { OnramperHandle, UseOnramperOptions } from '../hooks/useOnramper';
 
 jest.mock('../env.local', () => ({ ENV: {} }), { virtual: true });
 jest.mock('@onramper/onramper-react-native', () => ({
-  OnramperClient: jest.fn(),
+  OnramperClient: Object.assign(jest.fn(), { sdkVersion: '9.8.7' }),
 }));
 jest.mock('react-native-safe-area-context', () => ({
   SafeAreaProvider: ({ children }: { children: React.ReactNode }) => children,

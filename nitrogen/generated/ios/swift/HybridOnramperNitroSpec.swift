@@ -10,7 +10,7 @@ import NitroModules
 /// See ``HybridOnramperNitroSpec``
 public protocol HybridOnramperNitroSpec_protocol: HybridObject {
   // Properties
-  
+  var sdkVersion: String { get }
 
   // Methods
   func configure(config: OnramperNitroConfig) throws -> Promise<Void>

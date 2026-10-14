@@ -89,6 +89,22 @@ jobs:
           fs.writeFileSync('package.json', `${JSON.stringify(p, null, 2)}\n`);
           NODE
 
+      - name: Prepare release notes
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const changelog = fs.readFileSync('CHANGELOG.md', 'utf8');
+          const heading = `## [${process.env.VERSION}]`;
+          const sections = changelog.split(/^## /m).slice(1);
+          const section = sections.find(value => `## ${value.split('\n')[0]}` === heading);
+          if (!section) throw new Error(`Missing changelog entry for ${process.env.VERSION}`);
+          const notes = section.slice(section.indexOf('\n') + 1).trim();
+          if (!notes) throw new Error(`Empty changelog entry for ${process.env.VERSION}`);
+          fs.writeFileSync(`${process.env.RUNNER_TEMP}/release-notes.md`, `${notes}\n`);
+          NODE
+
       - name: Fetch xcframework + checksum
         run: npm ci && npm run fetch-xcframework
 
@@ -160,8 +176,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ steps.ver.outputs.version }}
-          IOS_VERSION: ${{ github.event.inputs.ios-version }}
         run: |
           gh release create "v${VERSION}" \
             --title "v${VERSION}" \
-            --notes "Bundles OnramperSDK ${IOS_VERSION}."
+            --notes-file "$RUNNER_TEMP/release-notes.md"

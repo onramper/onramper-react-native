@@ -20,9 +20,9 @@ namespace margelo::nitro::onramper { struct PreparedIntentResult; }
 // Forward declaration of `NitroSessionCredentials` to properly resolve imports.
 namespace margelo::nitro::onramper { struct NitroSessionCredentials; }
 
+#include <string>
 #include <NitroModules/Promise.hpp>
 #include "OnramperNitroConfig.hpp"
-#include <string>
 #include "PreparedIntentResult.hpp"
 #include <functional>
 #include <optional>
@@ -55,7 +55,7 @@ namespace margelo::nitro::onramper {
 
     public:
       // Properties
-      
+      virtual std::string getSdkVersion() = 0;
 
     public:
       // Methods

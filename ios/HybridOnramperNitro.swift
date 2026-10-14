@@ -9,6 +9,8 @@ import SwiftUI
 /// callbacks, and feeds the SDK's `sessionExpirationHandler` from a stored
 /// async JS callback. The public typed JS API lives in `OnramperClient.ts`.
 final class HybridOnramperNitro: HybridOnramperNitroSpec {
+  var sdkVersion: String { OnramperSDK.OnramperClient.sdkVersion }
+
   private let logRelay = SDKLogRelay()
   @MainActor private var client: OnramperClient?
   @MainActor private var stateObservation: AnyCancellable?

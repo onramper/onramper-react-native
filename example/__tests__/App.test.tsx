@@ -16,7 +16,7 @@ jest.mock(
   }),
   { virtual: true },
 );
-jest.mock('@onramper/onramper-react-native', () => ({ OnramperClient: jest.fn() }));
+jest.mock('@onramper/onramper-react-native', () => ({ OnramperClient: Object.assign(jest.fn(), { sdkVersion: '9.8.7' }) }));
 // Never resolves: the app stays in its initializing state for these render tests.
 jest.mock('../createDemoSession', () => ({ createDemoSession: jest.fn(() => new Promise(() => {})) }));
 jest.mock('react-native-safe-area-context', () => ({

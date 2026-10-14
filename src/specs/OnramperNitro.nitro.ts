@@ -36,6 +36,8 @@ export interface PreparedIntentResult {
  * them back into the fully-typed `OnramperState`/`CheckoutEvent` unions.
  */
 export interface OnramperNitro extends HybridObject<{ ios: 'swift' }> {
+  // Compiled native SDK version, readable before configure/initialize.
+  readonly sdkVersion: string;
   configure(config: OnramperNitroConfig): Promise<void>;
   initialize(sessionId: string, sessionToken: string): Promise<void>;
   reset(): Promise<void>;

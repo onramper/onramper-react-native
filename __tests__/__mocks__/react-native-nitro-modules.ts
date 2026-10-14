@@ -4,6 +4,7 @@
 // flows. Grab the most-recently-created instance via `__lastNative()`.
 
 export interface MockNative {
+  sdkVersion: string;
   configure: jest.Mock;
   initialize: jest.Mock;
   reset: jest.Mock;
@@ -26,6 +27,7 @@ export interface MockNative {
 
 export function makeNative(): MockNative {
   const native = {
+    sdkVersion: '1.3.1',
     configure: jest.fn().mockResolvedValue(undefined),
     initialize: jest.fn().mockResolvedValue(undefined),
     reset: jest.fn().mockResolvedValue(undefined),
