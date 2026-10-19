@@ -1,6 +1,6 @@
 # iOS build setup for `@onramper/onramper-react-native`
 
-Build-time configuration for embedding the Onramper iOS SDK: iOS build settings, App Attest, the first build, and Metro. For the full integration walkthrough — install, usage, error handling, API reference — see [Getting started](doc:headless-react-native-getting-started).
+Build-time configuration for embedding the Onramper iOS SDK: iOS build settings, App Attest, camera & microphone usage descriptions, the first build, and Metro. For the full integration walkthrough — install, usage, error handling, API reference — see [Getting started](doc:headless-react-native-getting-started).
 
 ---
 
@@ -55,7 +55,29 @@ For App Store builds, Xcode automatically switches to `production`.
 
 You'll also need to set a **Development Team** under Signing & Capabilities. The Headless Wrapper works with any team; the bundle ID just needs to be registered with Apple Developer Portal (Xcode does this automatically when you enable automatic signing).
 
-### 2.2 Pod install + first build
+### 2.2 Camera & microphone usage descriptions
+
+Some providers run ID-document or selfie verification inside the checkout webview. Without usage descriptions iOS turns down the webview's camera request without showing a prompt, and the app gets no Camera toggle in Settings.
+
+Bare RN: add to your app's `Info.plist`:
+
+```xml
+<key>NSCameraUsageDescription</key>
+<string>Camera access is required for identity verification</string>
+<key>NSMicrophoneUsageDescription</key>
+<string>Microphone access is required for identity verification</string>
+```
+
+Expo: add them under `ios.infoPlist` in `app.json`:
+
+```json
+"infoPlist": {
+  "NSCameraUsageDescription": "Camera access is required for identity verification",
+  "NSMicrophoneUsageDescription": "Microphone access is required for identity verification"
+}
+```
+
+### 2.3 Pod install + first build
 
 Bare RN:
 
