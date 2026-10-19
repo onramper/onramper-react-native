@@ -22,7 +22,9 @@
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": false,
           "NSAllowsLocalNetworking": true
-        }
+        },
+        "NSCameraUsageDescription": "Camera access is required for identity verification",
+        "NSMicrophoneUsageDescription": "Microphone access is required for identity verification"
       },
       "appleTeamId": "P3JUP9FF82"
     }
