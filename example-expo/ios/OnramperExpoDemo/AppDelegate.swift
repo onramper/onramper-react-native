@@ -77,7 +77,41 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     factory.startReactNative(
       withModuleName: "main",
       in: window,
-      launchOptions: nil)
+      launchOptions: launchOptions(from: connectionOptions))
+  }
+
+  // With scenes, links are delivered here instead of to the AppDelegate, so forward them
+  // to its Expo/RCTLinkingManager handlers.
+  func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+    guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else { return }
+    for context in URLContexts {
+      var options: [UIApplication.OpenURLOptionsKey: Any] = [:]
+      options[.sourceApplication] = context.options.sourceApplication
+      options[.annotation] = context.options.annotation
+      options[.openInPlace] = context.options.openInPlace
+      _ = appDelegate.application(UIApplication.shared, open: context.url, options: options)
+    }
+  }
+
+  func scene(_ scene: UIScene, continue userActivity: NSUserActivity) {
+    guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else { return }
+    _ = appDelegate.application(UIApplication.shared, continue: userActivity) { _ in }
+  }
+
+  // RCTLinkingManager.getInitialURL reads the cold-start link from launch options.
+  private func launchOptions(from connectionOptions: UIScene.ConnectionOptions) -> [UIApplication.LaunchOptionsKey: Any]? {
+    if let url = connectionOptions.urlContexts.first?.url {
+      return [.url: url]
+    }
+    if let userActivity = connectionOptions.userActivities.first {
+      return [
+        .userActivityDictionary: [
+          UIApplication.LaunchOptionsKey.userActivityType: userActivity.activityType,
+          "UIApplicationLaunchOptionsUserActivityKey": userActivity,
+        ],
+      ]
+    }
+    return nil
   }
 }
 
