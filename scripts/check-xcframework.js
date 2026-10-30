@@ -15,3 +15,12 @@ if (!fs.existsSync(xcframework)) {
   console.error('Run `npm run fetch-xcframework` before packing or publishing.');
   process.exit(1);
 }
+
+// The OnramperStripe sources are fetched the same way; without them the pod's
+// Stripe checkout (and so the package) would not build.
+const stripeSources = path.resolve(__dirname, '..', 'ios', 'OnramperStripe');
+if (!fs.existsSync(stripeSources) || !fs.readdirSync(stripeSources).some((name) => name.endsWith('.swift'))) {
+  console.error('ios/OnramperStripe/*.swift is missing.');
+  console.error('Run `npm run fetch-xcframework` before packing or publishing.');
+  process.exit(1);
+}

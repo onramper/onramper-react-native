@@ -245,6 +245,29 @@ export class OnramperClient {
     }
   }
 
+  /**
+   * Turns on the experimental Stripe checkout (iOS): USD to USDC on Solana,
+   * Ethereum or Base, paid with Apple Pay, for US customers outside New York,
+   * up to 100 USD before fees. Call once, before the first checkout. A
+   * `getCheckoutRequirements` request with `onlyOnramps: ['stripe']` then runs
+   * the Stripe checkout; without this call it runs the regular checkout.
+   *
+   * `merchantIdentifier` is the Apple Pay merchant ID set up with Stripe and
+   * present in the app's Apple Pay entitlement. `merchantName` labels the Apple
+   * Pay sheet as "<merchantName> (through Stripe)" (default "Onramper").
+   * Process-wide, like the native SDK's `StripeCheckout.enable`.
+   */
+  async enableStripeCheckout(options: { merchantIdentifier: string; merchantName?: string }): Promise<void> {
+    try {
+      this.assertActive();
+      await this.native.enableStripeCheckout(options.merchantIdentifier, options.merchantName);
+      this.assertActive();
+    } catch (e: unknown) {
+      this.assertActive();
+      throw OnramperError.from(e);
+    }
+  }
+
   /** Discards a prepared intent (e.g. if the user navigates away before checkout). */
   async cancelPreparedIntent(intentHandle: string): Promise<void> {
     try {

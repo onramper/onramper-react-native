@@ -260,6 +260,29 @@ describe('OnramperClient', () => {
     expect(native.cancelPreparedIntent).toHaveBeenCalledWith('intent-1');
   });
 
+  it('enableStripeCheckout forwards the merchant id and name to native', async () => {
+    const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
+    const native = __lastNative();
+    await client.enableStripeCheckout({ merchantIdentifier: 'merchant.com.example', merchantName: 'Example' });
+    expect(native.enableStripeCheckout).toHaveBeenCalledWith('merchant.com.example', 'Example');
+  });
+
+  it('enableStripeCheckout leaves merchantName undefined so native keeps its default', async () => {
+    const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
+    const native = __lastNative();
+    await client.enableStripeCheckout({ merchantIdentifier: 'merchant.com.example' });
+    expect(native.enableStripeCheckout).toHaveBeenCalledWith('merchant.com.example', undefined);
+  });
+
+  it('enableStripeCheckout wraps native errors as OnramperError', async () => {
+    const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
+    const native = __lastNative();
+    native.enableStripeCheckout.mockRejectedValueOnce(new Error('boom'));
+    await expect(client.enableStripeCheckout({ merchantIdentifier: 'merchant.com.example' })).rejects.toMatchObject({
+      name: 'OnramperError',
+    });
+  });
+
   it('fans out parsed state to addStateListener', () => {
     const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
     const native = __lastNative();

@@ -53,6 +53,12 @@ export interface OnramperNitro extends HybridObject<{ ios: 'swift' }> {
   getCheckoutRequirements(requestJson: string, prefillJson: string, styleJson: string): Promise<PreparedIntentResult>;
   cancelPreparedIntent(intentHandle: string): Promise<void>;
 
+  // Turns on the experimental Stripe checkout: calls the iOS SDK's
+  // `StripeCheckout.enable(merchantIdentifier:merchantName:)` (process-wide).
+  // A checkout requested with `onlyOnramps: ["stripe"]` then runs it.
+  // `merchantName` undefined keeps the SDK's default label.
+  enableStripeCheckout(merchantIdentifier: string, merchantName: string | undefined): Promise<void>;
+
   // Single native callback per stream; the JS wrapper fans out to multiple listeners.
   setLogListener(onLog: (recordJson: string) => void): void;
   setStateListener(onState: (stateJson: string) => void): void;

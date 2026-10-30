@@ -1,6 +1,6 @@
 {
   "name": "@onramper/onramper-react-native",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "React Native wrapper for the Onramper iOS SDK",
   "main": "./lib/commonjs/index.js",
   "module": "./lib/module/index.js",
@@ -26,6 +26,7 @@
     "src",
     "ios/*.swift",
     "ios/Frameworks/OnramperSDK.xcframework",
+    "ios/OnramperStripe/*.swift",
     "nitrogen/generated",
     "nitro.json",
     "OnramperReactNative.podspec",
@@ -65,7 +66,8 @@
   "license": "Apache-2.0",
   "homepage": "https://github.com/onramper/onramper-react-native#readme",
   "onramperSDK": {
-    "checksum": "a4b708ead056a7943616400c533d6b3294f67054b90ea79957d52ad125d11521"
+    "checksum": "ac2ba976a5a1ebcd5462291088cbb213df3c2dd0fb62ece0f3c95d265ee835f8",
+    "stripeSourcesChecksum": "64f4be7e0ac2eeb7e4a01d9d997481f06363d212c43274c1bb61763436825f68"
   },
   "peerDependencies": {
     "react": ">=19.0.0",

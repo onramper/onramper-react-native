@@ -5,6 +5,12 @@
 // and (if checksum was 'PENDING_FETCH') writes the computed checksum back to
 // package.json.
 //
+// It then fetches the OnramperStripe module's Swift sources from the same tag
+// (Sources/OnramperStripe in the release repo) into ios/OnramperStripe/. The
+// pod compiles them next to our bridge; they ship as source because they build
+// against Stripe's iOS SDK. Their content checksum is verified against
+// onramperSDK.stripeSourcesChecksum the same way (see stripe-sources.js).
+//
 // The release repository is public, so download its stable asset URL directly.
 // No GitHub account or token is required. `spawnSync` with an argv array (no
 // shell) keeps the call injection-safe.
@@ -13,6 +19,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { spawnSync } = require('node:child_process');
+const { fetchStripeSources } = require('./stripe-sources');
 
 const root = path.resolve(__dirname, '..');
 const pkgPath = path.join(root, 'package.json');
@@ -80,3 +87,5 @@ if (unzip.status !== 0) {
   process.exit(unzip.status ?? 1);
 }
 console.log('Unzipped xcframework into ios/Frameworks/.');
+
+fetchStripeSources({ root, pkgPath, releaseRepo, releaseTag });
