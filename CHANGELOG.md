@@ -2,6 +2,23 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.4.1]
+
+Bundles `OnramperSDK@1.4.1` from its published, checksum-verified release.
+See [OnramperSDK for iOS 1.4.1](https://github.com/onramper/onramper-ios/releases/tag/v1.4.1).
+
+### Changed
+
+- **Smoother MoonPay Apple Pay checkout.** When MoonPay has no payment
+  disclosures to show, Buy now opens the native Apple Pay sheet directly,
+  without the intermediate MoonPay sheet. The checkout sheet stays invisible
+  (the Buy button keeps spinning) until MoonPay needs the user (for example,
+  3-D Secure) or there is a result to show, so your screen can't present its
+  own modal meanwhile. Coinbase Apple Pay checkout also keeps its sheet
+  invisible until needed.
+
+No JavaScript or native bridge API changed, so no migration is required.
+
 ## [1.4.0]
 
 Bundles `OnramperSDK@1.4.0` from its published, checksum-verified release.
