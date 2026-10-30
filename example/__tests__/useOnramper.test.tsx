@@ -50,7 +50,7 @@ function deferred<T>() {
   return { promise, resolve, reject };
 }
 
-const DEV = { environment: 'development', theme: 'dark', generation: 0 } as const;
+const DEV = { environment: 'development', theme: 'dark', generation: 0, trustedLoginEmail: '' } as const;
 const session = (id: string) => ({ sessionId: id, sessionToken: `${id}-token` });
 
 beforeEach(() => {
@@ -97,7 +97,7 @@ async function render(props: UseOnramperOptions) {
 
 test('initializes automatically on mount for the selected environment', async () => {
   await render(DEV);
-  expect(mintMock).toHaveBeenCalledWith('https://demo-stg.onramper.dev/demo/create-session', 'tok-dev');
+  expect(mintMock).toHaveBeenCalledWith('https://demo-stg.onramper.dev/demo/create-session', 'tok-dev', '');
   expect(clients).toHaveLength(1);
   expect(clients[0].config).toMatchObject({ environment: 'development', theme: 'dark', apiKey: 'pk_test_x' });
   expect(clients[0].initialize).toHaveBeenCalledWith(session('s1'));
@@ -111,7 +111,7 @@ test('switching environment destroys the old client and initializes production',
     renderer.update(<Harness {...DEV} environment="production" />);
   });
   expect(clients[0].destroy).toHaveBeenCalled();
-  expect(mintMock).toHaveBeenLastCalledWith('https://demo-prod.onramper.com/demo/create-session', 'tok-prod');
+  expect(mintMock).toHaveBeenLastCalledWith('https://demo-prod.onramper.com/demo/create-session', 'tok-prod', '');
   expect(clients[1].config.environment).toBe('production');
   expect(latest.client).toBe(clients[1]);
 });
@@ -273,4 +273,65 @@ test('re-initializing does not carry finalization over to a new client', async (
   expect(latest.hasFinalizedCheckout).toBe(true);
   await act(async () => renderer.update(<Harness {...DEV} generation={1} />));
   expect(latest.hasFinalizedCheckout).toBe(false);
+});
+
+describe('trusted partner login', () => {
+  const EMAIL = 'tester@onramper.com';
+  const onSessionExpired = (i: number) =>
+    (ClientMock.mock.calls[i][0] as { onSessionExpired: () => Promise<unknown> }).onSessionExpired;
+
+  test('without an email nothing is reported or logged', async () => {
+    await render(DEV);
+    expect(latest.trustedLogin).toBeNull();
+    expect(latest.log.some(l => l.line.includes('trusted login'))).toBe(false);
+  });
+
+  test('sends the email, exposes the result and hands only credentials to the SDK', async () => {
+    mintMock.mockResolvedValue({ ...session('s1'), trustedLogin: 'bound' });
+    await render({ ...DEV, trustedLoginEmail: EMAIL });
+    expect(mintMock).toHaveBeenCalledWith(expect.any(String), 'tok-dev', EMAIL);
+    expect(clients[0].initialize).toHaveBeenCalledWith(session('s1'));
+    expect(latest.trustedLogin).toBe('bound');
+    expect(latest.log.map(l => l.line)).toContain('trusted login: bound');
+  });
+
+  test('never logs the email address', async () => {
+    mintMock.mockResolvedValue({ ...session('s1'), trustedLogin: 'unavailable' });
+    await render({ ...DEV, trustedLoginEmail: EMAIL });
+    expect(latest.trustedLogin).toBe('unavailable');
+    expect(latest.log.some(l => l.line.includes('trusted login: unavailable'))).toBe(true);
+    expect(latest.log.some(l => l.line.includes(EMAIL))).toBe(false);
+  });
+
+  test('changing the email destroys the client and builds a new one for the new user', async () => {
+    const renderer = await render({ ...DEV, trustedLoginEmail: EMAIL });
+    await act(async () => {
+      renderer.update(<Harness {...DEV} trustedLoginEmail="other@moonpay.com" />);
+    });
+    expect(clients).toHaveLength(2);
+    expect(clients[0].destroy).toHaveBeenCalled();
+    expect(mintMock).toHaveBeenLastCalledWith(expect.any(String), 'tok-dev', 'other@moonpay.com');
+    expect(latest.client).toBe(clients[1]);
+  });
+
+  test('the session-expiry re-mint sends the same email and returns only credentials', async () => {
+    await render({ ...DEV, trustedLoginEmail: EMAIL });
+    mintMock.mockResolvedValueOnce({ ...session('s2'), trustedLogin: 'unavailable' });
+    let renewed: unknown;
+    await act(async () => {
+      renewed = await onSessionExpired(0)();
+    });
+    expect(mintMock).toHaveBeenCalledTimes(2);
+    expect(mintMock).toHaveBeenLastCalledWith(expect.any(String), 'tok-dev', EMAIL);
+    expect(renewed).toEqual(session('s2'));
+    expect(latest.trustedLogin).toBe('unavailable');
+  });
+
+  test('a mint rejected for the email surfaces as an init error', async () => {
+    mintMock.mockRejectedValueOnce(new Error('create-session 400: {"error":"email_not_allowed"}'));
+    await render({ ...DEV, trustedLoginEmail: 'someone@example.com' });
+    expect(latest.status).toBe('error');
+    expect(latest.initError).toContain('email_not_allowed');
+    expect(latest.trustedLogin).toBeNull();
+  });
 });

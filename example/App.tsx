@@ -2,7 +2,8 @@
  * Onramper RN (Nitro) demo app — modelled on oid-ios-demo.
  * The SDK initializes automatically (and again on environment / theme change or
  * after clearing sessions); Buy Crypto drives getCheckoutRequirements and the
- * native checkout button; Settings switches environment and appearance.
+ * native checkout button; Settings switches environment, trusted partner login
+ * and appearance.
  *
  * @format
  */
@@ -21,13 +22,15 @@ function App() {
   const [isDark, setDark] = useState(true);
   const [environment, setEnvironment] = useState<AppEnvironment>(DEFAULT_ENVIRONMENT);
   const [generation, setGeneration] = useState(0);
+  // Trusted partner login email the current session was minted with ('' = off).
+  const [trustedLoginEmail, setTrustedLoginEmail] = useState('');
   const [settingsOpen, setSettingsOpen] = useState(false);
   // Target of an in-flight environment switch; the picker is locked until that
   // environment's init run settles (ready or error).
   const [switchTarget, setSwitchTarget] = useState<AppEnvironment | null>(null);
   const switching = switchTarget !== null;
   const palette = PALETTES[isDark ? 'dark' : 'light'];
-  const onramper = useOnramper({ environment, theme: palette.name, generation });
+  const onramper = useOnramper({ environment, theme: palette.name, generation, trustedLoginEmail });
 
   // Native views follow the iOS appearance, not this in-app toggle: without
   // this, SwiftUI content such as the SDK button's ToS text (`.secondary`)
@@ -59,6 +62,24 @@ function App() {
     setEnvironment(next);
   };
 
+  // The binding names the user the SDK session was minted for, and signOut()
+  // disables trusted login on that client for good. So a user change is:
+  // sign out, then mint a session for the new email and build a NEW client —
+  // the hook does the last two because the email is part of its run key.
+  const applyTrustedLoginEmail = async (next: string) => {
+    const email = next.trim();
+    if (email === trustedLoginEmail || switching) {
+      return;
+    }
+    try {
+      await onramper.client?.signOut();
+    } catch (e: unknown) {
+      onramper.appendLog('error', `sign-out before restarting the session failed: ${describeError(e).message}`);
+    }
+    onramper.appendLog('info', `trusted login ${email === '' ? 'off' : 'email changed'} — restarting session`);
+    setTrustedLoginEmail(email);
+  };
+
   const clearSessions = async () => {
     const c = onramper.client;
     if (!c) {
@@ -83,6 +104,9 @@ function App() {
           environment={environment}
           onChangeEnvironment={changeEnvironment}
           switching={switching}
+          trustedLoginEmail={trustedLoginEmail}
+          trustedLogin={onramper.trustedLogin}
+          onApplyTrustedLoginEmail={applyTrustedLoginEmail}
           isDark={isDark}
           onChangeDark={setDark}
           onClearSessions={clearSessions}

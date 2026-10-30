@@ -66,6 +66,13 @@ export default function App() {
   const [prefillLastName, setPrefillLastName] = useState(PREFILL_DEFAULTS.lastName);
   const [prefillPhone, setPrefillPhone] = useState(PREFILL_DEFAULTS.phoneNumber);
 
+  // Trusted partner login (optional): the email is sent with the demo-session
+  // mint on the next Configure + Initialize. `sessionEmail` is what the current
+  // client's session was minted with.
+  const [trustedLoginEmail, setTrustedLoginEmail] = useState('');
+  const [trustedLogin, setTrustedLogin] = useState<string | null>(null);
+  const sessionEmail = useRef('');
+
   const [client, setClient] = useState<OnramperClient | null>(null);
   const [state, setState] = useState<OnramperState>({ kind: 'idle' });
   const [quote, setQuote] = useState<QuoteResponse | null>(null);
@@ -110,17 +117,43 @@ export default function App() {
   };
 
   const onConfigureInitialize = async () => {
+    const email = trustedLoginEmail.trim();
+    // A trusted-login session is bound to one user, and signOut() disables
+    // trusted login on that client for good. So a user change is: sign out,
+    // mint a session for the new email, and build a NEW client (below).
+    if (client && email !== sessionEmail.current) {
+      try {
+        await client.signOut();
+        info('signed out — trusted login email changed');
+      } catch (e: unknown) {
+        const err = OnramperError.from(e);
+        fail(`signOut error: ${err.code ?? 'unknown'} — ${err.userMessage}`);
+      }
+    }
+    sessionEmail.current = email;
     // Destroy any prior client so its listeners come off the native emitter
     // before we create a new one. Otherwise every retry doubles the handlers.
     client?.destroy();
     setQuote(null);
     setTransactionId(null);
     setButton(null);
+    setTrustedLogin(email === '' ? 'off' : null);
+
+    // Initial mint and expiry re-mints send the same email. Log the outcome,
+    // never the address (PII).
+    const mint = async () => {
+      const { sessionId, sessionToken, trustedLogin: result } = await createDemoSession(ENV.demoToken, email);
+      if (email !== '') {
+        setTrustedLogin(result ?? 'not reported');
+        info(`trusted login: ${result ?? 'not reported by the backend'}`);
+      }
+      return { sessionId, sessionToken };
+    };
 
     let inflight: OnramperClient | null = null;
     try {
-      info('minting demo session…');
-      const session = await createDemoSession(ENV.demoToken);
+      info(`minting demo session${email !== '' ? ' (trusted login email sent)' : ''}…`);
+      const session = await mint();
       info('demo session minted');
 
       inflight = new OnramperClient({
@@ -132,7 +165,7 @@ export default function App() {
         theme: 'light',
         onSessionExpired: async () => {
           info('onSessionExpired invoked — refreshing');
-          return createDemoSession(ENV.demoToken);
+          return mint();
         },
       });
       setupClient(inflight);
@@ -251,6 +284,20 @@ export default function App() {
           <Text style={styles.kv}>apiKey: {maskedKey}</Text>
           <Text style={styles.kv}>clientId: {ENV.clientId || '(missing)'}</Text>
           <Text style={styles.kv}>demoToken: {ENV.demoToken ? '✓ loaded' : '(missing)'}</Text>
+          <View style={{ height: 8 }} />
+          <Field
+            label="trusted login email (optional)"
+            value={trustedLoginEmail}
+            onChangeText={setTrustedLoginEmail}
+            placeholder="(blank — normal OTP sign-in)"
+            email
+          />
+          <Text style={styles.note}>
+            Trusted partner login: the session is minted bound to this email, so Buy signs that user in to OnramperID
+            without an OTP. Changing it signs out and re-creates the client on the next Configure + Initialize. Only
+            @onramper.com and @moonpay.com addresses are accepted by the demo service.
+          </Text>
+          <Text style={styles.kv}>trustedLogin: {trustedLogin ?? '—'}</Text>
           <View style={{ height: 8 }} />
           <Button title="Configure + Initialize" onPress={onConfigureInitialize} />
 
@@ -377,6 +424,7 @@ function Field({
   onChangeText,
   compact = false,
   numeric = false,
+  email = false,
   placeholder,
   editable = true,
 }: {
@@ -385,6 +433,7 @@ function Field({
   onChangeText: (v: string) => void;
   compact?: boolean;
   numeric?: boolean;
+  email?: boolean;
   placeholder?: string;
   editable?: boolean;
 }) {
@@ -397,7 +446,7 @@ function Field({
         style={[styles.input, !editable && styles.inputDisabled]}
         autoCapitalize="none"
         autoCorrect={false}
-        keyboardType={numeric ? 'decimal-pad' : 'default'}
+        keyboardType={numeric ? 'decimal-pad' : email ? 'email-address' : 'default'}
         placeholder={placeholder}
         placeholderTextColor="#AAA"
         editable={editable}

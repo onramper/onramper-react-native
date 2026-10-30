@@ -4,8 +4,8 @@ This app demonstrates the Nitro-based Onramper React Native SDK as a small demo
 app modelled on the iOS demo: the SDK initializes automatically, a Buy Crypto
 screen picks currency, wallet, amount, payment method, country/state and onramp
 and renders the native checkout button, and a Settings sheet (gear icon)
-switches between Development and Production, toggles dark mode, clears local
-sessions and shows the SDK event log.
+switches between Development and Production, sets a trusted partner login
+email, toggles dark mode, clears local sessions and shows the SDK event log.
 
 ## Prerequisites
 
@@ -25,6 +25,19 @@ values are missing, the app shows an initialization error naming them.
 
 The app starts on Development. Switching environments in Settings signs out and
 re-initializes the SDK; the choice is not persisted across launches.
+
+### Trusted partner login
+
+Settings → **Trusted partner login** takes an email that the demo session
+service binds the SDK session to, so tapping Buy signs that user in to
+OnramperID without an OTP. **Apply & restart session** signs out, mints a new
+session with the email (also used for every session-expiry re-mint) and creates
+a new `OnramperClient` — a client whose user changes must be replaced, not
+reused. The card shows the last result: Bound, Unavailable, or Off when the
+field is empty (normal OTP sign-in). The demo service only accepts
+`@onramper.com` and `@moonpay.com` addresses and rejects others with a 400,
+shown as an initialization error. The address is never written to the event
+log, and it is not persisted across launches.
 
 ## Install
 

@@ -82,6 +82,13 @@ The screen is a small harness: edit the transaction fields (source/destination/a
 method, wallet) and use the buttons to create a client, fetch a quote, and present the widget.
 A live log at the bottom shows SDK state transitions and any errors.
 
+**Trusted partner login:** fill in the optional *trusted login email* under Credentials before
+**Configure + Initialize**. The demo session is then minted bound to that user (also on every
+session-expiry re-mint), so tapping Buy signs them in to OnramperID without an OTP; the
+`trustedLogin` line shows `bound`, `unavailable` or `off`. Changing the email signs out the current
+client and creates a new one on the next Configure + Initialize. Only `@onramper.com` and
+`@moonpay.com` addresses are accepted by the demo service. Leave it blank for normal OTP sign-in.
+
 ## Troubleshooting
 
 - **`OnramperSDK.xcframework` not found / pod install fails** — rerun Step 1; the xcframework must
