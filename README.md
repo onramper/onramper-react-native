@@ -135,6 +135,21 @@ to start again; calling `initialize()` on a destroyed instance does not revive i
 These rules release local prepared views; they do not cancel an already submitted
 payment or guarantee cancellation of a request already sent to the backend.
 
+When your app's signed-in user changes, call `signOut()`, then `destroy()` the
+client and create and initialize a new `OnramperClient` with a session minted for
+the new user. Without `signOut()`, an existing OnramperID login on the device wins
+and the next checkout reuses the previous user's account.
+
+## Trusted partner login
+
+If your backend has already verified the user's email, add `user: { email }` to
+its signed `client-sessions` request. On Buy, the user is signed in to OnramperID
+without the email OTP — with no login UI at all, or only the "additional info"
+form when profile fields are missing. No JavaScript changes are needed; it is
+enabled per integration by Onramper and falls back to the normal OTP sign-in on
+any failure. Available with RN package 1.4.0 or newer. See
+[Backend session endpoint](docs/BACKEND_SESSION_ENDPOINT.md#trusted-partner-login).
+
 ## Diagnostic logs
 
 Pass `logLevel: 'info'` (or `'debug'`) and `logHandler: record => yourStore.append(record)`
