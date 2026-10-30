@@ -9,6 +9,7 @@ yarn-error.log
 # Native
 # Fetched at build/publish time (npm `files` force-includes the xcframework); never tracked
 ios/Frameworks/
+ios/OnramperStripe/
 ios/build/
 ios/Pods/
 

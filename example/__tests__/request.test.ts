@@ -4,6 +4,7 @@ import {
   parseAmount,
   selectCountry,
   selectCrypto,
+  selectOnramp,
   type BuyForm,
 } from '../checkout/request';
 
@@ -67,6 +68,23 @@ describe('form transitions', () => {
     const next = selectCrypto({ ...DEFAULT_BUY_FORM, wallet: 'custom' }, 'eth');
     expect(next.cryptoId).toBe('eth');
     expect(next.wallet).toBe('0x97EF62c275A9A4C2E6199Bd7a4feB6efd207fC86');
+  });
+
+  it('selectOnramp moves the form to USD / USDC on Solana for Stripe', () => {
+    const next = selectOnramp({ ...DEFAULT_BUY_FORM, fiat: 'eur' }, 'stripe');
+    expect(next.onramp).toBe('stripe');
+    expect(next.fiat).toBe('usd');
+    expect(next.cryptoId).toBe('usdc_solana');
+    expect(buildCheckoutRequest(next)).toMatchObject({
+      destination: 'usdc_solana',
+      wallet: { network: 'solana' },
+      onlyOnramps: ['stripe'],
+    });
+  });
+
+  it('selectOnramp keeps the form as is for other onramps', () => {
+    const next = selectOnramp({ ...DEFAULT_BUY_FORM, fiat: 'eur' }, 'moonpay');
+    expect(next).toEqual({ ...DEFAULT_BUY_FORM, fiat: 'eur', onramp: 'moonpay' });
   });
 
   it('selectCountry sets the default fiat for that country', () => {

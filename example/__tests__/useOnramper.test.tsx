@@ -19,6 +19,7 @@ jest.mock('../createDemoSession', () => ({ createDemoSession: jest.fn() }));
 
 interface FakeClient {
   config: { environment: string; theme: string; apiKey: string };
+  enableStripeCheckout: jest.Mock;
   initialize: jest.Mock;
   destroy: jest.Mock;
   addStateListener: jest.Mock;
@@ -59,6 +60,7 @@ beforeEach(() => {
   ClientMock.mockImplementation((config: FakeClient['config']) => {
     const client: FakeClient = {
       config,
+      enableStripeCheckout: jest.fn().mockResolvedValue(undefined),
       initialize: jest.fn().mockResolvedValue(undefined),
       destroy: jest.fn(),
       addStateListener: jest.fn(() => () => {}),

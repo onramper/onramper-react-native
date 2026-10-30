@@ -29,6 +29,7 @@ import {
   parseAmount,
   selectCountry,
   selectCrypto,
+  selectOnramp,
   type BuyForm,
 } from '../checkout/request';
 import {
@@ -344,7 +345,7 @@ export function BuyCryptoScreen({
             label="Onramp"
             options={ONRAMP_OPTIONS}
             value={form.onramp ?? ANY_ONRAMP}
-            onChange={v => update({ onramp: v === ANY_ONRAMP ? null : v })}
+            onChange={v => setForm(f => selectOnramp(f, v === ANY_ONRAMP ? null : v))}
           />
         </Card>
 

@@ -21,8 +21,27 @@ Pod::Spec.new do |s|
   # This podspec lives at the package root (not ios/) because nitrogen emits its
   # generated source globs (nitrogen/generated/**) relative to the podspec's
   # directory via add_nitrogen_files below. Our own sources are ios/-prefixed.
-  s.source_files        = 'ios/*.swift'
+  # ios/OnramperStripe holds the iOS SDK's Stripe checkout module, fetched as
+  # source from the same onramper-ios release as the xcframework
+  # (scripts/stripe-sources.js). It compiles into this pod against OnramperSDK's
+  # @_spi(OnramperNative) interface and Stripe's iOS SDK.
+  s.source_files        = 'ios/*.swift', 'ios/OnramperStripe/*.swift'
   s.vendored_frameworks = 'ios/Frameworks/OnramperSDK.xcframework'
+
+  # Stripe's iOS SDK, pinned exactly like the iOS SDK's own Package.swift: the
+  # crypto onramp is a private-preview SPI whose signatures change between
+  # releases. Stripe publishes this version through Swift Package Manager only
+  # (CocoaPods trunk stops at 26.9.0), so it comes in through React Native's
+  # spm_dependency helper, defined by the app Podfile's react_native_pods
+  # require and applied by react_native_post_install.
+  unless defined?(spm_dependency)
+    raise 'OnramperReactNative needs React Native\'s spm_dependency helper: require react_native_pods in your Podfile and call react_native_post_install in post_install.'
+  end
+  spm_dependency(s,
+    url: 'https://github.com/stripe/stripe-ios-spm',
+    requirement: { kind: 'exactVersion', version: '26.15.1' },
+    products: ['StripeCryptoOnramp', 'StripePaymentSheet', 'StripePayments']
+  )
 
   load File.join(__dir__, 'nitrogen', 'generated', 'ios', 'OnramperReactNative+autolinking.rb')
   add_nitrogen_files(s)

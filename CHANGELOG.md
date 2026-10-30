@@ -2,6 +2,49 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.5.0]
+
+Bundles `OnramperSDK@1.5.0` from its published, checksum-verified release.
+See [OnramperSDK for iOS 1.5.0](https://github.com/onramper/onramper-ios/releases/tag/v1.5.0).
+
+### Added
+
+- **Stripe checkout (experimental).** USD to USDC on Solana, Ethereum or Base,
+  paid with Apple Pay, for customers in the US outside New York, up to 100 USD
+  per purchase before fees. It is off until your app turns it on:
+  1. Add the Apple Pay (merchant ID set up with Stripe) and App Attest
+     capabilities. It needs a physical iPhone.
+  2. Call `client.enableStripeCheckout({ merchantIdentifier })` once, before
+     the first checkout.
+  3. Request `onlyOnramps: ['stripe']` in `getCheckoutRequirements`.
+
+  The total Apple Pay will charge (fees included) is
+  `quote.providerContext?.sourceTotalAmount`. A Stripe checkout reports
+  `paymentPending` once paid and then `completed` when the USDC is delivered.
+  Stripe and Onramper must set it up for your app first; see
+  [Stripe checkout](README.md#stripe-checkout-experimental).
+
+### Changed
+
+- **New iOS dependency: Stripe's iOS SDK.** The pod now also compiles the
+  iOS SDK's Stripe checkout module and depends on Stripe's iOS SDK 26.15.1
+  (exact). Stripe publishes that version through Swift Package Manager only,
+  so the pod adds it with React Native's `spm_dependency` helper during
+  `pod install`; nothing to add to your Podfile beyond the standard
+  `react_native_post_install`. It is built for every app, even one that
+  never turns the Stripe checkout on. Apps that already include Stripe's iOS
+  SDK another way (for example through `@stripe/stripe-react-native`, which
+  uses Stripe's CocoaPods) can't use 1.5.0 yet: the app would contain
+  Stripe's modules twice.
+
+### Fixed
+
+- **Checkouts no longer fail after the SDK session's first refresh** (from the
+  iOS SDK): the refresh response used to fail to decode, ending any checkout
+  still running at that point.
+
+No existing JavaScript API changed; `enableStripeCheckout` is new.
+
 ## [1.4.1]
 
 Bundles `OnramperSDK@1.4.1` from its published, checksum-verified release.

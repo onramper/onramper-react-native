@@ -69,6 +69,7 @@ No `install-expo-modules` step and no AppDelegate changes are required. Not comp
 | Xcode | 16+ (Xcode 26 tested) | |
 | Real iOS device | Required for App Attest | Simulator can launch but attestation returns `attestationFailed` |
 | Apple Developer account | Required for signing | Free or paid; needs the App Attest capability under your team |
+| Stripe checkout (optional) | Package 1.5.0+ | Apple Pay capability with a merchant ID set up with Stripe, App Attest, a physical iPhone. See [Stripe checkout](https://github.com/onramper/onramper-react-native#stripe-checkout-experimental) |
 
 ---
 

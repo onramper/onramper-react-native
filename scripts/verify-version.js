@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 // Verifies that the SHA-256 checksum of ios/Frameworks/OnramperSDK.xcframework.zip
-// matches the value recorded under `onramperSDK.checksum` in package.json.
+// matches the value recorded under `onramperSDK.checksum` in package.json, and
+// that the fetched OnramperStripe sources match `onramperSDK.stripeSourcesChecksum`.
 // Run in CI before publishing to make desync mechanically impossible.
 
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
+const { stripeSourcesProblem } = require('./stripe-sources');
 
 const root = path.resolve(__dirname, '..');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
@@ -24,3 +26,10 @@ if (recorded !== computed) {
   process.exit(1);
 }
 console.log(`OK: package.json checksum matches xcframework (${computed.slice(0, 12)}...).`);
+
+const stripeProblem = stripeSourcesProblem(root, pkg);
+if (stripeProblem) {
+  console.error(stripeProblem);
+  process.exit(1);
+}
+console.log('OK: package.json stripeSourcesChecksum matches ios/OnramperStripe.');

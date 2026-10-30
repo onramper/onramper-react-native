@@ -7,12 +7,14 @@
 // Removed (not used to compile/link against the framework):
 //   - **/*.swiftmodule/*.abi.json                 (ABI-diffing tooling only)
 //   - **/*.swiftmodule/Project/                   (*.swiftsourceinfo; leaks internal paths)
-//   - **/*.swiftmodule/*.private.swiftinterface   (non-public API surface)
 //   - **/*.swiftmodule/*.package.swiftinterface   (non-public API surface)
 //
 // KEPT intentionally: dSYMs (downstream crash symbolication), the OnramperSDK
 // binary, Info.plist, the public *.swiftinterface + *.swiftdoc, module.modulemap,
-// the resource bundle, and PrivacyInfo.xcprivacy.
+// the resource bundle, and PrivacyInfo.xcprivacy. Also *.private.swiftinterface:
+// it carries OnramperSDK's @_spi(OnramperNative) surface, which the bundled
+// OnramperStripe sources (ios/OnramperStripe) compile against. Without it the
+// pod fails to build.
 
 const fs = require('node:fs');
 const path = require('node:path');
@@ -70,9 +72,7 @@ function pruneSwiftModule(moduleDir) {
       remove(full); // *.swiftsourceinfo
     } else if (
       entry.isFile() &&
-      (entry.name.endsWith('.abi.json') ||
-        entry.name.endsWith('.private.swiftinterface') ||
-        entry.name.endsWith('.package.swiftinterface'))
+      (entry.name.endsWith('.abi.json') || entry.name.endsWith('.package.swiftinterface'))
     ) {
       remove(full);
     }

@@ -1,4 +1,4 @@
-export type CryptoId = 'btc' | 'eth' | 'sol';
+export type CryptoId = 'btc' | 'eth' | 'sol' | 'usdc_solana';
 
 export interface CryptoOption {
   id: CryptoId;
@@ -34,6 +34,16 @@ export const CRYPTOS: readonly CryptoOption[] = [
     color: '#32ADE6',
     defaultWallet: 'Br2jjHYskB1JJikv3Qw2QcmWVQGfZvkJFng4ZEwiGSjv',
   },
+  // `usdc_solana` (not Onramper's `usdc_sol`): the SDK's Stripe checkout takes
+  // `usdc_<solana|ethereum|base>` and checks the wallet network against it.
+  {
+    id: 'usdc_solana',
+    symbol: 'USDC',
+    name: 'USD Coin',
+    network: 'solana',
+    color: '#2775CA',
+    defaultWallet: 'Br2jjHYskB1JJikv3Qw2QcmWVQGfZvkJFng4ZEwiGSjv',
+  },
 ];
 
 export function findCrypto(id: CryptoId): CryptoOption {
@@ -66,7 +76,17 @@ export const ONRAMPS: readonly OnrampOption[] = [
   { value: 'moonpay', label: 'MoonPay' },
   { value: 'paybis', label: 'Paybis' },
   { value: 'coinbasepay', label: 'Coinbase Pay' },
+  // Experimental Stripe checkout: needs the app to call enableStripeCheckout
+  // (useOnramper does) and USD to USDC, Apple Pay, US, at most 100.
+  { value: 'stripe', label: 'Stripe' },
 ];
+
+/**
+ * Apple Pay merchant ID for the Stripe checkout, the same one the native demo
+ * uses. It must also be in the app's Apple Pay entitlement
+ * (OnramperRNDemo.entitlements).
+ */
+export const STRIPE_APPLE_PAY_MERCHANT_ID = 'merchant.com.onramper.stripe';
 
 export type CountryId = 'us' | 'es' | 'nl' | 'gr';
 export interface CountryOption {

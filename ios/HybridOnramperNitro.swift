@@ -262,6 +262,23 @@ final class HybridOnramperNitro: HybridOnramperNitroSpec {
     }
   }
 
+  // MARK: - Stripe
+
+  /// Registers the iOS SDK's Stripe checkout (compiled into this pod from
+  /// ios/OnramperStripe). Process-wide, like the native call: it does not depend
+  /// on this client's lifetime, so it needs neither configure() nor a ticket.
+  func enableStripeCheckout(merchantIdentifier: String, merchantName: String?) throws -> Promise<Void> {
+    return Promise.async {
+      await MainActor.run {
+        if let merchantName {
+          StripeCheckout.enable(merchantIdentifier: merchantIdentifier, merchantName: merchantName)
+        } else {
+          StripeCheckout.enable(merchantIdentifier: merchantIdentifier)
+        }
+      }
+    }
+  }
+
   // MARK: - Teardown
 
   /// Releases the stored JS callbacks (Nitro holds strong refs to them) and the

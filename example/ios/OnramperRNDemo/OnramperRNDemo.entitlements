@@ -4,5 +4,9 @@
 <dict>
 	<key>com.apple.developer.devicecheck.appattest-environment</key>
 	<string>development</string>
+	<key>com.apple.developer.in-app-payments</key>
+	<array>
+		<string>merchant.com.onramper.stripe</string>
+	</array>
 </dict>
 </plist>

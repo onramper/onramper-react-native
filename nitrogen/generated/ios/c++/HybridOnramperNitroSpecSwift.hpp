@@ -23,8 +23,8 @@ namespace margelo::nitro::onramper { struct NitroSessionCredentials; }
 #include <NitroModules/Promise.hpp>
 #include "OnramperNitroConfig.hpp"
 #include "PreparedIntentResult.hpp"
-#include <functional>
 #include <optional>
+#include <functional>
 #include "NitroSessionCredentials.hpp"
 
 #include "OnramperReactNative-Swift-Cxx-Umbrella.hpp"
@@ -122,6 +122,14 @@ namespace margelo::nitro::onramper {
     }
     inline std::shared_ptr<Promise<void>> cancelPreparedIntent(const std::string& intentHandle) override {
       auto __result = _swiftPart.cancelPreparedIntent(intentHandle);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
+    inline std::shared_ptr<Promise<void>> enableStripeCheckout(const std::string& merchantIdentifier, const std::optional<std::string>& merchantName) override {
+      auto __result = _swiftPart.enableStripeCheckout(merchantIdentifier, merchantName);
       if (__result.hasError()) [[unlikely]] {
         std::rethrow_exception(__result.error());
       }

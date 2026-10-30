@@ -79,6 +79,19 @@ export function selectCrypto(form: BuyForm, cryptoId: CryptoId): BuyForm {
   return { ...form, cryptoId, wallet: findCrypto(cryptoId).defaultWallet };
 }
 
+/**
+ * Sets the onramp filter. Stripe sells only USD to USDC, so picking it moves a
+ * form on another asset or fiat to USDC on Solana / USD instead of letting
+ * every checkout fail the SDK's input check.
+ */
+export function selectOnramp(form: BuyForm, onramp: string | null): BuyForm {
+  if (onramp !== 'stripe') {
+    return { ...form, onramp };
+  }
+  const next: BuyForm = { ...form, onramp, fiat: 'usd' };
+  return form.cryptoId.startsWith('usdc') ? next : selectCrypto(next, 'usdc_solana');
+}
+
 export function selectCountry(form: BuyForm, country: CountryId): BuyForm {
   return { ...form, country, fiat: findCountry(country).defaultFiat };
 }
