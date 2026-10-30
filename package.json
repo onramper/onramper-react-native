@@ -1,6 +1,6 @@
 {
   "name": "@onramper/onramper-react-native",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "React Native wrapper for the Onramper iOS SDK",
   "main": "./lib/commonjs/index.js",
   "module": "./lib/module/index.js",
@@ -65,7 +65,7 @@
   "license": "Apache-2.0",
   "homepage": "https://github.com/onramper/onramper-react-native#readme",
   "onramperSDK": {
-    "checksum": "098ee1386e443fdd486f4bf07292993c25887464e96599c0952a7ea4e1560b37"
+    "checksum": "a4b708ead056a7943616400c533d6b3294f67054b90ea79957d52ad125d11521"
   },
   "peerDependencies": {
     "react": ">=19.0.0",

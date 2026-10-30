@@ -252,7 +252,7 @@ When the user taps **Buy**, the button:
 1. Records the Terms-of-Service consent timestamp.
 2. Presents the OnramperID login sheet, if required by the provider — this also covers **phone re-verification** (when a provider needs a recent phone verification, the same sheet opens and the user re-verifies their existing number). Both are handled automatically; you don't wire anything.
 3. Finalizes the transaction.
-4. Presents the appropriate payment view (Apple Pay, card, etc. — chosen automatically based on the onramp's response).
+4. Presents the appropriate payment view (Apple Pay, card, etc. — chosen automatically based on the onramp's response). For MoonPay and Coinbase Apple Pay, the payment sheet starts invisible while the Buy button keeps spinning; with no MoonPay disclosures to show, the user sees only the native Apple Pay sheet. As with trusted login, your screen can't present its own modal until the payment sheet appears or closes.
 
 If the user's OnramperID session expires mid-checkout, the button automatically re-presents the login sheet — the user signs in again and the checkout resumes from where it was.
 

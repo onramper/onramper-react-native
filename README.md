@@ -88,6 +88,9 @@ const onFailed = client.addEventListener('failed', (e) => {
 
 `paymentPending` means accepted but awaiting settlement. Show processing and track
 `currentTransactionId`; do not treat it as completion or automatically restart payment.
+When MoonPay has no payment disclosures to show, Buy goes straight to the native
+Apple Pay sheet; the payment sheet stays invisible until it is needed, and your
+screen can't present its own modal meanwhile.
 The native button also handles MoonPay onboarding and 3-D Secure. Observe
 `customerOnboardingRequired`, `challengeStarted`, and `challengeCompleted` for progress.
 These events do not establish payment success. All flows still require backend webhooks.
