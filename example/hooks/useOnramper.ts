@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { OnramperClient, type OnramperState } from '@onramper/onramper-react-native';
+import { STRIPE_APPLE_PAY_MERCHANT_ID } from '../config/catalog';
 import { resolveEnvironment, type AppEnvironment } from '../config/environments';
 import { createDemoSession, type TrustedLoginResult } from '../createDemoSession';
 import type { ThemeName } from '../theme';
@@ -201,6 +202,9 @@ export function useOnramper({
         c.addEventListener(name, () => appendLog('event', name));
       }
 
+      // Lets the "Stripe" onramp filter run the Stripe checkout (process-wide;
+      // repeating it on a re-created client is harmless).
+      await c.enableStripeCheckout({ merchantIdentifier: STRIPE_APPLE_PAY_MERCHANT_ID });
       await c.initialize(session);
       if (cancelled) {
         return;

@@ -27,7 +27,7 @@ jobs:
   #     manual setup in Xcode UI that hasn't run yet.
   # Re-enable example build + xctest jobs once both are resolved.
   ios:
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
