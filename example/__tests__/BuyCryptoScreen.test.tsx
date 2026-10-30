@@ -273,3 +273,17 @@ test.each(['failed', 'paymentPending', 'completed'] as const)(
     expect(client.getCheckoutRequirements).toHaveBeenCalledTimes(1);
   },
 );
+
+test('modal triggers are disabled while a checkout sheet may be presented invisibly', async () => {
+  const { onramper } = setup();
+  const settings = (r: ReactTestRenderer.ReactTestRenderer) =>
+    r.root.findByProps({ accessibilityLabel: 'Settings' }).props.disabled;
+
+  const idle = await render(onramper);
+  expect(settings(idle)).toBe(false);
+
+  for (const sdkState of ['authenticating', 'finalizing', 'rendering']) {
+    const r = await render({ ...onramper, sdkState } as OnramperHandle);
+    expect(settings(r)).toBe(true);
+  }
+});

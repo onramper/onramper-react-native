@@ -66,6 +66,15 @@ const STATE_OPTIONS = US_STATES.map(s => ({
   label: `${s.name} (${s.code})`,
 }));
 
+// The SDK can present its login and payment sheets invisibly while Buy spins
+// (trusted login; MoonPay / Coinbase Apple Pay). The screen can't present its
+// own modal until they appear or close, so the modal triggers wait.
+const CHECKOUT_IN_FLIGHT: ReadonlySet<string> = new Set([
+  'authenticating',
+  'finalizing',
+  'rendering',
+]);
+
 export function BuyCryptoScreen({
   onramper,
   environment,
@@ -81,6 +90,7 @@ export function BuyCryptoScreen({
   const [prefillForm, setPrefillForm] = useState<PrefillForm>(DEFAULT_PREFILL);
   const [stateSheetOpen, setStateSheetOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const checkoutInFlight = CHECKOUT_IN_FLIGHT.has(onramper.sdkState);
 
   const [amountDraft, setAmountDraft] = useDebouncedField(form.amount, v =>
     setForm(f => ({ ...f, amount: v })),
@@ -214,10 +224,20 @@ export function BuyCryptoScreen({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Settings"
+            accessibilityState={{ disabled: checkoutInFlight }}
+            disabled={checkoutInFlight}
             onPress={onOpenSettings}
             hitSlop={12}
           >
-            <Text style={[styles.gear, { color: t.text }]}>⚙︎</Text>
+            <Text
+              style={[
+                styles.gear,
+                { color: t.text },
+                checkoutInFlight && styles.inactive,
+              ]}
+            >
+              ⚙︎
+            </Text>
           </Pressable>
         </View>
       </View>
@@ -250,6 +270,7 @@ export function BuyCryptoScreen({
               }
               sublabel="US state — tap to change"
               selected={false}
+              disabled={checkoutInFlight}
               onPress={() => setStateSheetOpen(true)}
             />
           ) : null}
@@ -476,4 +497,5 @@ const styles = StyleSheet.create({
   },
   actionLabel: { fontSize: 15, fontWeight: '600' },
   status: { fontSize: 12, fontFamily: 'Menlo' },
+  inactive: { opacity: 0.4 },
 });
