@@ -36,7 +36,7 @@ async function render() {
 
 test('starts SDK initialization on launch without any button tap', async () => {
   await render();
-  expect(createDemoSession).toHaveBeenCalledWith('https://demo-stg.onramper.dev/demo/create-session', 'tok');
+  expect(createDemoSession).toHaveBeenCalledWith('https://demo-stg.onramper.dev/demo/create-session', 'tok', '');
 });
 
 test('renders the Buy Crypto form', async () => {

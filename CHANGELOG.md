@@ -2,6 +2,61 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.4.0]
+
+Bundles `OnramperSDK@1.4.0` from its published, checksum-verified release.
+
+Most changes in this release come from
+[OnramperSDK for iOS 1.4.0](https://github.com/onramper/onramper-ios/releases/tag/v1.4.0).
+
+### Added
+
+- **Trusted partner login.** If your backend has already verified the user's
+  email, add `user: { email }` to the signed `client-sessions` request. On Buy,
+  the user is signed in to OnramperID without the email OTP:
+  - **Best case:** no login UI at all — the user goes straight to the payment sheet.
+  - **Profile fields missing:** only the OnramperID "additional info" form
+    appears. There is no OTP screen and no "Grant permission" screen.
+  - If an OnramperID account already exists for that email, the user is signed
+    in to it; otherwise one is created with the email marked verified.
+
+  When `user` is sent, the session response also carries
+  `trustedLogin: "bound" | "unavailable"`. Trusted login is enabled per
+  integration — talk to your Onramper contact. Until it is, every session
+  reports `"unavailable"` and sign-in stays the normal OTP flow. It never blocks
+  sign-in: on any failure the normal OnramperID sign-in appears, with no error to
+  handle. No JavaScript API changed. See
+  [Backend session endpoint](docs/BACKEND_SESSION_ENDPOINT.md#trusted-partner-login).
+
+### Changed
+
+- `signOut()` also clears the OnramperID web session (no "continue as" the
+  previous user), closes an open login sheet without reporting an error, and
+  turns trusted login off for that client.
+- When login is needed, the Buy button spins briefly while the SDK checks for a
+  trusted login, then the login sheet appears. With a trusted login, the sheet is
+  already presented but invisible while the button spins (up to ~15s): your
+  screen stays interactive, but it can't present its own modal until the login
+  sheet appears or closes.
+- If the OnramperID page can't load, the login sheet shows **Retry** and
+  **Close** instead of staying blank. If OnramperID ends sign-in with an error,
+  the sheet closes and Buy is tappable again. A stalled sign-in now fails after
+  15 seconds instead of leaving the Buy button spinning.
+- The bare RN demo's Settings screen has a **Trusted partner login** email field
+  that re-mints the demo session with `user.email` and re-creates the client.
+  The Expo demo has the same field under Credentials, applied on the next
+  **Configure + Initialize**.
+
+### Upgrading from 1.3.1
+
+- No existing call sites need to change. Run `pod install` and rebuild the native
+  app after updating the package.
+- **When your app's signed-in user changes:** call `signOut()`, then `destroy()`
+  the client and create and initialize a new `OnramperClient` with a session
+  minted for the new user's `user.email`. Without `signOut()`, an existing
+  OnramperID login on the device wins and the next checkout reuses the previous
+  user's account.
+
 ## [1.3.1]
 
 Bundles `OnramperSDK@1.3.1` from its published, checksum-verified release.

@@ -138,6 +138,12 @@ await client.initialize({ sessionId, sessionToken });
 >
 > Read this guide for what that endpoint should look like, with a TypeScript reference implementation and the SigV2 signing details.
 
+#### Trusted partner login
+
+If your backend has already verified the user's email, it can add `user: { email }` to the signed session request. On Buy, the user is then signed in to OnramperID without the email OTP: in the best case there is no login UI at all, and if profile fields are missing only the OnramperID "additional info" form appears. No app code changes are needed — see [Backend session endpoint](doc:backend-session-endpoint) for the request and the rules. It is enabled per integration by Onramper, and on any failure the normal OTP sign-in appears.
+
+While the Buy button spins, the login sheet is already presented but invisible (up to ~15s). Your screen stays interactive, but it can't present its own modal until the login sheet appears or closes. When your app's signed-in user changes, follow [3.8](#38-signing-the-onramperid-user-out).
+
 ### 3.3 Constructing the client
 
 ```ts
@@ -336,6 +342,20 @@ await client.signOut();
 // session itself has expired.
 ```
 
+`signOut()` also clears the OnramperID web session and turns [trusted partner login](#trusted-partner-login) off for that client: the session's trusted login names the user it was minted for.
+
+**When your app's signed-in user changes**, sign the old user out and start a new client with a session minted for the new user (with their `user.email` if you use trusted login):
+
+```ts
+await client.signOut();
+client.destroy();
+
+const next = new OnramperClient({ apiKey, clientId, environment, onSessionExpired });
+await next.initialize(await createSession()); // minted for the new user
+```
+
+Without `signOut()`, an existing OnramperID login on the device wins and the next checkout reuses the previous user's account.
+
 ### 3.9 Customizing the Buy button
 
 `CheckoutButtonStyle` exposes three fields. Style is **per-checkout** (not global) — pass the same value on every `getCheckoutRequirements()` call if you want a consistent look.
@@ -450,7 +470,7 @@ Values you pass as `prefill` are never logged at any level.
 | `initialize({ sessionId, sessionToken })` | `Promise<void>` | Runs attestation + Headless Wrapper-session bootstrap. Call once per app session. |
 | `getCheckoutRequirements(request, buttonStyle?, prefill?)` | `Promise<{ button, quote }>` | Creates the intent, resolves requirements, returns a ready-to-render React element + priced quote. Safe to call repeatedly. `prefill` pre-populates the OnramperID screens — best-effort, never blocks sign-in. |
 | `reset()` | `Promise<void>` | Returns the Headless Wrapper to `ready` after `completed` / `failed`. Does not invalidate the session token or OIDC login. |
-| `signOut()` | `Promise<void>` | Clears stored OIDC tokens (access + refresh) and calls `reset()`. Next checkout re-presents the OnramperID login sheet. Does not invalidate the partner Headless Wrapper session. |
+| `signOut()` | `Promise<void>` | Clears stored OIDC tokens (access + refresh) and the OnramperID web session, and calls `reset()`. Next checkout re-presents the OnramperID login sheet. Turns trusted partner login off for this client. Does not invalidate the partner Headless Wrapper session. |
 | `cancelPreparedIntent(intentHandle)` | `Promise<void>` | Drops a prepared-intent handle on the native side. Rarely needed — `getCheckoutRequirements()` invalidates the prior intent automatically. |
 | `addStateListener(fn)` | `() => void` | Returns an unsubscribe. `fn` receives every `OnramperState` transition. |
 | `addTransactionIdListener(fn)` | `() => void` | Returns an unsubscribe. `fn` receives the current durable Onramper transaction ID as `string | null`; reset/sign-out publish `null`. |

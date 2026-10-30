@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { OnramperClient, type OnramperState } from '@onramper/onramper-react-native';
 import { resolveEnvironment, type AppEnvironment } from '../config/environments';
-import { createDemoSession } from '../createDemoSession';
+import { createDemoSession, type TrustedLoginResult } from '../createDemoSession';
 import type { ThemeName } from '../theme';
 import { recordDiagnostic } from '../utils/diagnostics';
 import { describeError } from '../utils/format';
@@ -21,6 +21,12 @@ export interface UseOnramperOptions {
   theme: ThemeName;
   /** Bump to tear down and re-initialize (e.g. after clearing local sessions). */
   generation: number;
+  /**
+   * Trusted partner login email sent with every demo-session mint ('' = off).
+   * Part of the run key: the binding names the user the session was minted
+   * for, so a different user needs a new session AND a new client.
+   */
+  trustedLoginEmail: string;
 }
 
 export interface OnramperHandle {
@@ -33,6 +39,11 @@ export interface OnramperHandle {
   transactionId: string | null;
   completedCheckoutId: string | null;
   lastFailure: string | null;
+  /**
+   * What the most recent demo-session mint reported for trusted login; null
+   * when no email was sent, the mint failed, or the backend didn't say.
+   */
+  trustedLogin: TrustedLoginResult | null;
   /**
    * Environment of the last init run that finished (ready or error). Unlike
    * `status`, it changes even when a failed run is followed by another failed
@@ -51,18 +62,24 @@ const MAX_LOG_ENTRIES = 300;
 
 /**
  * Owns the OnramperClient: mints a demo session, constructs and initializes the
- * client on mount and whenever environment / theme / generation change, and
+ * client on mount and whenever environment / theme / generation / trusted-login
+ * email change, and
  * destroys the previous one. A run superseded mid-flight is abandoned — it
  * never publishes its client, and anything it created is destroyed.
  */
-export function useOnramper({ environment, theme, generation }: UseOnramperOptions): OnramperHandle {
+export function useOnramper({
+  environment,
+  theme,
+  generation,
+  trustedLoginEmail,
+}: UseOnramperOptions): OnramperHandle {
   // The client is stored with the run that created it. When props move to a
   // new run, the render that sees the new props must stop exposing the old
   // client: this hook's effect cleanup destroys it in the same commit, after
   // which child effects (e.g. useCheckout) would call a disposed native object.
   const [ready, setReady] = useState<{ client: OnramperClient; runKey: string } | null>(null);
   const [attempt, setAttempt] = useState(0);
-  const runKey = `${environment}|${theme}|${generation}|${attempt}`;
+  const runKey = `${environment}|${theme}|${generation}|${trustedLoginEmail}|${attempt}`;
   const client = ready?.runKey === runKey ? ready.client : null;
   const [status, setStatus] = useState<InitStatus>('initializing');
   const [initError, setInitError] = useState<string | null>(null);
@@ -71,6 +88,7 @@ export function useOnramper({ environment, theme, generation }: UseOnramperOptio
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [completedCheckoutId, setCompletedCheckoutId] = useState<string | null>(null);
   const [lastFailure, setLastFailure] = useState<string | null>(null);
+  const [trustedLogin, setTrustedLogin] = useState<TrustedLoginResult | null>(null);
   const [settledEnvironment, setSettledEnvironment] = useState<AppEnvironment | null>(null);
   const [log, setLog] = useState<LogEntry[]>([]);
   const nextLogId = useRef(0);
@@ -102,11 +120,28 @@ export function useOnramper({ environment, theme, generation }: UseOnramperOptio
     setTransactionId(null);
     setCompletedCheckoutId(null);
     setLastFailure(null);
+    setTrustedLogin(null);
 
     const run = async () => {
       const env = resolveEnvironment(environment);
-      const mint = () => createDemoSession(env.sessionEndpoint, env.demoToken);
-      appendLog('info', `[${environment}] minting demo session…`);
+      const email = trustedLoginEmail.trim();
+      // Initial mint and every expiry re-mint carry the same email, so a
+      // refreshed session stays bound to the same user. Only the SDK's
+      // credentials are handed on; the trusted-login outcome is logged here.
+      // Never log the address itself — only that one was sent.
+      const mint = async () => {
+        const { sessionId, sessionToken, trustedLogin: result } = await createDemoSession(
+          env.sessionEndpoint,
+          env.demoToken,
+          email,
+        );
+        if (!cancelled && email !== '') {
+          setTrustedLogin(result ?? null);
+          appendLog('info', `trusted login: ${result ?? 'not reported by the backend'}`);
+        }
+        return { sessionId, sessionToken };
+      };
+      appendLog('info', `[${environment}] minting demo session${email !== '' ? ' (trusted login email sent)' : ''}…`);
       const session = await mint();
       if (cancelled) {
         return;
@@ -191,7 +226,7 @@ export function useOnramper({ environment, theme, generation }: UseOnramperOptio
       cancelled = true;
       created?.destroy();
     };
-  }, [environment, theme, generation, attempt, runKey, appendLog]);
+  }, [environment, theme, generation, trustedLoginEmail, attempt, runKey, appendLog]);
 
   return {
     client,
@@ -203,6 +238,7 @@ export function useOnramper({ environment, theme, generation }: UseOnramperOptio
     transactionId,
     completedCheckoutId,
     lastFailure,
+    trustedLogin,
     settledEnvironment,
     log,
     appendLog,

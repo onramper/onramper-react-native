@@ -38,6 +38,31 @@ Request body (`scope` required):
 { "scope": ["quotes:read", "checkout:write"] }
 ```
 
+### Trusted partner login
+
+If your backend has already verified the user's email, add an optional
+`user: { email }` to the same signed request. The wrapper can then sign the user
+in to OnramperID without the email OTP — see the
+[1.4.0 release notes](../CHANGELOG.md#140) for what the user sees.
+
+```json
+{ "scope": ["quotes:read", "checkout:write"], "user": { "email": "jane@example.com" } }
+```
+
+- Send the email from your **own verified user record**, never from a value the
+  app supplied in its request to your endpoint.
+- A user who changes their email must re-verify it before you send the new address.
+- Sessions minted for `onSessionExpired` are new sessions: send `user.email` again.
+- When `user` is present, the response also carries
+  `trustedLogin: "bound" | "unavailable"`. `"unavailable"` means the session was
+  created, but sign-in stays the normal OTP flow. You don't need to return this
+  field to the app; it is useful in your own logs.
+- Trusted login is off by default and enabled per integration on the Onramper
+  side. Until it is, every session reports `"unavailable"`.
+- When your app's signed-in user changes, the app must call `signOut()`, then
+  create and initialize a new `OnramperClient` with a session minted for the new
+  user — see [Signing the OnramperID user out](GETTING_STARTED.md#38-signing-the-onramperid-user-out).
+
 
 ## 🔐 Authentication: Signing v2
 
@@ -66,7 +91,11 @@ Please go over the Signing v2 guide for this.
 ```ts
 import { signRequest } from "./sigv2";
 
-type CreateSessionInput = { scope?: string[] };
+type CreateSessionInput = {
+  scope?: string[];
+  /** Verified email from YOUR user record — enables trusted partner login. */
+  verifiedEmail?: string;
+};
 
 export async function createClientSession(input: CreateSessionInput) {
   const apiKey = process.env.PARTNER_API_KEY!;
@@ -76,6 +105,7 @@ export async function createClientSession(input: CreateSessionInput) {
   const path = `/partners/v2/${apiKey}/client-sessions`;
   const body = {
     scope: input.scope ?? ["quotes:read", "checkout:write"],
+    ...(input.verifiedEmail ? { user: { email: input.verifiedEmail } } : {}),
   };
 
   const { signature, timestamp, nonce } = signRequest({
@@ -122,8 +152,13 @@ export function registerRoutes(app: FastifyInstance) {
     }
 
     // 2. Mint the session against the Onramper partners-api.
+    //    For trusted partner login, pass the email from YOUR verified user
+    //    record (never from the request body).
     const { scope } = req.body ?? {};
-    const result = await createClientSession({ scope });
+    const result = await createClientSession({
+      scope,
+      verifiedEmail: user.emailVerified ? user.email : undefined,
+    });
 
     // 3. Return { sessionId, sessionToken } to the app verbatim.
     reply.code(result.status);

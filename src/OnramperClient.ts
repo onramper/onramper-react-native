@@ -186,6 +186,9 @@ export class OnramperClient {
    * checkout that requires user_info will re-trigger the login flow. Also
    * resets in-flight checkout state. Does NOT clear the partner-scoped SDK
    * session — re-calling `initialize` is only needed if that session expired.
+   * Also turns trusted partner login off for this client: when the app's user
+   * changes, destroy this client and create a new one with a session minted
+   * for the new user.
    */
   async signOut(): Promise<void> {
     try {

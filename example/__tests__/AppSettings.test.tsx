@@ -40,3 +40,23 @@ test('clearing sessions without an initialized SDK reports an error instead of s
   expect(text(r)).not.toContain('local sessions cleared');
   expect(createDemoSession).not.toHaveBeenCalled();
 });
+
+test('applying a trusted login email restarts the session and logs without the address', async () => {
+  const r = await renderWithSettingsOpen();
+  const email = r.root.findByProps({ accessibilityLabel: 'Email', keyboardType: 'email-address' });
+
+  await act(async () => email.props.onChangeText('tester@onramper.com'));
+  await act(async () => r.root.findByProps({ accessibilityLabel: 'Apply & restart session' }).props.onPress());
+
+  // Expand the (collapsed) event logs to read the lines.
+  for (const toggle of r.root.findAllByProps({ accessibilityLabel: 'SDK events' })) {
+    if (typeof toggle.props.onPress === 'function') {
+      await act(async () => toggle.props.onPress());
+    }
+  }
+  expect(text(r)).toContain('trusted login email changed — restarting session');
+  expect(r.root.findByProps({ testID: 'trusted-login-status' }).props.children).toBe('—');
+  expect(r.root.findByProps({ accessibilityLabel: 'Apply & restart session' }).props.disabled).toBe(true);
+  // The only place the address may appear is the input itself.
+  expect(text(r).split('tester@onramper.com')).toHaveLength(2);
+});

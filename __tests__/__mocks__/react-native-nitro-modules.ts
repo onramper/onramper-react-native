@@ -27,7 +27,7 @@ export interface MockNative {
 
 export function makeNative(): MockNative {
   const native = {
-    sdkVersion: '1.3.1',
+    sdkVersion: '1.4.0',
     configure: jest.fn().mockResolvedValue(undefined),
     initialize: jest.fn().mockResolvedValue(undefined),
     reset: jest.fn().mockResolvedValue(undefined),
