@@ -6,6 +6,11 @@ require Pod::Executable.execute_command('node', ['-p',
   )', __dir__]).strip
 
 platform :ios, '16.4'
+
+# Opt-in native checkout providers for @onramper/onramper-react-native (read by
+# its podspec, so set it before use_native_modules!). The example enables
+# Stripe; ONRAMPER_PROVIDERS='' pod install builds it without (CI does both).
+$OnramperProviders = ENV.fetch('ONRAMPER_PROVIDERS', 'stripe').split(',')
 prepare_react_native_project!
 
 linkage = ENV['USE_FRAMEWORKS']

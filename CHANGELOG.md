@@ -2,6 +2,34 @@
 
 All notable changes to this project are documented in this file.
 
+## [Unreleased]
+
+### Changed
+
+- **The iOS SDK comes from Swift Package Manager.** The package no longer
+  vendors `OnramperSDK.xcframework` or the Stripe checkout sources. `pod install`
+  adds the public [`onramper-ios`](https://github.com/onramper/onramper-ios)
+  package (exactly this package's version) through React Native's
+  `spm_dependency` helper, plus an "[onramper-react-native] Embed OnramperSDK"
+  build phase on your app target. Xcode downloads the package on the first
+  build. Needs `react_native_post_install` in the Podfile's `post_install`
+  (already required) and CocoaPods 1.10+.
+- **The Stripe checkout is opt-in.** Stripe's iOS SDK is only built into apps
+  that enable the Stripe provider; other apps no longer build or ship it, and
+  can now use `@stripe/stripe-react-native` (same Stripe version, 26.15.1).
+
+### Migration
+
+- Apps using the Stripe checkout (`enableStripeCheckout`) must enable the
+  provider, then run `pod install` again:
+  - bare React Native: `$OnramperProviders = ['stripe']` at the top of
+    `ios/Podfile`, before `use_native_modules!`;
+  - Expo: `["@onramper/onramper-react-native", { "providers": ["stripe"] }]`
+    in `app.json` `plugins`, then prebuild.
+
+  Without it, `enableStripeCheckout` rejects with `configurationError`.
+- Other apps: run `pod install` again. No code changes.
+
 ## [1.5.0]
 
 Bundles `OnramperSDK@1.5.0` from its published, checksum-verified release.

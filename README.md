@@ -11,13 +11,17 @@ npm install @onramper/onramper-react-native react-native-nitro-modules
 cd ios && pod install
 ```
 
-Requires React Native 0.79+, `react-native-nitro-modules` 0.35+, the **New Architecture**, and an iOS **16.0+** deployment target. Works in **bare React Native (no Expo required)** and **Expo** apps — not Expo Go, since the package vendors a native binary.
+Requires React Native 0.79+, `react-native-nitro-modules` 0.35+, the **New Architecture**, CocoaPods 1.10+, and an iOS **16.0+** deployment target. Works in **bare React Native (no Expo required)** and **Expo** apps — not Expo Go, since the package includes native code.
+
+The iOS SDK isn't inside the npm package. `pod install` adds the public [`onramper-ios`](https://github.com/onramper/onramper-ios) Swift package (exactly this package's version) to the pod through React Native's `spm_dependency` helper, and Xcode downloads it on the first build, like in a native app. It also adds an **"[onramper-react-native] Embed OnramperSDK"** build phase to your app target, which copies `OnramperSDK.framework` into the app.
 
 **Expo apps** — add the bundled config plugin to `app.json`, then prebuild:
 
 ```json
 { "expo": { "plugins": ["@onramper/onramper-react-native"] } }
 ```
+
+With the [Stripe checkout](#stripe-checkout-experimental): `"plugins": [["@onramper/onramper-react-native", { "providers": ["stripe"] }]]`.
 
 The plugin applies the required iOS build flag (it does not change your deployment target). Set your app's deployment target to **16.4+** — Expo SDK 56's own minimum (bare RN only needs 16.0). For bare-RN Podfile setup (Xcode 16+/26) and full details, see the [integration guide](docs/GETTING_STARTED.md).
 
@@ -157,8 +161,13 @@ any failure. Available with RN package 1.4.0 or newer. See
 
 iOS, from package 1.5.0: **USD to USDC on Solana, Ethereum or Base, paid with Apple Pay, for customers in the US outside New York, up to 100 USD per purchase before fees.** It is off until your app turns it on, and Stripe and Onramper must have set it up for your app first (talk to your Onramper contact).
 
-1. **Capabilities.** Add **Apple Pay** with the merchant ID set up with Stripe, and **App Attest** (`com.apple.developer.devicecheck.appattest-environment` = `production`). Stripe requires app attestation, so it doesn't run in the Simulator.
-2. **Turn it on** once, before the first checkout:
+1. **Install it.** The Stripe checkout and Stripe's iOS SDK are only built into apps that opt in. Bare React Native, at the top of `ios/Podfile` (before `use_native_modules!`), then `pod install`:
+   ```ruby
+   $OnramperProviders = ['stripe']
+   ```
+   Expo: `"plugins": [["@onramper/onramper-react-native", { "providers": ["stripe"] }]]` in `app.json`, then prebuild. Without it, `enableStripeCheckout` rejects with `configurationError`.
+2. **Capabilities.** Add **Apple Pay** with the merchant ID set up with Stripe, and **App Attest** (`com.apple.developer.devicecheck.appattest-environment` = `production`). Stripe requires app attestation, so it doesn't run in the Simulator.
+3. **Turn it on** once, before the first checkout:
 
    ```ts
    await client.enableStripeCheckout({
@@ -168,7 +177,7 @@ iOS, from package 1.5.0: **USD to USDC on Solana, Ethereum or Base, paid with Ap
    ```
 
    Without it, a request for `['stripe']` runs the regular checkout.
-3. **Request it** with `onlyOnramps: ['stripe']`:
+4. **Request it** with `onlyOnramps: ['stripe']`:
 
    ```ts
    const { button, quote } = await client.getCheckoutRequirements({
@@ -185,11 +194,19 @@ iOS, from package 1.5.0: **USD to USDC on Solana, Ethereum or Base, paid with Ap
    ```
 
    The wallet network must match the destination network. Inputs this checkout can't handle reject with an `OnramperError` (`invalidRequest` or `amountOutOfRange`) before anything is sent.
-4. **Show the total.** `amount` and `quote.rate` exclude fees; `quote.payout` is the USDC the user receives, and the total Apple Pay will charge is `quote.providerContext?.sourceTotalAmount` (a string such as `"25.83"`).
-5. **What the user sees.** After Buy: OnramperID sign-in as usual, then the Apple Pay sheet opens on its own. First-time users then create or sign in to a Link account (Stripe's checkout account) and may be asked to verify their identity. The checkout sheet stays invisible until a step needs it; meanwhile your screen can't present its own modal.
-6. **Outcome.** Same states and events as other providers, except that a Stripe checkout reports `paymentPending` once paid and then `completed` when the USDC is delivered. For Stripe, `paymentPending` is not final.
+5. **Show the total.** `amount` and `quote.rate` exclude fees; `quote.payout` is the USDC the user receives, and the total Apple Pay will charge is `quote.providerContext?.sourceTotalAmount` (a string such as `"25.83"`).
+6. **What the user sees.** After Buy: OnramperID sign-in as usual, then the Apple Pay sheet opens on its own. First-time users then create or sign in to a Link account (Stripe's checkout account) and may be asked to verify their identity. The checkout sheet stays invisible until a step needs it; meanwhile your screen can't present its own modal.
+7. **Outcome.** Same states and events as other providers, except that a Stripe checkout reports `paymentPending` once paid and then `completed` when the USDC is delivered. For Stripe, `paymentPending` is not final.
 
-**Stripe's iOS SDK.** From 1.5.0 the pod depends on Stripe's iOS SDK 26.15.1 (exact), which Stripe publishes through Swift Package Manager only. `pod install` adds it with React Native's `spm_dependency` helper, so your Podfile needs nothing beyond the standard `react_native_post_install`. It is built for every app, even one that never calls `enableStripeCheckout`. **Apps that already include Stripe's iOS SDK another way (for example through `@stripe/stripe-react-native`, which uses Stripe's CocoaPods) can't use 1.5.0 yet**: the app would contain Stripe's modules twice. Talk to your Onramper contact.
+**Stripe's iOS SDK.** With the Stripe provider, the pod also links onramper-ios's `OnramperStripe` product, which depends on Stripe's iOS SDK 26.15.1 (exact; the crypto onramp is a private-preview API). Without it, no Stripe code is built. Next to `@stripe/stripe-react-native` (0.84+, which also resolves Stripe's SDK through Swift Package Manager):
+
+| Your app | Works |
+| -- | -- |
+| Our Stripe checkout off, plus `@stripe/stripe-react-native` | Yes |
+| Our Stripe checkout on, no other Stripe library | Yes |
+| Our Stripe checkout on, plus `@stripe/stripe-react-native` | Builds, but Stripe's UI module is loaded twice (`Class ... is implemented in both` at launch). Not supported yet; talk to your Onramper contact |
+
+In every row both must pin the same Stripe version (26.15.1 in `@stripe/stripe-react-native` 0.84): Swift Package Manager allows one version of a package per app, and it resolves our pin even when the Stripe provider is off. `@stripe/stripe-react-native` also requires `use_frameworks! :linkage => :dynamic`.
 
 ## Diagnostic logs
 
@@ -223,11 +240,11 @@ native app after upgrading; a JavaScript-only update cannot add the native gette
 
 ## Versioning
 
-`@onramper/onramper-react-native@X.Y.Z` always bundles `OnramperSDK@X.Y.Z` (iOS). Wrapper-only patches are published as `X.Y.Z-N` pre-releases (`npm install @onramper/onramper-react-native@next` to opt in).
+`@onramper/onramper-react-native@X.Y.Z` always uses `OnramperSDK@X.Y.Z` (iOS), resolved from `onramper-ios` through Swift Package Manager. Wrapper-only patches are published as `X.Y.Z-N` pre-releases (`npm install @onramper/onramper-react-native@next` to opt in).
 
 ## Privacy manifest
 
-The vendored `OnramperSDK.xcframework` already ships its own `PrivacyInfo.xcprivacy`. Don't add a duplicate.
+`OnramperSDK.framework` (from `onramper-ios`) already ships its own `PrivacyInfo.xcprivacy`. Don't add a duplicate.
 
 ## Known limitations
 
@@ -235,9 +252,12 @@ The vendored `OnramperSDK.xcframework` already ships its own `PrivacyInfo.xcpriv
 
 ## Troubleshooting
 
-- **`pod install` fails finding the xcframework** — confirm `node_modules/@onramper/onramper-react-native/ios/Frameworks/OnramperSDK.xcframework/` exists.
-- **`pod install` fails with "needs React Native's spm_dependency helper"** — your Podfile must `require` React Native's `react_native_pods` script and call `react_native_post_install(installer, ...)` in `post_install`, as the React Native and Expo templates do. That helper adds Stripe's iOS SDK (Swift Package Manager) to the pod.
-- **`[SPM] WARNING!!! ... with static linking, this might cause linker errors`** during `pod install` — React Native prints this for any pod with Swift package dependencies. Static linking (the default) is what we build and test with; you can ignore it unless your app build reports linker errors.
+- **`pod install` fails with "needs React Native's spm_dependency helper"** — your Podfile must `require` React Native's `react_native_pods` script and call `react_native_post_install(installer, ...)` in `post_install`, as the React Native and Expo templates do. That helper adds the `onramper-ios` Swift package to the pod.
+- **App crashes at launch with `dyld: Library not loaded: @rpath/OnramperSDK.framework`**, or the build fails with "OnramperSDK.framework not found in build products" — the "[onramper-react-native] Embed OnramperSDK" build phase is missing or ran before the package was built. Check that `post_install` calls `react_native_post_install`, then run `pod install` again; it re-adds the phase.
+- **Build fails resolving or downloading `onramper-ios`** — Xcode fetches `https://github.com/onramper/onramper-ios` (and, with the Stripe provider, `stripe-ios-spm`) during package resolution. Offline CI or a proxy must allow GitHub; with `xcodebuild`, `-clonedSourcePackagesDirPath` lets CI cache the checkouts.
+- **`warning: Conflicting parseable interfaces for Swift Module OnramperSDK`** (Release builds, Stripe provider on) — harmless. Xcode unpacks the same `OnramperSDK.xcframework` into two build folders and the debug-symbol step notices both; the copies are identical.
+- **Removed the package, and the build warns about the "Embed OnramperSDK" phase** — delete that build phase from your app target.
+- **`[SPM] WARNING!!! ... with static linking, this might cause linker errors`** during `pod install` — React Native prints this for any pod with Swift package dependencies. We build and test with both static (the default) and dynamic frameworks; you can ignore it unless your app build reports linker errors.
 - **Bare RN build fails with `module map file ... not found` (Xcode 16+/26)** — disable explicit Swift modules in your `Podfile` `post_install` (`SWIFT_ENABLE_EXPLICIT_MODULES = NO`). Expo apps get this automatically via the config plugin. See the [integration guide](docs/GETTING_STARTED.md).
 - **App Attest errors in simulator** — expected. App Attest only works on real devices. The SDK surfaces this as `attestationFailed`.
 - **Buttons appear but sheets don't open** — the host RN screen must be inside a normal `UIViewController` (the default). Modal-presented screens may need extra care; report an issue with a repro.

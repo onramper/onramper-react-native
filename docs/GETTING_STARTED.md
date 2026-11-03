@@ -1,6 +1,6 @@
 A consumer-facing guide to embedding the Onramper Headless solution in a React Native app via this wrapper.
 
-> **iOS-only in this release.** The wrapper vendors the native `OnramperSDK.xcframework`; every API runs on iOS. On Android the module is a stub — calls throw `OnramperError` with code `platformUnsupported`, so guard call sites with a platform check. Android is not part of this release.
+> **iOS-only in this release.** The wrapper uses the native iOS SDK (`OnramperSDK`, from the public `onramper-ios` Swift package); every API runs on iOS. On Android the module is a stub — calls throw `OnramperError` with code `platformUnsupported`, so guard call sites with a platform check. Android is not part of this release.
 
 ---
 
@@ -53,7 +53,7 @@ The wrapper is built with **Nitro Modules** and requires React Native's **New Ar
 | **A bare React Native app** (no Expo) | `npm install @onramper/onramper-react-native react-native-nitro-modules`, apply the iOS build settings, then `pod install` ([iOS build setup](doc:ios-build-setup)). |
 | **An Expo app** (prebuild / CNG) | `npm install @onramper/onramper-react-native react-native-nitro-modules`, add the bundled config plugin to `app.json` `plugins`, then `npx expo prebuild` — the plugin applies the iOS build settings for you. |
 
-No `install-expo-modules` step and no AppDelegate changes are required. Not compatible with Expo Go (the package vendors a native binary).
+No `install-expo-modules` step and no AppDelegate changes are required. Not compatible with Expo Go (the package includes native code).
 
 ---
 
@@ -79,13 +79,15 @@ No `install-expo-modules` step and no AppDelegate changes are required. Not comp
 npm install @onramper/onramper-react-native react-native-nitro-modules
 ```
 
-`react-native-nitro-modules` is a peer dependency — install it in your app. The native binary (`OnramperSDK.xcframework`) and the Nitro module autolink in during `pod install`. Ensure the **New Architecture** is enabled (the default on RN 0.76+).
+`react-native-nitro-modules` is a peer dependency — install it in your app. The Nitro module autolinks in during `pod install`, which also adds the iOS SDK (the `onramper-ios` Swift package, exactly this package's version) through React Native's `spm_dependency` helper and an "Embed OnramperSDK" build phase to your app target; Xcode downloads the package on the first build. Ensure the **New Architecture** is enabled (the default on RN 0.76+).
 
 **Expo apps** — add the bundled config plugin so prebuild applies the iOS build settings automatically:
 
 ```json
 { "expo": { "plugins": ["@onramper/onramper-react-native"] } }
 ```
+
+For the experimental Stripe checkout, enable its provider: `"plugins": [["@onramper/onramper-react-native", { "providers": ["stripe"] }]]` (bare React Native: `$OnramperProviders = ['stripe']` in the Podfile — see [iOS build setup](doc:ios-build-setup)). Without it, no Stripe code is built.
 
 Set your app's iOS deployment target to **16.4+** — Expo SDK 56's own minimum (e.g. `ios.deploymentTarget` in `app.json`). Then run `npx expo prebuild` followed by `npx expo run:ios`. You can skip the [iOS build setup](doc:ios-build-setup) — the plugin applies the required build flag for you.
 

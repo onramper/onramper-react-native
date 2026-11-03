@@ -13,6 +13,10 @@ Set your app's iOS deployment target to **16.0+**, and disable explicit Swift mo
 ```ruby
 platform :ios, '16.0'
 
+# Optional: opt-in native checkout providers. Only for the experimental Stripe
+# checkout; adds Stripe's iOS SDK. Must come before use_native_modules!.
+# $OnramperProviders = ['stripe']
+
 # ... target block ...
 
 post_install do |installer|
@@ -35,6 +39,8 @@ end
 ```
 
 The Headless Wrapper's minimum is iOS 16.0; set your app target's deployment target to 16.0 (or higher) as well. Autolinking is automatic — the package's podspec is discovered without any `react-native.config.js` change.
+
+`react_native_post_install` is required: it writes the iOS SDK's Swift package (`onramper-ios`) into the Pods project. `pod install` also adds an **"[onramper-react-native] Embed OnramperSDK"** build phase to your app target, which copies `OnramperSDK.framework` into the app; keep it, or the app crashes at launch with `dyld: Library not loaded: @rpath/OnramperSDK.framework`.
 
 ---
 
@@ -85,6 +91,8 @@ Bare RN:
 cd ios && pod install
 cd .. && npx react-native run-ios --device
 ```
+
+The first build downloads the `onramper-ios` Swift package (and, with the Stripe provider, `stripe-ios-spm`) from GitHub.
 
 Expo:
 
