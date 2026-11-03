@@ -103,10 +103,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # The podspec resolves onramper-ios v<version> through SPM; refuse to
-      # publish unless that tag declares the products it links.
-      - name: Verify the onramper-ios package
-        run: npm run verify-version
+      # The podspec pins onramper-ios to the commit of tag v<version>. Record
+      # it in package.json (committed below) and refuse to publish unless that
+      # commit declares the products the podspec links. Review the recorded
+      # SHA in the release commit.
+      - name: Pin and verify the onramper-ios package
+        run: node scripts/verify-version.js --record
 
       - name: Test + build
         run: |
@@ -126,7 +128,7 @@ jobs:
           VERSION: ${{ steps.ver.outputs.version }}
         run: |
           git add package.json
-          # package.json may already be at the target version (e.g. it
+          # package.json may already be at the target version and revision (e.g. it
           # was pre-populated on master), in which case there is nothing to
           # commit — that's fine. The tag is what the publish + podspec git
           # source need, so always create and push it.

@@ -36,21 +36,28 @@ Pod::Spec.new do |s|
   # The iOS SDK comes from its public Swift package, like in a native app:
   # `OnramperSDK` (prebuilt binary, no dependencies) plus one product per
   # provider (`OnramperStripe` brings Stripe's iOS SDK, pinned by onramper-ios).
-  # The version is this package's version without a prerelease suffix: each
-  # release of this package wraps the iOS SDK release with the same number.
+  # Each release of this package wraps the iOS SDK release with the same number.
+  # It is pinned to the commit of that onramper-ios tag (package.json
+  # onramperIOS.revision, recorded and checked by scripts/verify-version.js),
+  # not to the tag, so a moved tag can't change what apps build. That commit's
+  # Package.swift in turn pins the binary by checksum.
   # React Native's spm_dependency helper (RN >= 0.75) records the package here;
   # react_native_post_install writes it into Pods.xcodeproj, and
   # onramper_spm.rb embeds OnramperSDK.framework into the app.
   #
-  # SDK development only: ONRAMPER_IOS_PACKAGE_URL / ONRAMPER_IOS_PACKAGE_VERSION
+  # SDK development only: ONRAMPER_IOS_PACKAGE_URL + ONRAMPER_IOS_PACKAGE_REVISION
   # point at another copy of onramper-ios (e.g. file:///path/to/onramper-ios).
   unless defined?(spm_dependency)
     raise 'OnramperReactNative needs React Native\'s spm_dependency helper: require react_native_pods in your Podfile and call react_native_post_install in post_install.'
   end
   OnramperSPM.verify_cocoapods_version!
+  revision = ENV['ONRAMPER_IOS_PACKAGE_REVISION'] || package.dig('onramperIOS', 'revision')
+  unless revision.is_a?(String) && revision.match?(/\A[0-9a-f]{40}\z/)
+    raise 'OnramperReactNative: package.json onramperIOS.revision must be the 40-character onramper-ios commit SHA.'
+  end
   spm_dependency(s,
     url: ENV.fetch('ONRAMPER_IOS_PACKAGE_URL', 'https://github.com/onramper/onramper-ios'),
-    requirement: { kind: 'exactVersion', version: ENV.fetch('ONRAMPER_IOS_PACKAGE_VERSION', package['version'].split('-').first) },
+    requirement: { kind: 'revision', revision: revision },
     products: OnramperSPM.products(providers)
   )
 

@@ -62,6 +62,9 @@
   "author": "Onramper <engineering@onramper.com>",
   "license": "Apache-2.0",
   "homepage": "https://github.com/onramper/onramper-react-native#readme",
+  "onramperIOS": {
+    "revision": "64225c4bf2fe12bafb88143a7ea0349154a0791e"
+  },
   "peerDependencies": {
     "react": ">=19.0.0",
     "react-native": ">=0.79.0",

@@ -13,7 +13,7 @@ cd ios && pod install
 
 Requires React Native 0.79+, `react-native-nitro-modules` 0.35+, the **New Architecture**, CocoaPods 1.10+, and an iOS **16.0+** deployment target. Works in **bare React Native (no Expo required)** and **Expo** apps — not Expo Go, since the package includes native code.
 
-The iOS SDK isn't inside the npm package. `pod install` adds the public [`onramper-ios`](https://github.com/onramper/onramper-ios) Swift package (exactly this package's version) to the pod through React Native's `spm_dependency` helper, and Xcode downloads it on the first build, like in a native app. It also adds an **"[onramper-react-native] Embed OnramperSDK"** build phase to your app target, which copies `OnramperSDK.framework` into the app.
+The iOS SDK isn't inside the npm package. `pod install` adds the public [`onramper-ios`](https://github.com/onramper/onramper-ios) Swift package to the pod, pinned to the commit of the release with this package's version through React Native's `spm_dependency` helper, and Xcode downloads it on the first build, like in a native app. It also adds an **"[onramper-react-native] Embed OnramperSDK"** build phase to your app target, which copies `OnramperSDK.framework` into the app.
 
 **Expo apps** — add the bundled config plugin to `app.json`, then prebuild:
 
