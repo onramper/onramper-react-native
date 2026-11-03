@@ -19,13 +19,10 @@ jobs:
       - run: npm run typecheck
       - run: npx jest
 
-  # iOS verification covers the archive, prepared-intent lifecycle, and demo log store.
-  # Example-app xcodebuild + xctest scheme are deferred:
-  #   - The bundled example uses RN 0.85 / Expo SDK 55 which has a known build
-  #     error in node_modules/expo/.../ExpoReactNativeFactory.swift.
-  #   - The Xcode unit-test scheme (OnramperReactNativeTests) requires a one-time
-  #     manual setup in Xcode UI that hasn't run yet.
-  # Re-enable example build + xctest jobs once both are resolved.
+  # iOS verification covers the onramper-ios release pin, prepared-intent
+  # lifecycle, and demo log store; ios-example below builds the bare example.
+  # Still deferred: the Expo example build, and the Xcode unit-test scheme
+  # (OnramperReactNativeTests), which requires a one-time manual setup in Xcode UI.
   ios:
     runs-on: macos-15
     steps:
@@ -35,9 +32,44 @@ jobs:
           node-version: '24'
           cache: 'npm'
       - run: npm ci
-      - run: npm run fetch-xcframework
+      # Fails until onramper-ios has a tag for package.json's version: the
+      # podspec resolves exactly that version through SPM.
       - run: npm run verify-version
       - name: Test native prepared-intent lifecycle
         run: npm run test:native
       - name: Test demo daily log storage
         run: npm --prefix example run test:logs
+
+  # Builds the bare example against the onramper-ios package (SPM), with the
+  # Stripe provider on (the example's default) and off.
+  ios-example:
+    runs-on: macos-15
+    strategy:
+      fail-fast: false
+      matrix:
+        providers: ['stripe', '']
+    env:
+      ONRAMPER_PROVIDERS: ${{ matrix.providers }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm ci
+        working-directory: example
+      - run: cp env.local.example.ts env.local.ts
+        working-directory: example
+      # Standalone CocoaPods, as example/README.md asks: the example's Gemfile
+      # pins an older one that rewrites the lockfile.
+      - run: pod install
+        working-directory: example/ios
+      - name: Build (Debug, simulator)
+        working-directory: example/ios
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -workspace OnramperRNDemo.xcworkspace -scheme OnramperRNDemo \
+            -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO | tail -50

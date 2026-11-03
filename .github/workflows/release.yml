@@ -74,14 +74,9 @@ jobs:
           const fs = require('node:fs');
           const p = JSON.parse(fs.readFileSync('package.json', 'utf8'));
           const baseVersion = typeof p.version === 'string' ? p.version.split('-')[0] : '';
-          const checksum = p.onramperSDK?.checksum;
 
           if (baseVersion !== process.env.IOS_VERSION) {
             console.error(`package.json base version ${baseVersion || '(missing)'} does not match iOS version ${process.env.IOS_VERSION}.`);
-            process.exit(1);
-          }
-          if (typeof checksum !== 'string' || !/^[0-9a-f]{64}$/.test(checksum)) {
-            console.error('package.json onramperSDK.checksum must be exactly 64 lowercase hexadecimal characters.');
             process.exit(1);
           }
 
@@ -105,14 +100,13 @@ jobs:
           fs.writeFileSync(`${process.env.RUNNER_TEMP}/release-notes.md`, `${notes}\n`);
           NODE
 
-      - name: Fetch xcframework + checksum
-        run: npm ci && npm run fetch-xcframework
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Verify checksum recorded
+      # The podspec resolves onramper-ios v<version> through SPM; refuse to
+      # publish unless that tag declares the products it links.
+      - name: Verify the onramper-ios package
         run: npm run verify-version
-
-      - name: Slim xcframework for npm
-        run: npm run slim-xcframework
 
       - name: Test + build
         run: |
@@ -132,12 +126,12 @@ jobs:
           VERSION: ${{ steps.ver.outputs.version }}
         run: |
           git add package.json
-          # package.json may already be at the target version/checksum (e.g. it
+          # package.json may already be at the target version (e.g. it
           # was pre-populated on master), in which case there is nothing to
           # commit — that's fine. The tag is what the publish + podspec git
           # source need, so always create and push it.
           if git diff --cached --quiet; then
-            echo "package.json already at v${VERSION} with recorded checksum; nothing to commit."
+            echo "package.json already at v${VERSION}; nothing to commit."
           else
             git commit -m "chore(release): v${VERSION}"
             git push origin master
