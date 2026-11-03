@@ -9,7 +9,7 @@
     ],
     "newArchEnabled": true,
     "plugins": [
-      "@onramper/onramper-react-native"
+      ["@onramper/onramper-react-native", { "providers": ["stripe"] }]
     ],
     "ios": {
       "bundleIdentifier": "com.onramper.demo.react-native-expo",
