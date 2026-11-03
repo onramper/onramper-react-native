@@ -283,6 +283,26 @@ describe('OnramperClient', () => {
     });
   });
 
+  it('enableStripeCheckout rejects with configurationError when the Stripe provider is not installed', async () => {
+    const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
+    const native = __lastNative();
+    // What HybridOnramperNitro throws when built without ONRAMPER_STRIPE.
+    const payload = {
+      code: 'configurationError',
+      supportCode: 'configurationError',
+      message:
+        "SDK configuration error: the Stripe checkout isn't installed: add $OnramperProviders = ['stripe'] " +
+        'to the Podfile (Expo: the plugin option providers: ["stripe"]) and run pod install. Contact your integrator.',
+      userMessage: 'Something went wrong. Please try again.',
+    };
+    native.enableStripeCheckout.mockRejectedValueOnce(new Error(`ONRAMPER_ERROR:${JSON.stringify(payload)}`));
+    await expect(client.enableStripeCheckout({ merchantIdentifier: 'merchant.com.example' })).rejects.toMatchObject({
+      name: 'OnramperError',
+      code: 'configurationError',
+      message: expect.stringContaining('$OnramperProviders'),
+    });
+  });
+
   it('fans out parsed state to addStateListener', () => {
     const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
     const native = __lastNative();

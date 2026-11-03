@@ -1,4 +1,5 @@
 require 'json'
+require_relative 'onramper_spm'
 
 package = JSON.parse(File.read(File.join(__dir__, 'package.json')))
 
@@ -14,33 +15,43 @@ Pod::Spec.new do |s|
   s.swift_version  = '5.9'
   s.source         = { :git => "#{package['repository']}.git", :tag => "v#{s.version}" }
 
-  s.pod_target_xcconfig = {
-    'DEFINES_MODULE' => 'YES',
-  }
+  # Opt-in native checkout providers, from the app's Podfile:
+  #   $OnramperProviders = ['stripe']   # before use_native_modules!
+  # (Expo: the config plugin's `providers` option writes it.) Each provider
+  # links one more onramper-ios product and compiles its bridge code
+  # (#if ONRAMPER_<PROVIDER>). Without one, the app builds no provider SDK.
+  providers = OnramperSPM.providers
+  conditions = OnramperSPM.compilation_conditions(providers)
+
+  # Assigned as a whole: a podspec can't read pod_target_xcconfig back.
+  xcconfig = { 'DEFINES_MODULE' => 'YES' }
+  xcconfig['SWIFT_ACTIVE_COMPILATION_CONDITIONS'] = (['$(inherited)'] + conditions).join(' ') unless conditions.empty?
+  s.pod_target_xcconfig = xcconfig
 
   # This podspec lives at the package root (not ios/) because nitrogen emits its
   # generated source globs (nitrogen/generated/**) relative to the podspec's
   # directory via add_nitrogen_files below. Our own sources are ios/-prefixed.
-  # ios/OnramperStripe holds the iOS SDK's Stripe checkout module, fetched as
-  # source from the same onramper-ios release as the xcframework
-  # (scripts/stripe-sources.js). It compiles into this pod against OnramperSDK's
-  # @_spi(OnramperNative) interface and Stripe's iOS SDK.
-  s.source_files        = 'ios/*.swift', 'ios/OnramperStripe/*.swift'
-  s.vendored_frameworks = 'ios/Frameworks/OnramperSDK.xcframework'
+  s.source_files = 'ios/*.swift'
 
-  # Stripe's iOS SDK, pinned exactly like the iOS SDK's own Package.swift: the
-  # crypto onramp is a private-preview SPI whose signatures change between
-  # releases. Stripe publishes this version through Swift Package Manager only
-  # (CocoaPods trunk stops at 26.9.0), so it comes in through React Native's
-  # spm_dependency helper, defined by the app Podfile's react_native_pods
-  # require and applied by react_native_post_install.
+  # The iOS SDK comes from its public Swift package, like in a native app:
+  # `OnramperSDK` (prebuilt binary, no dependencies) plus one product per
+  # provider (`OnramperStripe` brings Stripe's iOS SDK, pinned by onramper-ios).
+  # The version is this package's version without a prerelease suffix: each
+  # release of this package wraps the iOS SDK release with the same number.
+  # React Native's spm_dependency helper (RN >= 0.75) records the package here;
+  # react_native_post_install writes it into Pods.xcodeproj, and
+  # onramper_spm.rb embeds OnramperSDK.framework into the app.
+  #
+  # SDK development only: ONRAMPER_IOS_PACKAGE_URL / ONRAMPER_IOS_PACKAGE_VERSION
+  # point at another copy of onramper-ios (e.g. file:///path/to/onramper-ios).
   unless defined?(spm_dependency)
     raise 'OnramperReactNative needs React Native\'s spm_dependency helper: require react_native_pods in your Podfile and call react_native_post_install in post_install.'
   end
+  OnramperSPM.verify_cocoapods_version!
   spm_dependency(s,
-    url: 'https://github.com/stripe/stripe-ios-spm',
-    requirement: { kind: 'exactVersion', version: '26.15.1' },
-    products: ['StripeCryptoOnramp', 'StripePaymentSheet', 'StripePayments']
+    url: ENV.fetch('ONRAMPER_IOS_PACKAGE_URL', 'https://github.com/onramper/onramper-ios'),
+    requirement: { kind: 'exactVersion', version: ENV.fetch('ONRAMPER_IOS_PACKAGE_VERSION', package['version'].split('-').first) },
+    products: OnramperSPM.products(providers)
   )
 
   load File.join(__dir__, 'nitrogen', 'generated', 'ios', 'OnramperReactNative+autolinking.rb')

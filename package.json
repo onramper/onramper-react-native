@@ -25,11 +25,10 @@
     "lib",
     "src",
     "ios/*.swift",
-    "ios/Frameworks/OnramperSDK.xcframework",
-    "ios/OnramperStripe/*.swift",
     "nitrogen/generated",
     "nitro.json",
     "OnramperReactNative.podspec",
+    "onramper_spm.rb",
     "app.plugin.js",
     "README.md",
     "CHANGELOG.md",
@@ -46,10 +45,8 @@
     "typecheck": "tsc --noEmit",
     "nitrogen": "nitrogen && node scripts/sync-view-config.js",
     "prepare": "bob build",
-    "prepack": "node scripts/check-xcframework.js",
-    "verify-version": "node scripts/verify-version.js",
-    "fetch-xcframework": "node scripts/fetch-xcframework.js",
-    "slim-xcframework": "node scripts/slim-xcframework.js"
+    "prepack": "node scripts/verify-version.js",
+    "verify-version": "node scripts/verify-version.js"
   },
   "publishConfig": {
     "access": "public"
@@ -65,10 +62,6 @@
   "author": "Onramper <engineering@onramper.com>",
   "license": "Apache-2.0",
   "homepage": "https://github.com/onramper/onramper-react-native#readme",
-  "onramperSDK": {
-    "checksum": "ac2ba976a5a1ebcd5462291088cbb213df3c2dd0fb62ece0f3c95d265ee835f8",
-    "stripeSourcesChecksum": "64f4be7e0ac2eeb7e4a01d9d997481f06363d212c43274c1bb61763436825f68"
-  },
   "peerDependencies": {
     "react": ">=19.0.0",
     "react-native": ">=0.79.0",

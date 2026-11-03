@@ -2,6 +2,9 @@ import Combine
 import Foundation
 import NitroModules
 import OnramperSDK
+#if ONRAMPER_STRIPE
+import OnramperStripe
+#endif
 import SwiftUI
 
 /// Nitro bridge to OnramperSDK's `OnramperClient`. Wraps the @MainActor SDK
@@ -264,11 +267,14 @@ final class HybridOnramperNitro: HybridOnramperNitroSpec {
 
   // MARK: - Stripe
 
-  /// Registers the iOS SDK's Stripe checkout (compiled into this pod from
-  /// ios/OnramperStripe). Process-wide, like the native call: it does not depend
-  /// on this client's lifetime, so it needs neither configure() nor a ticket.
+  /// Registers the iOS SDK's Stripe checkout (the onramper-ios `OnramperStripe`
+  /// product, linked only when the app opts in with `$OnramperProviders =
+  /// ['stripe']`). Process-wide, like the native call: it does not depend on
+  /// this client's lifetime, so it needs neither configure() nor a ticket.
+  /// Without the provider it rejects with `configurationError`.
   func enableStripeCheckout(merchantIdentifier: String, merchantName: String?) throws -> Promise<Void> {
     return Promise.async {
+      #if ONRAMPER_STRIPE
       await MainActor.run {
         if let merchantName {
           StripeCheckout.enable(merchantIdentifier: merchantIdentifier, merchantName: merchantName)
@@ -276,8 +282,16 @@ final class HybridOnramperNitro: HybridOnramperNitroSpec {
           StripeCheckout.enable(merchantIdentifier: merchantIdentifier)
         }
       }
+      #else
+      throw bridgeSDKError(OnramperError.configurationError(reason: Self.stripeNotInstalledReason))
+      #endif
     }
   }
+
+  /// Becomes "SDK configuration error: <reason>. Contact your integrator."
+  static let stripeNotInstalledReason =
+    "the Stripe checkout isn't installed: add $OnramperProviders = ['stripe'] to the Podfile "
+    + "(Expo: the plugin option providers: [\"stripe\"]) and run pod install"
 
   // MARK: - Teardown
 
