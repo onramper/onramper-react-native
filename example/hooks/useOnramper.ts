@@ -51,6 +51,12 @@ export interface OnramperHandle {
    * run, so callers can tell when a specific switch has settled.
    */
   settledEnvironment: AppEnvironment | null;
+  /**
+   * Whether the Stripe checkout is built in (the example's Podfile sets
+   * `$OnramperProviders = ['stripe']` unless ONRAMPER_PROVIDERS is empty);
+   * null until the current client got that far.
+   */
+  stripeAvailable: boolean | null;
   log: LogEntry[];
   appendLog: (level: LogLevel, line: string) => void;
   clearLog: () => void;
@@ -91,6 +97,7 @@ export function useOnramper({
   const [lastFailure, setLastFailure] = useState<string | null>(null);
   const [trustedLogin, setTrustedLogin] = useState<TrustedLoginResult | null>(null);
   const [settledEnvironment, setSettledEnvironment] = useState<AppEnvironment | null>(null);
+  const [stripeAvailable, setStripeAvailable] = useState<boolean | null>(null);
   const [log, setLog] = useState<LogEntry[]>([]);
   const nextLogId = useRef(0);
 
@@ -203,8 +210,22 @@ export function useOnramper({
       }
 
       // Lets the "Stripe" onramp filter run the Stripe checkout (process-wide;
-      // repeating it on a re-created client is harmless).
-      await c.enableStripeCheckout({ merchantIdentifier: STRIPE_APPLE_PAY_MERCHANT_ID });
+      // repeating it on a re-created client is harmless). A build without the
+      // Stripe provider rejects with configurationError: keep going without it.
+      try {
+        await c.enableStripeCheckout({ merchantIdentifier: STRIPE_APPLE_PAY_MERCHANT_ID });
+        if (!cancelled) {
+          setStripeAvailable(true);
+        }
+      } catch (e: unknown) {
+        if (describeError(e).code !== 'configurationError') {
+          throw e;
+        }
+        if (!cancelled) {
+          setStripeAvailable(false);
+          appendLog('info', 'Stripe checkout not built in (ONRAMPER_PROVIDERS is empty); the Stripe onramp runs the regular checkout');
+        }
+      }
       await c.initialize(session);
       if (cancelled) {
         return;
@@ -244,6 +265,7 @@ export function useOnramper({
     lastFailure,
     trustedLogin,
     settledEnvironment,
+    stripeAvailable,
     log,
     appendLog,
     clearLog,

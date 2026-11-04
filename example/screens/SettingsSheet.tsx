@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import type { StripeLinkSignIn } from '@onramper/onramper-react-native';
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Card } from '../components/Card';
 import { DiagnosticsCard } from '../components/DiagnosticsCard';
@@ -25,6 +26,11 @@ export interface SettingsSheetProps {
   /** What the last mint reported for trusted login (null = not reported / failed). */
   trustedLogin: TrustedLoginResult | null;
   onApplyTrustedLoginEmail: (email: string) => Promise<void>;
+  /** Demo/QA override of the partner's Stripe Link sign-in order (null = follow the partner). */
+  stripeLinkSignIn: StripeLinkSignIn | null;
+  onChangeStripeLinkSignIn: (value: StripeLinkSignIn | null) => void;
+  /** Whether this build has the Stripe checkout (null = not known yet). */
+  stripeAvailable: boolean | null;
   isDark: boolean;
   onChangeDark: (value: boolean) => void;
   onClearSessions: () => Promise<void>;
@@ -33,6 +39,13 @@ export interface SettingsSheetProps {
 }
 
 const ENV_OPTIONS = ENVIRONMENTS.map(value => ({ value, label: environmentLabel(value) }));
+
+type LinkSignInChoice = StripeLinkSignIn | 'partner';
+const LINK_SIGN_IN_OPTIONS: readonly { value: LinkSignInChoice; label: string }[] = [
+  { value: 'partner', label: 'Partner' },
+  { value: 'before_payment', label: 'Link first' },
+  { value: 'after_payment', label: 'Apple Pay first' },
+];
 
 const TRUSTED_LOGIN_LABEL: Record<TrustedLoginResult, string> = { bound: 'Bound', unavailable: 'Unavailable' };
 
@@ -163,6 +176,23 @@ export function SettingsSheet(props: SettingsSheetProps) {
               )}
             </Pressable>
             {clearError ? <Text style={{ color: t.danger }}>{clearError}</Text> : null}
+          </Card>
+
+          <Card
+            title="Stripe Link sign-in"
+            footer={
+              props.stripeAvailable === false
+                ? 'This build has no Stripe checkout (ONRAMPER_PROVIDERS is empty).'
+                : 'When a returning Link user signs in to Link: before Apple Pay, or after it (Apple Pay first for ' +
+                  'everyone). Partner follows the setting Onramper has for the partner. Applies from the next Stripe ' +
+                  'checkout. Demo and QA only; production apps never set it.'
+            }>
+            <Segmented
+              options={LINK_SIGN_IN_OPTIONS}
+              value={props.stripeLinkSignIn ?? 'partner'}
+              onChange={value => props.onChangeStripeLinkSignIn(value === 'partner' ? null : value)}
+              disabled={props.stripeAvailable !== true}
+            />
           </Card>
 
           <Card title="Appearance" footer="Re-initializes the SDK with the matching theme.">

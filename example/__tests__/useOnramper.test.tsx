@@ -155,6 +155,52 @@ test('init failure surfaces an error and retry re-runs', async () => {
   expect(latest.status).toBe('ready');
 });
 
+test('a build with the Stripe provider reports the Stripe checkout available', async () => {
+  await render(DEV);
+  expect(clients[0].enableStripeCheckout).toHaveBeenCalled();
+  expect(latest.stripeAvailable).toBe(true);
+});
+
+test('a build without the Stripe provider still initializes, without Stripe', async () => {
+  ClientMock.mockImplementationOnce((config: FakeClient['config']) => {
+    const client: FakeClient = {
+      config,
+      enableStripeCheckout: jest.fn().mockRejectedValue({ code: 'configurationError', message: 'not installed' }),
+      initialize: jest.fn().mockResolvedValue(undefined),
+      destroy: jest.fn(),
+      addStateListener: jest.fn(() => () => {}),
+      addTransactionIdListener: jest.fn(() => () => {}),
+      addEventListener: jest.fn(() => () => {}),
+    };
+    clients.push(client);
+    return client;
+  });
+  await render(DEV);
+  expect(latest.status).toBe('ready');
+  expect(latest.stripeAvailable).toBe(false);
+  expect(clients[0].initialize).toHaveBeenCalled();
+  expect(latest.log.some(l => l.level === 'info' && l.line.includes('Stripe checkout not built in'))).toBe(true);
+});
+
+test('any other Stripe enable failure is an init error', async () => {
+  ClientMock.mockImplementationOnce((config: FakeClient['config']) => {
+    const client: FakeClient = {
+      config,
+      enableStripeCheckout: jest.fn().mockRejectedValue({ code: 'unknown', message: 'boom' }),
+      initialize: jest.fn().mockResolvedValue(undefined),
+      destroy: jest.fn(),
+      addStateListener: jest.fn(() => () => {}),
+      addTransactionIdListener: jest.fn(() => () => {}),
+      addEventListener: jest.fn(() => () => {}),
+    };
+    clients.push(client);
+    return client;
+  });
+  await render(DEV);
+  expect(latest.status).toBe('error');
+  expect(latest.initError).toContain('boom');
+});
+
 test('unmount destroys the client', async () => {
   const renderer = await render(DEV);
   await act(async () => {

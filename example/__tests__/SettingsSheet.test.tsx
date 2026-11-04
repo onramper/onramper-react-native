@@ -17,6 +17,9 @@ function props(overrides: Partial<SettingsSheetProps> = {}): SettingsSheetProps 
     trustedLoginEmail: '',
     trustedLogin: null,
     onApplyTrustedLoginEmail: jest.fn().mockResolvedValue(undefined),
+    stripeLinkSignIn: null,
+    onChangeStripeLinkSignIn: jest.fn(),
+    stripeAvailable: true,
     isDark: true,
     onChangeDark: jest.fn(),
     onClearSessions: jest.fn().mockResolvedValue(undefined),
@@ -41,6 +44,23 @@ test('renders every section with versions', async () => {
   for (const s of ['Environment', 'Trusted partner login', 'Clear local sessions', 'Dark mode', 'SDK events', 'Library', 'OnramperSDK']) {
     expect(out).toContain(s);
   }
+});
+
+test('picking a Stripe Link sign-in order sets or clears the override', async () => {
+  const p = props();
+  const r = await render(p);
+  await act(async () => r.root.findByProps({ accessibilityLabel: 'Apple Pay first' }).props.onPress());
+  expect(p.onChangeStripeLinkSignIn).toHaveBeenLastCalledWith('after_payment');
+  await act(async () => r.root.findByProps({ accessibilityLabel: 'Link first' }).props.onPress());
+  expect(p.onChangeStripeLinkSignIn).toHaveBeenLastCalledWith('before_payment');
+  await act(async () => r.root.findByProps({ accessibilityLabel: 'Partner' }).props.onPress());
+  expect(p.onChangeStripeLinkSignIn).toHaveBeenLastCalledWith(null);
+});
+
+test('the Stripe Link sign-in picker is disabled in a build without Stripe', async () => {
+  const r = await render(props({ stripeAvailable: false }));
+  expect(r.root.findByProps({ accessibilityLabel: 'Link first' }).props.disabled).toBe(true);
+  expect(JSON.stringify(r.toJSON())).toContain('no Stripe checkout');
 });
 
 test('picking Production asks to switch environment', async () => {
