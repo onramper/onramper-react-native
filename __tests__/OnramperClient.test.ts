@@ -283,6 +283,29 @@ describe('OnramperClient', () => {
     });
   });
 
+  it('setStripeLinkSignInOverride forwards the order to native', async () => {
+    const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
+    const native = __lastNative();
+    await client.setStripeLinkSignInOverride('after_payment');
+    expect(native.setStripeLinkSignInOverride).toHaveBeenCalledWith('after_payment');
+    await client.setStripeLinkSignInOverride('before_payment');
+    expect(native.setStripeLinkSignInOverride).toHaveBeenLastCalledWith('before_payment');
+  });
+
+  it('setStripeLinkSignInOverride(null) clears the override (native nil)', async () => {
+    const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
+    const native = __lastNative();
+    await client.setStripeLinkSignInOverride(null);
+    expect(native.setStripeLinkSignInOverride).toHaveBeenCalledWith(undefined);
+  });
+
+  it('setStripeLinkSignInOverride wraps native errors as OnramperError', async () => {
+    const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
+    const native = __lastNative();
+    native.setStripeLinkSignInOverride.mockRejectedValueOnce(new Error('boom'));
+    await expect(client.setStripeLinkSignInOverride('after_payment')).rejects.toMatchObject({ name: 'OnramperError' });
+  });
+
   it('enableStripeCheckout rejects with configurationError when the Stripe provider is not installed', async () => {
     const client = new OnramperClient({ ...baseConfig, onSessionExpired: jest.fn() });
     const native = __lastNative();

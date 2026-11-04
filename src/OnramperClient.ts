@@ -13,6 +13,7 @@ import type {
   OnramperUserPrefill,
   QuoteResponse,
   SessionCredentials,
+  StripeLinkSignIn,
 } from './types';
 
 export interface GetCheckoutRequirementsResult {
@@ -261,6 +262,26 @@ export class OnramperClient {
     try {
       this.assertActive();
       await this.native.enableStripeCheckout(options.merchantIdentifier, options.merchantName);
+      this.assertActive();
+    } catch (e: unknown) {
+      this.assertActive();
+      throw OnramperError.from(e);
+    }
+  }
+
+  /**
+   * Demo and QA override of the partner's Link sign-in order in the Stripe
+   * checkout (iOS), the native SDK's `StripeCheckout.linkSignInOverride`.
+   * `'before_payment'` signs a returning Link user in before Apple Pay,
+   * `'after_payment'` keeps Apple Pay first for everyone, and `null` (the
+   * default) follows the partner's setting from Onramper. Applies from the next
+   * Stripe checkout, never to one in progress. Production apps don't call this.
+   * Process-wide; rejects with `configurationError` without the Stripe provider.
+   */
+  async setStripeLinkSignInOverride(order: StripeLinkSignIn | null): Promise<void> {
+    try {
+      this.assertActive();
+      await this.native.setStripeLinkSignInOverride(order ?? undefined);
       this.assertActive();
     } catch (e: unknown) {
       this.assertActive();

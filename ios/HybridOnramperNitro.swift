@@ -288,6 +288,32 @@ final class HybridOnramperNitro: HybridOnramperNitroSpec {
     }
   }
 
+  /// Demo and QA override of the partner's Link sign-in order: sets the
+  /// iOS SDK's `StripeCheckout.linkSignInOverride` ("before_payment" or
+  /// "after_payment", the raw values of `StripeCheckout.LinkSignIn`; nil
+  /// follows the partner setting). The SDK reads it when a Stripe checkout
+  /// starts. Process-wide, like `enableStripeCheckout`. An unknown value
+  /// rejects with `invalidRequest(field: "linkSignIn")` and leaves the
+  /// override unchanged; without the provider it rejects with
+  /// `configurationError`.
+  func setStripeLinkSignInOverride(order: String?) throws -> Promise<Void> {
+    return Promise.async {
+      #if ONRAMPER_STRIPE
+      var override: StripeCheckout.LinkSignIn?
+      if let order {
+        guard let value = StripeCheckout.LinkSignIn(rawValue: order) else {
+          throw bridgeSDKError(OnramperError.invalidRequest(
+            field: "linkSignIn", debugInfo: "expected before_payment or after_payment"))
+        }
+        override = value
+      }
+      await MainActor.run { StripeCheckout.linkSignInOverride = override }
+      #else
+      throw bridgeSDKError(OnramperError.configurationError(reason: Self.stripeNotInstalledReason))
+      #endif
+    }
+  }
+
   /// Becomes "SDK configuration error: <reason>. Contact your integrator."
   static let stripeNotInstalledReason =
     "the Stripe checkout isn't installed: add $OnramperProviders = ['stripe'] to the Podfile "

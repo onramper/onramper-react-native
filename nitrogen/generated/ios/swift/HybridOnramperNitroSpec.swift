@@ -20,6 +20,7 @@ public protocol HybridOnramperNitroSpec_protocol: HybridObject {
   func getCheckoutRequirements(requestJson: String, prefillJson: String, styleJson: String) throws -> Promise<PreparedIntentResult>
   func cancelPreparedIntent(intentHandle: String) throws -> Promise<Void>
   func enableStripeCheckout(merchantIdentifier: String, merchantName: String?) throws -> Promise<Void>
+  func setStripeLinkSignInOverride(order: String?) throws -> Promise<Void>
   func setLogListener(onLog: @escaping (_ recordJson: String) -> Void) throws -> Void
   func setStateListener(onState: @escaping (_ stateJson: String) -> Void) throws -> Void
   func setEventListener(onEvent: @escaping (_ eventJson: String) -> Void) throws -> Void

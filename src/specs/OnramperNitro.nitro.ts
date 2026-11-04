@@ -58,6 +58,10 @@ export interface OnramperNitro extends HybridObject<{ ios: 'swift' }> {
   // A checkout requested with `onlyOnramps: ["stripe"]` then runs it.
   // `merchantName` undefined keeps the SDK's default label.
   enableStripeCheckout(merchantIdentifier: string, merchantName: string | undefined): Promise<void>;
+  // Demo/QA override of the partner's Link sign-in order: sets the iOS SDK's
+  // `StripeCheckout.linkSignInOverride` ("before_payment" | "after_payment";
+  // undefined clears it). Read when a Stripe checkout starts.
+  setStripeLinkSignInOverride(order: string | undefined): Promise<void>;
 
   // Single native callback per stream; the JS wrapper fans out to multiple listeners.
   setLogListener(onLog: (recordJson: string) => void): void;
