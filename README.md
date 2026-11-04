@@ -11,7 +11,7 @@ npm install @onramper/onramper-react-native react-native-nitro-modules
 cd ios && pod install
 ```
 
-Requires React Native 0.79+, `react-native-nitro-modules` 0.35+, the **New Architecture**, CocoaPods 1.10+, and an iOS **16.0+** deployment target. Works in **bare React Native (no Expo required)** and **Expo** apps — not Expo Go, since the package includes native code.
+Requires React Native 0.79+, `react-native-nitro-modules` 0.35+, the **New Architecture**, CocoaPods 1.10+, **Xcode 26+**, and an iOS **16.0+** deployment target. Works in **bare React Native (no Expo required)** and **Expo** apps — not Expo Go, since the package includes native code.
 
 The iOS SDK isn't inside the npm package. `pod install` adds the public [`onramper-ios`](https://github.com/onramper/onramper-ios) Swift package to the pod, pinned to the commit of the release with this package's version through React Native's `spm_dependency` helper, and Xcode downloads it on the first build, like in a native app. It also adds an **"[onramper-react-native] Embed OnramperSDK"** build phase to your app target, which copies `OnramperSDK.framework` into the app.
 
@@ -306,5 +306,6 @@ native app after upgrading; a JavaScript-only update cannot add the native gette
 - **`[SPM] WARNING!!! ... with static linking, this might cause linker errors`** during `pod install` — React Native prints this for any pod with Swift package dependencies. We build and test with both static (the default) and dynamic frameworks; you can ignore it unless your app build reports linker errors.
 - **Bare RN build fails with `module map file ... not found` (Xcode 16+/26)** — disable explicit Swift modules in your `Podfile` `post_install` (`SWIFT_ENABLE_EXPLICIT_MODULES = NO`). Expo apps get this automatically via the config plugin. See the [integration guide](docs/GETTING_STARTED.md).
 - **Stripe checkout fails with `providerFailed` "Checkout could not continue"** — usually Stripe refusing the app. With `logLevel: 'debug'`, the `step.failed` log record carries Stripe's `providerCode`: `app_attestation_unavailable`, or `parameter_missing` "Missing required param: app_id" on Link calls, means Stripe couldn't verify the app. Check that Stripe registered your bundle ID and Apple Team ID for app attestation, on the same Stripe account (live or test) as your partner's `stripe` key, and that the app's App Attest environment is `production`. With `development`, Stripe rejects the attestation even for a registered app.
+- **Build fails with `no such module '_WebKit_SwiftUI'`** (or, with the Stripe provider, `no member 'allowsNumberPadPopover'` in StripeUICore) — you're building with Xcode 16 or older. The iOS SDK and Stripe's iOS SDK need Xcode 26.
 - **App Attest errors in simulator** — expected. App Attest only works on real devices. The SDK surfaces this as `attestationFailed`.
 - **Buttons appear but sheets don't open** — the host RN screen must be inside a normal `UIViewController` (the default). Modal-presented screens may need extra care; report an issue with a repro.

@@ -66,7 +66,7 @@ No `install-expo-modules` step and no AppDelegate changes are required. Not comp
 | New Architecture | Required | Nitro Modules run on the New Architecture only |
 | `react-native-nitro-modules` | 0.35+ | Peer dependency — the package's native bridge is built with Nitro |
 | Node | 22.11.0+ | |
-| Xcode | 16+ (Xcode 26 tested) | |
+| Xcode | 26+ | The iOS SDK is built with Xcode 26 and needs its iOS 26 SDK (Xcode 16 fails with "no such module '_WebKit_SwiftUI'"); so does Stripe's iOS SDK 26.15.1 |
 | Real iOS device | Required for App Attest | Simulator can launch but attestation returns `attestationFailed` |
 | Apple Developer account | Required for signing | Free or paid; needs the App Attest capability under your team |
 | Stripe checkout (optional) | Package 1.6.0+ (opt-in provider) | Set-up by Onramper and Stripe, the `stripe` provider in the Podfile or Expo plugin, Apple Pay capability with a merchant ID set up with Stripe, App Attest, a physical iPhone. See [3.13 Stripe checkout](#313-stripe-checkout-experimental) |

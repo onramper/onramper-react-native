@@ -64,6 +64,9 @@ Onramper's backend support; until it is deployed, Stripe checkouts work as in
 
 ### Migration
 
+- **Xcode 26 is required** (documented now; already true for 1.5.0): the iOS
+  SDK is built with Xcode 26, and Xcode 16 fails with "no such module
+  '_WebKit_SwiftUI'".
 - Apps using the Stripe checkout (`enableStripeCheckout`) must enable the
   provider, then run `pod install` again:
   - bare React Native: `$OnramperProviders = ['stripe']` at the top of
