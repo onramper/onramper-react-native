@@ -1,7 +1,8 @@
 # Inclusion is driven by the `files` allowlist in package.json (which lists the
-# exact ios/*.swift sources + the xcframework directory, so ios/Tests and the
-# fetched .xcframework.zip are excluded by construction). This file only trims
-# stray dev artifacts that could otherwise slip in.
+# exact ios/*.swift sources, so ios/Tests is excluded by construction). The iOS
+# SDK itself is not in the package: the podspec pulls it from onramper-ios
+# through Swift Package Manager. This file only trims stray dev artifacts that
+# could otherwise slip in.
 
 # Top-level hidden directories
 /.*/
@@ -21,6 +22,5 @@ __tests__
 /docs/
 /.github/
 
-# Defensive: never ship native test sources or the intermediate framework zip
+# Defensive: never ship native test sources
 ios/Tests/
-ios/Frameworks/*.zip

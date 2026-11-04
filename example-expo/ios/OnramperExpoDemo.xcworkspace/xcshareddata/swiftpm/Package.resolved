@@ -1,0 +1,23 @@
+{
+  "originHash" : "220fc7a4a9fc4629553a531b19d5ddc24660fc700b62e68314467332c671ea6e",
+  "pins" : [
+    {
+      "identity" : "onramper-ios",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/onramper/onramper-ios",
+      "state" : {
+        "revision" : "16e9b133a1a810d5c5661586bc2d647180e1d6d8"
+      }
+    },
+    {
+      "identity" : "stripe-ios-spm",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/stripe/stripe-ios-spm",
+      "state" : {
+        "revision" : "64c15e98b8d4ef52b24db12aa7d97de02769e0b0",
+        "version" : "26.15.1"
+      }
+    }
+  ],
+  "version" : 3
+}

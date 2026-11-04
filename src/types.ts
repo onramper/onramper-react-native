@@ -218,3 +218,12 @@ export type OnramperState =
   | { kind: 'failed'; error: OnramperErrorPayload };
 
 export type { OnramperErrorPayload };
+
+/**
+ * When a returning Link user signs in to Link in the Stripe checkout, relative
+ * to Apple Pay. The values are those of the partner's Stripe setting
+ * `linkSignIn`: `before_payment` signs a returning Link user in before Apple Pay
+ * (a new Link user still gets Apple Pay first); `after_payment` keeps Apple Pay
+ * first for everyone.
+ */
+export type StripeLinkSignIn = 'before_payment' | 'after_payment';

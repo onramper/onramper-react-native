@@ -41,13 +41,18 @@ log, and it is not persisted across launches.
 
 ## Install
 
-Install the repository package and fetch the pinned iOS SDK framework before
-installing the example and its pods:
+Install the repository package, then the example and its pods. The iOS SDK
+comes from the `onramper-ios` Swift package during `pod install` and the first
+Xcode build. The example enables the Stripe provider (`$OnramperProviders` in
+`ios/Podfile`); `ONRAMPER_PROVIDERS= pod install` builds it without Stripe, and
+the app then starts without it (the "Stripe" onramp runs the regular checkout).
+With Stripe, **Settings → Stripe Link sign-in** overrides the partner's Link
+sign-in order for the next checkouts (`setStripeLinkSignInOverride`): Partner,
+Link first or Apple Pay first.
 
 ```bash
 # repository root
 npm ci
-npm run fetch-xcframework
 
 cd example
 npm ci

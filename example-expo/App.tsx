@@ -3,6 +3,7 @@ import {
   Button,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -35,6 +36,33 @@ const TX_DEFAULTS = {
   walletAddress: 'Br2jjHYskB1JJikv3Qw2QcmWVQGfZvkJFng4ZEwiGSjv',
 };
 
+// `onlyOnramps` for the next request; null = every eligible ramp.
+const RAMPS: readonly { value: string | null; label: string }[] = [
+  { value: null, label: 'Any' },
+  { value: 'moonpay', label: 'MoonPay' },
+  { value: 'paybis', label: 'Paybis' },
+  { value: 'coinbasepay', label: 'Coinbase Pay' },
+  { value: 'stripe', label: 'Stripe' },
+];
+
+// The experimental Stripe checkout only takes USD to USDC (Solana, Ethereum or
+// Base), Apple Pay, US outside New York, at most 100 USD: picking Stripe fills
+// these in. The wallet stays as entered (it must be a Solana address here).
+const STRIPE_TX = {
+  source: 'usd',
+  destination: 'usdc_solana',
+  amount: '25',
+  paymentMethod: 'applepay',
+  country: 'us',
+  subdivision: 'us-ca',
+  walletNetwork: 'solana',
+};
+
+// Apple Pay merchant ID for the Stripe checkout, the same one the bare example
+// and the native demo use. It must also be in the app's Apple Pay entitlement
+// (app.json ios.entitlements).
+const STRIPE_APPLE_PAY_MERCHANT_ID = 'merchant.com.onramper.stripe';
+
 // Every prefill field is optional — supply only what your app actually knows.
 //
 // `email` and `phoneNumber` start blank deliberately. `email` is the binding
@@ -59,6 +87,20 @@ export default function App() {
   const [subdivision, setSubdivision] = useState(TX_DEFAULTS.subdivision);
   const [walletNetwork, setWalletNetwork] = useState(TX_DEFAULTS.walletNetwork);
   const [walletAddress, setWalletAddress] = useState(TX_DEFAULTS.walletAddress);
+  const [ramp, setRamp] = useState<string | null>(null);
+
+  const pickRamp = (value: string | null) => {
+    setRamp(value);
+    if (value === 'stripe') {
+      setSource(STRIPE_TX.source);
+      setDestination(STRIPE_TX.destination);
+      setAmount(STRIPE_TX.amount);
+      setPaymentMethod(STRIPE_TX.paymentMethod);
+      setCountry(STRIPE_TX.country);
+      setSubdivision(STRIPE_TX.subdivision);
+      setWalletNetwork(STRIPE_TX.walletNetwork);
+    }
+  };
 
   const [sendPrefill, setSendPrefill] = useState(true);
   const [prefillEmail, setPrefillEmail] = useState(PREFILL_DEFAULTS.email);
@@ -169,6 +211,15 @@ export default function App() {
         },
       });
       setupClient(inflight);
+      // Lets the "Stripe" ramp run the Stripe checkout (process-wide). A build
+      // without the Stripe provider rejects with configurationError: go on
+      // without it, and a Stripe request then runs the regular checkout.
+      try {
+        await inflight.enableStripeCheckout({ merchantIdentifier: STRIPE_APPLE_PAY_MERCHANT_ID });
+      } catch (e: unknown) {
+        if (OnramperError.from(e).code !== 'configurationError') throw e;
+        info('Stripe checkout not built in (no stripe provider); the Stripe ramp runs the regular checkout');
+      }
       await inflight.initialize({ sessionId: session.sessionId, sessionToken: session.sessionToken });
       setClient(inflight);
       info('initialized OK');
@@ -223,6 +274,7 @@ export default function App() {
           subdivision: subdivision || undefined,
           paymentMethod,
           wallet: { network: walletNetwork, address: walletAddress },
+          onlyOnramps: ramp ? [ramp] : undefined,
         },
         {
           backgroundColor: '#0A84FF',
@@ -303,6 +355,30 @@ export default function App() {
 
           <View style={styles.divider} />
           <Text style={styles.section}>Transaction</Text>
+          <Text style={styles.label}>ramp (onlyOnramps)</Text>
+          <View style={styles.ramps}>
+            {RAMPS.map((r) => {
+              const selected = r.value === ramp;
+              return (
+                <Pressable
+                  key={r.label}
+                  accessibilityRole="button"
+                  accessibilityLabel={`ramp ${r.label}`}
+                  accessibilityState={{ selected }}
+                  onPress={() => pickRamp(r.value)}
+                  style={[styles.ramp, selected && styles.rampSelected]}
+                >
+                  <Text style={[styles.rampLabel, selected && styles.rampLabelSelected]}>{r.label}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          {ramp === 'stripe' && (
+            <Text style={styles.note}>
+              Stripe: USD to USDC on Solana, Ethereum or Base, Apple Pay, US outside New York, at most 100 USD. Needs a
+              physical iPhone and a Solana wallet address below.
+            </Text>
+          )}
           <Row>
             <Field label="payment" value={paymentMethod} onChangeText={setPaymentMethod} />
           </Row>
@@ -486,4 +562,9 @@ const styles = StyleSheet.create({
   error: { color: '#CC0000' },
   muted: { color: '#999', fontStyle: 'italic' },
   buttonHost: { minHeight: 88, marginBottom: 8 },
+  ramps: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8 },
+  ramp: { borderWidth: 1, borderColor: '#CCC', borderRadius: 14, paddingVertical: 6, paddingHorizontal: 10, backgroundColor: '#FFF' },
+  rampSelected: { backgroundColor: '#0A84FF', borderColor: '#0A84FF' },
+  rampLabel: { fontSize: 13, color: '#333' },
+  rampLabelSelected: { color: '#FFF', fontWeight: '600' },
 });

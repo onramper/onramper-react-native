@@ -22,6 +22,7 @@ namespace margelo::nitro::onramper {
       prototype.registerHybridMethod("getCheckoutRequirements", &HybridOnramperNitroSpec::getCheckoutRequirements);
       prototype.registerHybridMethod("cancelPreparedIntent", &HybridOnramperNitroSpec::cancelPreparedIntent);
       prototype.registerHybridMethod("enableStripeCheckout", &HybridOnramperNitroSpec::enableStripeCheckout);
+      prototype.registerHybridMethod("setStripeLinkSignInOverride", &HybridOnramperNitroSpec::setStripeLinkSignInOverride);
       prototype.registerHybridMethod("setLogListener", &HybridOnramperNitroSpec::setLogListener);
       prototype.registerHybridMethod("setStateListener", &HybridOnramperNitroSpec::setStateListener);
       prototype.registerHybridMethod("setEventListener", &HybridOnramperNitroSpec::setEventListener);

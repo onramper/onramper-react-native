@@ -13,6 +13,10 @@ Set your app's iOS deployment target to **16.0+**, and disable explicit Swift mo
 ```ruby
 platform :ios, '16.0'
 
+# Optional: opt-in native checkout providers. Only for the experimental Stripe
+# checkout; adds Stripe's iOS SDK. Must come before use_native_modules!.
+# $OnramperProviders = ['stripe']
+
 # ... target block ...
 
 post_install do |installer|
@@ -36,6 +40,8 @@ end
 
 The Headless Wrapper's minimum is iOS 16.0; set your app target's deployment target to 16.0 (or higher) as well. Autolinking is automatic — the package's podspec is discovered without any `react-native.config.js` change.
 
+`react_native_post_install` is required: it writes the iOS SDK's Swift package (`onramper-ios`) into the Pods project. `pod install` also adds an **"[onramper-react-native] Embed OnramperSDK"** build phase to your app target, which copies `OnramperSDK.framework` into the app; keep it, or the app crashes at launch with `dyld: Library not loaded: @rpath/OnramperSDK.framework`.
+
 ---
 
 ## 2. App Attest & first build
@@ -55,7 +61,26 @@ For App Store builds, Xcode automatically switches to `production`.
 
 You'll also need to set a **Development Team** under Signing & Capabilities. The Headless Wrapper works with any team; the bundle ID just needs to be registered with Apple Developer Portal (Xcode does this automatically when you enable automatic signing).
 
-### 2.2 Camera & microphone usage descriptions
+### 2.2 Apple Pay (Stripe checkout only)
+
+The experimental Stripe checkout needs three things on top of App Attest:
+
+1. **The `stripe` provider**, so `pod install` links onramper-ios's `OnramperStripe` product (and Stripe's iOS SDK): `$OnramperProviders = ['stripe']` at the top of the `Podfile`, before `use_native_modules!` (see section 1), then `pod install`. Expo: the plugin option `{ "providers": ["stripe"] }`, then prebuild.
+2. **The Apple Pay capability** with the merchant ID set up with Stripe (Onramper provides it): **+ Capability** → **Apple Pay** → tick the merchant ID. This adds:
+
+   ```xml
+   <key>com.apple.developer.in-app-payments</key>
+   <array>
+     <string>merchant.com.yourcompany.app</string>
+   </array>
+   ```
+
+   Expo: the same key under `ios.entitlements` in `app.json`.
+3. **App Attest in `production`** for Stripe's app attestation, and a physical iPhone: Stripe doesn't support the Simulator.
+
+Then call `enableStripeCheckout({ merchantIdentifier })` with the same merchant ID. See the [README's Stripe checkout section](https://github.com/onramper/onramper-react-native#stripe-checkout-experimental) for the remaining steps.
+
+### 2.3 Camera & microphone usage descriptions
 
 Some providers run ID-document or selfie verification inside the checkout webview. Without usage descriptions iOS turns down the webview's camera request without showing a prompt, and the app gets no Camera toggle in Settings.
 
@@ -77,7 +102,7 @@ Expo: add them under `ios.infoPlist` in `app.json`:
 }
 ```
 
-### 2.3 Pod install + first build
+### 2.4 Pod install + first build
 
 Bare RN:
 
@@ -85,6 +110,8 @@ Bare RN:
 cd ios && pod install
 cd .. && npx react-native run-ios --device
 ```
+
+The first build downloads the `onramper-ios` Swift package (and, with the Stripe provider, `stripe-ios-spm`) from GitHub.
 
 Expo:
 

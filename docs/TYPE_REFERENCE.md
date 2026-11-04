@@ -29,6 +29,10 @@ Passed to `new OnramperClient(...)`.
 | `sessionId` | `string` | Session id minted by your backend. |
 | `sessionToken` | `string` | Session token minted by your backend. |
 
+### `StripeLinkSignIn`
+
+`'before_payment' | 'after_payment'`: when a returning Link user signs in to Link in the Stripe checkout, relative to Apple Pay. Passed to `client.setStripeLinkSignInOverride(order)` (demo/QA only; `null` follows Onramper's partner setting). `'before_payment'` signs a returning Link user in before Apple Pay (a new Link user still gets Apple Pay first); `'after_payment'` keeps Apple Pay first for everyone.
+
 ---
 
 ## Structured logs

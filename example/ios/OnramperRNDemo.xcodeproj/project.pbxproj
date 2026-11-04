@@ -28,8 +28,8 @@
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = OnramperRNDemo/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = OnramperRNDemo/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		CD1300010000000000000002 /* DemoDiagnostics.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = DemoDiagnostics.mm; path = OnramperRNDemo/DemoDiagnostics.mm; sourceTree = "<group>"; };
-		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		CD1300010000000000000004 /* DemoDailyLogStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DemoDailyLogStore.swift; path = OnramperRNDemo/DemoDailyLogStore.swift; sourceTree = "<group>"; };
+		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -120,6 +120,7 @@
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */,
 				E235C05ADACE081382539298 /* [CP] Copy Pods Resources */,
+				048046FE21C7D44C35F8E94A /* [onramper-react-native] Embed OnramperSDK */,
 			);
 			buildRules = (
 			);
@@ -207,6 +208,25 @@
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-OnramperRNDemo/Pods-OnramperRNDemo-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
+		};
+		048046FE21C7D44C35F8E94A /* [onramper-react-native] Embed OnramperSDK */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "[onramper-react-native] Embed OnramperSDK";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\n[ -n \"${TARGET_BUILD_DIR:-}\" ] && [ -n \"${FRAMEWORKS_FOLDER_PATH:-}\" ] || exit 0\nDEST=\"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}\"\nfor DIR in \"${BUILT_PRODUCTS_DIR}\" \"${BUILT_PRODUCTS_DIR}/PackageFrameworks\" \"${OBJROOT}/UninstalledProducts/${PLATFORM_NAME}\"; do\n  FRAMEWORK=\"$DIR/OnramperSDK.framework\"\n  [ -f \"$FRAMEWORK/OnramperSDK\" ] || continue\n  file -b \"$FRAMEWORK/OnramperSDK\" | grep -q \"dynamically linked\" || continue\n  mkdir -p \"$DEST\"\n  # No trailing slash on the source: --delete stays inside this framework.\n  rsync -a --delete --exclude Headers --exclude PrivateHeaders --exclude Modules \"$FRAMEWORK\" \"$DEST/\"\n  if [ -n \"${EXPANDED_CODE_SIGN_IDENTITY:-}\" ] && [ \"${CODE_SIGNING_ALLOWED:-NO}\" = \"YES\" ]; then\n    codesign --force --sign \"$EXPANDED_CODE_SIGN_IDENTITY\" --preserve-metadata=identifier,entitlements \"$DEST/OnramperSDK.framework\"\n  fi\n  exit 0\ndone\nif [ -n \"${PODS_CONFIGURATION_BUILD_DIR:-}\" ] && [ ! -d \"${PODS_CONFIGURATION_BUILD_DIR}/OnramperReactNative\" ]; then\n  echo \"warning: [onramper-react-native] OnramperReactNative isn't part of this build; if you removed @onramper/onramper-react-native, delete the \\\"${SCRIPT_PHASE_NAME:-Embed OnramperSDK}\\\" build phase\"\n  exit 0\nfi\necho \"error: [onramper-react-native] OnramperSDK.framework not found in build products. Make sure the Podfile's post_install calls react_native_post_install, then run pod install again\" >&2\nexit 1\n";
 		};
 		C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;

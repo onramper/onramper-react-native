@@ -9,13 +9,14 @@
     ],
     "newArchEnabled": true,
     "plugins": [
-      "@onramper/onramper-react-native"
+      ["@onramper/onramper-react-native", { "providers": ["stripe"] }]
     ],
     "ios": {
       "bundleIdentifier": "com.onramper.demo.react-native-expo",
       "deploymentTarget": "16.4",
       "entitlements": {
-        "com.apple.developer.devicecheck.appattest-environment": "development"
+        "com.apple.developer.devicecheck.appattest-environment": "production",
+        "com.apple.developer.in-app-payments": ["merchant.com.onramper.stripe"]
       },
       "infoPlist": {
         "CFBundleDisplayName": "Onramper Expo",

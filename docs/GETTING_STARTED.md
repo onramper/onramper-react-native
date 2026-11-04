@@ -1,6 +1,6 @@
 A consumer-facing guide to embedding the Onramper Headless solution in a React Native app via this wrapper.
 
-> **iOS-only in this release.** The wrapper vendors the native `OnramperSDK.xcframework`; every API runs on iOS. On Android the module is a stub — calls throw `OnramperError` with code `platformUnsupported`, so guard call sites with a platform check. Android is not part of this release.
+> **iOS-only in this release.** The wrapper uses the native iOS SDK (`OnramperSDK`, from the public `onramper-ios` Swift package); every API runs on iOS. On Android the module is a stub — calls throw `OnramperError` with code `platformUnsupported`, so guard call sites with a platform check. Android is not part of this release.
 
 ---
 
@@ -53,7 +53,7 @@ The wrapper is built with **Nitro Modules** and requires React Native's **New Ar
 | **A bare React Native app** (no Expo) | `npm install @onramper/onramper-react-native react-native-nitro-modules`, apply the iOS build settings, then `pod install` ([iOS build setup](doc:ios-build-setup)). |
 | **An Expo app** (prebuild / CNG) | `npm install @onramper/onramper-react-native react-native-nitro-modules`, add the bundled config plugin to `app.json` `plugins`, then `npx expo prebuild` — the plugin applies the iOS build settings for you. |
 
-No `install-expo-modules` step and no AppDelegate changes are required. Not compatible with Expo Go (the package vendors a native binary).
+No `install-expo-modules` step and no AppDelegate changes are required. Not compatible with Expo Go (the package includes native code).
 
 ---
 
@@ -66,10 +66,10 @@ No `install-expo-modules` step and no AppDelegate changes are required. Not comp
 | New Architecture | Required | Nitro Modules run on the New Architecture only |
 | `react-native-nitro-modules` | 0.35+ | Peer dependency — the package's native bridge is built with Nitro |
 | Node | 22.11.0+ | |
-| Xcode | 16+ (Xcode 26 tested) | |
+| Xcode | 26+ | The iOS SDK is built with Xcode 26 and needs its iOS 26 SDK (Xcode 16 fails with "no such module '_WebKit_SwiftUI'"); so does Stripe's iOS SDK 26.15.1 |
 | Real iOS device | Required for App Attest | Simulator can launch but attestation returns `attestationFailed` |
 | Apple Developer account | Required for signing | Free or paid; needs the App Attest capability under your team |
-| Stripe checkout (optional) | Package 1.5.0+ | Apple Pay capability with a merchant ID set up with Stripe, App Attest, a physical iPhone. See [Stripe checkout](https://github.com/onramper/onramper-react-native#stripe-checkout-experimental) |
+| Stripe checkout (optional) | Package 1.6.0+ (opt-in provider) | Set-up by Onramper and Stripe, the `stripe` provider in the Podfile or Expo plugin, Apple Pay capability with a merchant ID set up with Stripe, App Attest, a physical iPhone. See [3.13 Stripe checkout](#313-stripe-checkout-experimental) |
 
 ---
 
@@ -79,13 +79,15 @@ No `install-expo-modules` step and no AppDelegate changes are required. Not comp
 npm install @onramper/onramper-react-native react-native-nitro-modules
 ```
 
-`react-native-nitro-modules` is a peer dependency — install it in your app. The native binary (`OnramperSDK.xcframework`) and the Nitro module autolink in during `pod install`. Ensure the **New Architecture** is enabled (the default on RN 0.76+).
+`react-native-nitro-modules` is a peer dependency — install it in your app. The Nitro module autolinks in during `pod install`, which also adds the iOS SDK (the `onramper-ios` Swift package, exactly this package's version) through React Native's `spm_dependency` helper and an "Embed OnramperSDK" build phase to your app target; Xcode downloads the package on the first build. Ensure the **New Architecture** is enabled (the default on RN 0.76+).
 
 **Expo apps** — add the bundled config plugin so prebuild applies the iOS build settings automatically:
 
 ```json
 { "expo": { "plugins": ["@onramper/onramper-react-native"] } }
 ```
+
+For the experimental Stripe checkout, enable its provider: `"plugins": [["@onramper/onramper-react-native", { "providers": ["stripe"] }]]` (bare React Native: `$OnramperProviders = ['stripe']` in the Podfile, before `use_native_modules!` — see [iOS build setup](doc:ios-build-setup)). Without it, no Stripe code is built. All the steps are in [3.13 Stripe checkout](#313-stripe-checkout-experimental).
 
 Set your app's iOS deployment target to **16.4+** — Expo SDK 56's own minimum (e.g. `ios.deploymentTarget` in `app.json`). Then run `npx expo prebuild` followed by `npx expo run:ios`. You can skip the [iOS build setup](doc:ios-build-setup) — the plugin applies the required build flag for you.
 
@@ -343,7 +345,7 @@ await client.signOut();
 // session itself has expired.
 ```
 
-`signOut()` also clears the OnramperID web session and turns [trusted partner login](#trusted-partner-login) off for that client: the session's trusted login names the user it was minted for.
+`signOut()` also clears the OnramperID web session and turns [trusted partner login](#trusted-partner-login) off for that client: the session's trusted login names the user it was minted for. In the [Stripe checkout](#313-stripe-checkout-experimental) it logs the user out of Link too; `reset()` keeps the Link sign-in for the app session.
 
 **When your app's signed-in user changes**, sign the old user out and start a new client with a session minted for the new user (with their `user.email` if you use trusted login):
 
@@ -472,6 +474,8 @@ Values you pass as `prefill` are never logged at any level.
 | `getCheckoutRequirements(request, buttonStyle?, prefill?)` | `Promise<{ button, quote }>` | Creates the intent, resolves requirements, returns a ready-to-render React element + priced quote. Safe to call repeatedly. `prefill` pre-populates the OnramperID screens — best-effort, never blocks sign-in. |
 | `reset()` | `Promise<void>` | Returns the Headless Wrapper to `ready` after `completed` / `failed`. Does not invalidate the session token or OIDC login. |
 | `signOut()` | `Promise<void>` | Clears stored OIDC tokens (access + refresh) and the OnramperID web session, and calls `reset()`. Next checkout re-presents the OnramperID login sheet. Turns trusted partner login off for this client. Does not invalidate the partner Headless Wrapper session. |
+| `enableStripeCheckout({ merchantIdentifier, merchantName? })` | `Promise<void>` | Turns on the experimental Stripe checkout (process-wide). Rejects with `configurationError` without the `stripe` provider. See [3.13](#313-stripe-checkout-experimental). |
+| `setStripeLinkSignInOverride(order)` | `Promise<void>` | Demo/QA only: `'before_payment'`, `'after_payment'` or `null` (follow Onramper's partner setting) for the Stripe Link sign-in order, from the next checkout. Rejects with `configurationError` without the `stripe` provider. |
 | `cancelPreparedIntent(intentHandle)` | `Promise<void>` | Drops a prepared-intent handle on the native side. Rarely needed — `getCheckoutRequirements()` invalidates the prior intent automatically. |
 | `addStateListener(fn)` | `() => void` | Returns an unsubscribe. `fn` receives every `OnramperState` transition. |
 | `addTransactionIdListener(fn)` | `() => void` | Returns an unsubscribe. `fn` receives the current durable Onramper transaction ID as `string | null`; reset/sign-out publish `null`. |
@@ -528,6 +532,22 @@ These provider-lifecycle events come from third-party checkout webviews; not eve
 
 > For what the Headless Wrapper handles so you don't have to (ToS, login, token refresh, payment surface), see ➡️ **[What this wrapper does](doc:what-this-kit-does)**.
 
+### 3.13 Stripe checkout (experimental)
+
+iOS only: USD to USDC on Solana, Ethereum or Base, paid with Apple Pay, for customers in the US outside New York, up to 100 USD per purchase before fees. It is an opt-in provider: apps that don't enable it don't build Stripe's iOS SDK. To enable it:
+
+| Step | Bare React Native | Expo |
+|---|---|---|
+| 0. Onramper and Stripe set-up | A `stripe` key on your partner account; Stripe onboarding of your app (trusted app, app attestation with your bundle ID and Apple Team ID, an Apple Pay merchant ID with a certificate from Onramper's Stripe account). Ask your Onramper contact. | Same |
+| 1. Build the provider in | `$OnramperProviders = ['stripe']` at the top of `ios/Podfile`, **before `use_native_modules!`**, then `pod install` | `["@onramper/onramper-react-native", { "providers": ["stripe"] }]` in `app.json` `plugins`, then `npx expo prebuild` |
+| 2. Capabilities | **Apple Pay** (`com.apple.developer.in-app-payments` = your merchant ID) and **App Attest** in Signing & Capabilities | The same keys under `ios.entitlements` in `app.json` |
+| 3. Turn it on | `await client.enableStripeCheckout({ merchantIdentifier, merchantName })` once, before the first checkout | Same |
+| 4. Request it | `onlyOnramps: ['stripe']` in `getCheckoutRequirements`, with `source: 'usd'`, a `usdc_*` destination, `paymentMethod: 'applepay'` | Same |
+
+Checks: without step 1, `enableStripeCheckout` rejects with `configurationError` ("the Stripe checkout isn't installed …"); without step 3, a `['stripe']` request runs the regular checkout; it needs a physical iPhone (app attestation). Re-run `pod install` / prebuild after changing the provider list.
+
+Full details (the request, the total to show, what the user sees, the Link sign-in kept for the app session, the demo/QA `setStripeLinkSignInOverride`, outcomes and the declined-card message) are in the [README's Stripe checkout section](https://github.com/onramper/onramper-react-native#stripe-checkout-experimental).
+
 ---
 
 ## 4. Debugging your integration
@@ -573,3 +593,4 @@ In the running app, calling `client.initialize(...)` with valid staging credenti
 - Error UI covers at minimum `amountOutOfRange`, `quoteUnavailable`, `checkoutForbidden`, `temporaryFailure`, `networkError`, `deviceBlocked`, `configurationError`, and `unrecoverable`.
 - Analytics / observability hooked into `addStateListener` or `addEventListener('failed' | 'completed', …)`.
 - `client.destroy()` called on unmount so re-mounting doesn't leak listeners.
+- Stripe checkout (if used): the `stripe` provider in the Podfile / Expo plugin, the Apple Pay merchant ID in the entitlements and in `enableStripeCheckout`, App Attest `production`, tested on a real iPhone, and no `setStripeLinkSignInOverride` call in release builds.

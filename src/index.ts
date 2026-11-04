@@ -26,6 +26,7 @@ export type {
   RenderType,
   ReverificationField,
   SessionCredentials,
+  StripeLinkSignIn,
   ToSItem,
   TransactionType,
   UserInfoField,

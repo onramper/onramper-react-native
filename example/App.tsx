@@ -10,6 +10,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Appearance, StatusBar } from 'react-native';
+import type { StripeLinkSignIn } from '@onramper/onramper-react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DEFAULT_ENVIRONMENT, type AppEnvironment } from './config/environments';
 import { useOnramper } from './hooks/useOnramper';
@@ -31,6 +32,21 @@ function App() {
   const switching = switchTarget !== null;
   const palette = PALETTES[isDark ? 'dark' : 'light'];
   const onramper = useOnramper({ environment, theme: palette.name, generation, trustedLoginEmail });
+  // Demo/QA override of the partner's Stripe Link sign-in order (null = follow
+  // the partner). Process-wide in the SDK; applied again to every new client.
+  const [stripeLinkSignIn, setStripeLinkSignIn] = useState<StripeLinkSignIn | null>(null);
+  const client = onramper.client;
+  const stripeAvailable = onramper.stripeAvailable;
+  const appendLog = onramper.appendLog;
+  useEffect(() => {
+    if (!client || stripeAvailable !== true) {
+      return;
+    }
+    client
+      .setStripeLinkSignInOverride(stripeLinkSignIn)
+      .then(() => appendLog('info', `Stripe Link sign-in: ${stripeLinkSignIn ?? 'partner setting'}`))
+      .catch((e: unknown) => appendLog('error', `Stripe Link sign-in override failed: ${describeError(e).message}`));
+  }, [client, stripeAvailable, stripeLinkSignIn, appendLog]);
 
   // Native views follow the iOS appearance, not this in-app toggle: without
   // this, SwiftUI content such as the SDK button's ToS text (`.secondary`)
@@ -107,6 +123,9 @@ function App() {
           trustedLoginEmail={trustedLoginEmail}
           trustedLogin={onramper.trustedLogin}
           onApplyTrustedLoginEmail={applyTrustedLoginEmail}
+          stripeLinkSignIn={stripeLinkSignIn}
+          onChangeStripeLinkSignIn={setStripeLinkSignIn}
+          stripeAvailable={onramper.stripeAvailable}
           isDark={isDark}
           onChangeDark={setDark}
           onClearSessions={clearSessions}

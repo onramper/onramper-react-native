@@ -19,18 +19,20 @@ The **Expo** demo for [`@onramper/onramper-react-native`](../). It exercises `On
   **1.16.2** (`pod install`), not `bundle exec pod install`: the current Gemfile lock intentionally pins 1.15.2
   and is out of scope.
 - The library is consumed as `@onramper/onramper-react-native: file:..`, so the **parent package must be built**
-  and its native **xcframework fetched** before this app can build (see Step 1).
+  before this app can build (see Step 1). The iOS SDK comes from the `onramper-ios` Swift package during
+  `pod install` and the first Xcode build. `app.json` enables the Stripe provider (`providers: ["stripe"]`), the Apple Pay
+  merchant (`merchant.com.onramper.stripe`) and App Attest `production`; the app calls `enableStripeCheckout` on
+  Configure + Initialize. Pick **Stripe** under Transaction → ramp to run the Stripe checkout (it fills in USD to
+  USDC on Solana, US/California, 25, Apple Pay); the other ramps send that ramp as `onlyOnramps`, and Any sends none.
 
 ## Step 1 — Build the library (from the repo root)
 
 ```sh
 cd ..                        # repo root
 npm install                  # install + build the library (bob)
-npm run fetch-xcframework    # download OnramperSDK.xcframework into ios/Frameworks
 ```
 
-`fetch-xcframework` downloads from the public `onramper/onramper-ios` GitHub release. No GitHub
-account or access token is required.
+The `onramper-ios` package is public. No GitHub account or access token is required.
 
 ## Step 2 — Install this app's dependencies
 
@@ -91,8 +93,7 @@ client and creates a new one on the next Configure + Initialize. Only `@onramper
 
 ## Troubleshooting
 
-- **`OnramperSDK.xcframework` not found / pod install fails** — rerun Step 1; the xcframework must
-  exist at the repo root `ios/Frameworks/` before building.
+- **pod install fails** — rerun Step 1; the library must be built at the repo root before `pod install`.
 - **Stale native build after dependency changes** — `rm -rf ios && npm run ios -- --device` to regenerate the
   prebuild, or `cd ios && pod install` if only pods changed.
 - **`env.local.ts` missing** — the app imports `ENV` from it; complete Step 3.
