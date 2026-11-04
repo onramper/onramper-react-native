@@ -52,6 +52,13 @@ jobs:
       ONRAMPER_PROVIDERS: ${{ matrix.providers }}
     steps:
       - uses: actions/checkout@v4
+      # Xcode 26, as the iOS SDK release uses: OnramperSDK's interface imports
+      # _WebKit_SwiftUI and Stripe 26.15.1 uses iOS 26 SDK API, so the runner's
+      # default Xcode 16.4 can't build the example.
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - run: xcodebuild -version
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
