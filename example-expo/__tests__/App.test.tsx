@@ -50,6 +50,7 @@ test.each<OnramperErrorPayload>([
     addEventListener: jest.fn((name, listener) => {
       if (name === 'failed') onFailed = listener;
     }),
+    enableStripeCheckout: jest.fn().mockResolvedValue(undefined),
     initialize: jest.fn().mockResolvedValue(undefined),
     destroy: jest.fn(),
   };
@@ -84,6 +85,7 @@ describe('trusted partner login', () => {
         addTransactionIdListener: jest.fn(),
         addStateListener: jest.fn(),
         addEventListener: jest.fn(),
+        enableStripeCheckout: jest.fn().mockResolvedValue(undefined),
         initialize: jest.fn().mockResolvedValue(undefined),
         signOut: jest.fn().mockResolvedValue(undefined),
         destroy: jest.fn(),
@@ -147,6 +149,108 @@ describe('trusted partner login', () => {
     expect(clients[1].destroy).toHaveBeenCalled();
     expect(clients).toHaveLength(3);
     expect(createDemoSession).toHaveBeenLastCalledWith('', EMAIL);
+    await ReactTestRenderer.act(async () => renderer.unmount());
+  });
+});
+
+describe('ramp selector', () => {
+  let client: {
+    enableStripeCheckout: jest.Mock;
+    initialize: jest.Mock;
+    getCheckoutRequirements: jest.Mock;
+  };
+
+  beforeEach(() => {
+    jest.mocked(createDemoSession).mockResolvedValue({ sessionId: 's', sessionToken: 't' });
+    jest.mocked(OnramperClient).mockImplementation(() => {
+      client = {
+        enableStripeCheckout: jest.fn().mockResolvedValue(undefined),
+        initialize: jest.fn().mockResolvedValue(undefined),
+        getCheckoutRequirements: jest.fn().mockResolvedValue({
+          quote: { ramp: 'stripe', rate: 1, payout: 24, networkFee: 0, transactionFee: 1 },
+          button: null,
+        }),
+      };
+      return Object.assign(client, {
+        addTransactionIdListener: jest.fn(),
+        addStateListener: jest.fn(),
+        addEventListener: jest.fn(),
+        destroy: jest.fn(),
+      }) as unknown as OnramperClient;
+    });
+  });
+
+  async function setup() {
+    let renderer!: ReactTestRenderer.ReactTestRenderer;
+    await ReactTestRenderer.act(async () => {
+      renderer = ReactTestRenderer.create(<App />);
+    });
+    await ReactTestRenderer.act(async () => {
+      await renderer.root.findByProps({ title: 'Configure + Initialize' }).props.onPress();
+    });
+    const pick = (label: string) =>
+      ReactTestRenderer.act(async () => renderer.root.findByProps({ accessibilityLabel: `ramp ${label}` }).props.onPress());
+    const request = async () => {
+      await ReactTestRenderer.act(async () => {
+        await renderer.root.findByProps({ title: 'Get checkout requirements' }).props.onPress();
+      });
+      return client.getCheckoutRequirements.mock.calls.at(-1)?.[0];
+    };
+    return { renderer, pick, request };
+  }
+
+  test('initialize turns the Stripe checkout on with the demo merchant ID', async () => {
+    const { renderer } = await setup();
+    expect(client.enableStripeCheckout).toHaveBeenCalledWith({ merchantIdentifier: 'merchant.com.onramper.stripe' });
+    await ReactTestRenderer.act(async () => renderer.unmount());
+  });
+
+  test('a build without the Stripe provider still initializes', async () => {
+    jest.mocked(OnramperClient).mockImplementationOnce(() => {
+      client = {
+        enableStripeCheckout: jest.fn().mockRejectedValue({ code: 'configurationError', message: 'not installed' }),
+        initialize: jest.fn().mockResolvedValue(undefined),
+        getCheckoutRequirements: jest.fn(),
+      };
+      return Object.assign(client, {
+        addTransactionIdListener: jest.fn(),
+        addStateListener: jest.fn(),
+        addEventListener: jest.fn(),
+        destroy: jest.fn(),
+      }) as unknown as OnramperClient;
+    });
+    const { renderer } = await setup();
+    expect(client.initialize).toHaveBeenCalled();
+    expect(JSON.stringify(renderer.toJSON())).toContain('initialized OK');
+    await ReactTestRenderer.act(async () => renderer.unmount());
+  });
+
+  test('Any sends no onlyOnramps', async () => {
+    const { renderer, request } = await setup();
+    expect((await request()).onlyOnramps).toBeUndefined();
+    await ReactTestRenderer.act(async () => renderer.unmount());
+  });
+
+  test('picking a ramp sends only that ramp', async () => {
+    const { renderer, pick, request } = await setup();
+    await pick('MoonPay');
+    expect((await request()).onlyOnramps).toEqual(['moonpay']);
+    await ReactTestRenderer.act(async () => renderer.unmount());
+  });
+
+  test('picking Stripe fills in a request the Stripe checkout accepts', async () => {
+    const { renderer, pick, request } = await setup();
+    await pick('Stripe');
+    expect(await request()).toMatchObject({
+      source: 'usd',
+      destination: 'usdc_solana',
+      amount: 25,
+      country: 'us',
+      subdivision: 'us-ca',
+      paymentMethod: 'applepay',
+      wallet: { network: 'solana' },
+      onlyOnramps: ['stripe'],
+    });
     await ReactTestRenderer.act(async () => renderer.unmount());
   });
 });

@@ -20,9 +20,10 @@ The **Expo** demo for [`@onramper/onramper-react-native`](../). It exercises `On
   and is out of scope.
 - The library is consumed as `@onramper/onramper-react-native: file:..`, so the **parent package must be built**
   before this app can build (see Step 1). The iOS SDK comes from the `onramper-ios` Swift package during
-  `pod install` and the first Xcode build. `app.json` enables the Stripe provider (`providers: ["stripe"]`) to
-  show the config plugin option and keep that build path tested; the app itself doesn't run the Stripe checkout
-  (it has no Apple Pay entitlement). For the Stripe flow use the bare example, [`../example`](../example).
+  `pod install` and the first Xcode build. `app.json` enables the Stripe provider (`providers: ["stripe"]`), the Apple Pay
+  merchant (`merchant.com.onramper.stripe`) and App Attest `production`; the app calls `enableStripeCheckout` on
+  Configure + Initialize. Pick **Stripe** under Transaction → ramp to run the Stripe checkout (it fills in USD to
+  USDC on Solana, US/California, 25, Apple Pay); the other ramps send that ramp as `onlyOnramps`, and Any sends none.
 
 ## Step 1 — Build the library (from the repo root)
 
