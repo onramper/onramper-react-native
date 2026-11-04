@@ -44,6 +44,13 @@ Wraps `OnramperSDK@1.6.0` from the public
 - The example app has a **Stripe Link sign-in** picker in Settings, and starts
   without Stripe when built with `ONRAMPER_PROVIDERS=` instead of failing to
   initialize.
+- The Expo example has a **ramp selector** (`onlyOnramps`, with a Stripe
+  preset) and runs the Stripe checkout: it calls `enableStripeCheckout` and has
+  the Apple Pay merchant entitlement.
+- Both example apps use the **App Attest `production` environment**, as the
+  Stripe checkout needs. With `development`, Stripe rejects the attestation
+  (`app_attestation_unavailable`, then "Missing required param: app_id" on Link
+  calls), which the SDK reports as "Checkout could not continue".
 
 ### Fixed
 
