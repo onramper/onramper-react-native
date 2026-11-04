@@ -18,6 +18,7 @@ export interface MockNative {
   getCheckoutRequirements: jest.Mock;
   cancelPreparedIntent: jest.Mock;
   enableStripeCheckout: jest.Mock;
+  setStripeLinkSignInOverride: jest.Mock;
   dispose: jest.Mock;
   // Captured callbacks (set by the corresponding setters):
   __stateListener?: (json: string) => void;
@@ -28,7 +29,7 @@ export interface MockNative {
 
 export function makeNative(): MockNative {
   const native = {
-    sdkVersion: '1.5.0',
+    sdkVersion: '1.6.0',
     configure: jest.fn().mockResolvedValue(undefined),
     initialize: jest.fn().mockResolvedValue(undefined),
     reset: jest.fn().mockResolvedValue(undefined),
@@ -49,6 +50,7 @@ export function makeNative(): MockNative {
     getCheckoutRequirements: jest.fn().mockResolvedValue({ intentHandle: 'handle', quoteJson: '{}' }),
     cancelPreparedIntent: jest.fn().mockResolvedValue(undefined),
     enableStripeCheckout: jest.fn().mockResolvedValue(undefined),
+    setStripeLinkSignInOverride: jest.fn().mockResolvedValue(undefined),
     dispose: jest.fn(),
   } as MockNative;
   return native;

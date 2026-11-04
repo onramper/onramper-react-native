@@ -147,6 +147,7 @@
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
 				411ACEA3A8627134734E4938 /* [CP] Embed Pods Frameworks */,
+				F2290F894F39D75C4D7FBC21 /* [onramper-react-native] Embed OnramperSDK */,
 			);
 			buildRules = (
 			);
@@ -254,7 +255,6 @@
 				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ExpoModulesCore/ExpoModulesCore.framework/ExpoModulesCore",
 				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ExpoModulesJSI/ExpoModulesJSI.framework/ExpoModulesJSI",
 				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ExpoModulesWorklets/ExpoModulesWorklets.framework/ExpoModulesWorklets",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/OnramperReactNative/OnramperSDK.framework/OnramperSDK",
 				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
 				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
 				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermesvm.framework/hermesvm",
@@ -266,7 +266,6 @@
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ExpoModulesCore.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ExpoModulesJSI.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ExpoModulesWorklets.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/OnramperSDK.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermesvm.framework",
@@ -327,6 +326,25 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-OnramperExpoDemo/expo-configure-project.sh\"\n";
+		};
+		F2290F894F39D75C4D7FBC21 /* [onramper-react-native] Embed OnramperSDK */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "[onramper-react-native] Embed OnramperSDK";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\n[ -n \"${TARGET_BUILD_DIR:-}\" ] && [ -n \"${FRAMEWORKS_FOLDER_PATH:-}\" ] || exit 0\nDEST=\"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}\"\nfor DIR in \"${BUILT_PRODUCTS_DIR}\" \"${BUILT_PRODUCTS_DIR}/PackageFrameworks\" \"${OBJROOT}/UninstalledProducts/${PLATFORM_NAME}\"; do\n  FRAMEWORK=\"$DIR/OnramperSDK.framework\"\n  [ -f \"$FRAMEWORK/OnramperSDK\" ] || continue\n  file -b \"$FRAMEWORK/OnramperSDK\" | grep -q \"dynamically linked\" || continue\n  mkdir -p \"$DEST\"\n  # No trailing slash on the source: --delete stays inside this framework.\n  rsync -a --delete --exclude Headers --exclude PrivateHeaders --exclude Modules \"$FRAMEWORK\" \"$DEST/\"\n  if [ -n \"${EXPANDED_CODE_SIGN_IDENTITY:-}\" ] && [ \"${CODE_SIGNING_ALLOWED:-NO}\" = \"YES\" ]; then\n    codesign --force --sign \"$EXPANDED_CODE_SIGN_IDENTITY\" --preserve-metadata=identifier,entitlements \"$DEST/OnramperSDK.framework\"\n  fi\n  exit 0\ndone\nif [ -n \"${PODS_CONFIGURATION_BUILD_DIR:-}\" ] && [ ! -d \"${PODS_CONFIGURATION_BUILD_DIR}/OnramperReactNative\" ]; then\n  echo \"warning: [onramper-react-native] OnramperReactNative isn't part of this build; if you removed @onramper/onramper-react-native, delete the \\\"${SCRIPT_PHASE_NAME:-Embed OnramperSDK}\\\" build phase\"\n  exit 0\nfi\necho \"error: [onramper-react-native] OnramperSDK.framework not found in build products. Make sure the Podfile's post_install calls react_native_post_install, then run pod install again\" >&2\nexit 1\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
